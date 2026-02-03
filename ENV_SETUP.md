@@ -2,24 +2,6 @@
 
 Create a `.env` file in the root directory of the project with the following variables:
 
-## Required Environment Variables
-
-```env
-# Server Configuration
-PORT=3000
-NODE_ENV=development
-
-# MongoDB Configuration
-MONGODB_URI=mongodb://localhost:27017/healthcare_db
-
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-JWT_EXPIRES_IN=24h
-
-# CORS Configuration
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
-```
-
 ## Variable Descriptions
 
 ### PORT
@@ -41,7 +23,6 @@ ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 - **Example**: `MONGODB_URI=mongodb://localhost:27017/healthcare_db`
 - **Required**: **Yes**
 - **Note**: 
-  - For local MongoDB: `mongodb://localhost:27017/healthcare_db`
   - For MongoDB Atlas: `mongodb+srv://username:password@cluster.mongodb.net/healthcare_db`
   - For Docker: `mongodb://mongo:27017/healthcare_db`
 
