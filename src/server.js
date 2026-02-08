@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/database');
+const passport = require('./config/passport');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -29,6 +30,9 @@ app.use(cors(corsOptions));
 // Body parser middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Passport (Google OAuth)
+app.use(passport.initialize());
 
 // Rate limiting
 const limiter = rateLimit({

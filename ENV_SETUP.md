@@ -46,6 +46,29 @@ Create a `.env` file in the root directory of the project with the following var
   - Time format: `24h`, `7d`, `30m`
   - Examples: `1h`, `2d`, `30m`, `3600` (seconds)
 
+### GOOGLE_CLIENT_ID
+- **Description**: Google OAuth 2.0 Client ID (from Google Cloud Console)
+- **Example**: `GOOGLE_CLIENT_ID=123456789-abc.apps.googleusercontent.com`
+- **Required**: Yes (for Google sign-in)
+- **Note**: Create credentials at https://console.cloud.google.com/apis/credentials
+
+### GOOGLE_CLIENT_SECRET
+- **Description**: Google OAuth 2.0 Client Secret
+- **Example**: `GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxx`
+- **Required**: Yes (for Google sign-in)
+
+### GOOGLE_CALLBACK_URL
+- **Description**: Full URL for OAuth callback (must match Google Console exactly)
+- **Default**: `http://localhost:3000/api/auth/google/callback`
+- **Example**: `GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback`
+- **Required**: No (uses default for localhost)
+
+### GOOGLE_REDIRECT_AFTER_LOGIN
+- **Description**: URL to redirect users after successful Google sign-in (JWT sent as ?token=xxx)
+- **Default**: `http://localhost:5173`
+- **Example**: `GOOGLE_REDIRECT_AFTER_LOGIN=http://localhost:5173/auth/callback`
+- **Required**: No
+
 ### ALLOWED_ORIGINS
 - **Description**: Comma-separated list of allowed CORS origins
 - **Default**: `['http://localhost:3000']`
@@ -78,6 +101,12 @@ JWT_EXPIRES_IN=24h
 # CORS Configuration
 # Add all frontend URLs that need to access the API
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:8080
+
+# Google OAuth (for "Sign in with Google")
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-your-google-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback
+GOOGLE_REDIRECT_AFTER_LOGIN=http://localhost:5173
 ```
 
 ## Quick Setup

@@ -29,7 +29,8 @@ const register = async (userData) => {
     lastName,
     role: role || 'clerk',
     phoneNumber,
-    department
+    department,
+    authProvider: 'local'
   });
 
   await user.save();
@@ -86,6 +87,63 @@ const login = async (email, password) => {
 };
 
 /**
+ * Find or create user from Google OAuth profile
+ * @param {Object} profile - Google profile from passport (id, displayName, name, emails)
+ * @returns {Object} User and JWT token
+ * @throws {Error} If domain restriction fails (when ALLOWED_EMAIL_DOMAINS is set)
+ */
+const findOrCreateFromGoogle = async (profile) => {
+  const email = profile.emails?.[0]?.value?.toLowerCase();
+  if (!email) {
+    throw new Error('Email not provided by Google');
+  }
+
+  // TODO: In production, restrict sign-in to organization emails for security.
+  // Uncomment and configure ALLOWED_EMAIL_DOMAINS in .env (e.g. "hospital.com,clinic.org")
+  // to only allow users from trusted domains.
+  // const allowedDomains = process.env.ALLOWED_EMAIL_DOMAINS?.split(',').map(d => d.trim());
+  // if (allowedDomains?.length && !allowedDomains.some(d => email.endsWith(`@${d}`))) {
+  //   throw new Error(`Sign-in restricted to allowed domains: ${allowedDomains.join(', ')}`);
+  // }
+
+  const firstName = profile.name?.givenName || profile.displayName?.split(' ')[0] || 'User';
+  const lastName = profile.name?.familyName || profile.displayName?.split(' ').slice(1).join(' ') || '';
+
+  let user = await User.findOne({ googleId: profile.id });
+  if (user) {
+    user.lastLogin = new Date();
+    await user.save();
+  } else {
+    user = await User.findOne({ email });
+    if (user) {
+      user.googleId = profile.id;
+      user.authProvider = 'google';
+      user.lastLogin = new Date();
+      await user.save();
+    } else {
+      user = new User({
+        email,
+        googleId: profile.id,
+        authProvider: 'google',
+        firstName,
+        lastName,
+        role: 'clerk',
+        lastLogin: new Date()
+      });
+      await user.save();
+    }
+  }
+
+  if (!user.isActive) {
+    throw new Error('User account is deactivated');
+  }
+
+  const token = generateToken(user);
+  const userObject = user.toJSON();
+  return { user: userObject, token };
+};
+
+/**
  * Get user by ID
  * @param {String} userId - User ID
  * @returns {Object} User object
@@ -105,6 +163,7 @@ const getUserById = async (userId) => {
 module.exports = {
   register,
   login,
+  findOrCreateFromGoogle,
   getUserById
 };
 
