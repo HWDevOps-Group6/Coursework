@@ -10,13 +10,15 @@ This system follows a service-based architecture with:
 - **JWT** for stateless authentication
 - **bcrypt** for password hashing
 - **Joi** for input validation
+- **Passport.js** with Google OAuth 2.0 (Sign in with Google)
 
 ## Project Structure
 
 ```
 ├── src/
 │   ├── config/
-│   │   └── database.js          # MongoDB connection
+│   │   ├── database.js          # MongoDB connection
+│   │   └── passport.js          # Google OAuth strategy
 │   ├── middleware/
 │   │   ├── auth.js              # JWT authentication middleware
 │   │   └── validation.js        # Request validation middleware
@@ -136,6 +138,21 @@ npm start
 }
 ```
 
+### Sign in with Google
+
+**Endpoint:** `GET /api/auth/google`
+
+Redirects to Google sign-in. After successful authentication, redirects to `GOOGLE_REDIRECT_AFTER_LOGIN` with JWT in query: `?token=<JWT>`.
+
+**Setup:**
+1. Create a project in [Google Cloud Console](https://console.cloud.google.com/)
+2. Enable Google+ API (or People API)
+3. Create OAuth 2.0 credentials (Web application)
+4. Add authorized redirect URI: `http://localhost:3000/api/auth/google/callback`
+5. Add `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` to `.env`
+
+See `ENV_SETUP.md` for full configuration.
+
 ### Get Current User
 
 **Endpoint:** `GET /api/auth/me`
@@ -209,6 +226,9 @@ All errors follow this format:
 - `JWT_SECRET`: Secret key for JWT signing
 - `JWT_EXPIRES_IN`: Token expiration time (default: 24h)
 - `ALLOWED_ORIGINS`: Comma-separated list of allowed CORS origins
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`: Google OAuth credentials
+- `GOOGLE_CALLBACK_URL`: OAuth callback URL (must match Google Console)
+- `GOOGLE_REDIRECT_AFTER_LOGIN`: Where to redirect after sign-in (JWT in ?token=)
 
 ## Documentation
 

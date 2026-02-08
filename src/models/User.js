@@ -12,8 +12,22 @@ const userSchema = new mongoose.Schema({
   },
   passwordHash: {
     type: String,
-    required: [true, 'Password is required'],
+    required: false,
     minlength: [8, 'Password must be at least 8 characters']
+    // Optional for Google OAuth users - they authenticate via Google, not password
+  },
+  googleId: {
+    type: String,
+    required: false,
+    unique: true,
+    sparse: true
+    // Google's unique user ID - used for OAuth sign-in
+  },
+  authProvider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local'
+    // 'local' = email/password, 'google' = Google OAuth
   },
   firstName: {
     type: String,
@@ -50,7 +64,19 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes (email index is created automatically by unique: true)
+// Validate: local users need passwordHash, Google users need googleId
+userSchema.pre('save', function(next) {
+  if (this.authProvider === 'google' && !this.googleId) {
+    next(new Error('Google users must have googleId'));
+  } else if (this.authProvider === 'local' && !this.passwordHash) {
+    next(new Error('Local users must have passwordHash'));
+  } else {
+    next();
+  }
+});
+
+// Index for email (unique index is created automatically)
+userSchema.index({ email: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ department: 1 });
 
@@ -59,8 +85,11 @@ userSchema.virtual('fullName').get(function() {
   return `${this.firstName} ${this.lastName}`;
 });
 
-// Method to compare password
+// Method to compare password (only for local/auth users with passwordHash)
 userSchema.methods.comparePassword = async function(candidatePassword) {
+  if (!this.passwordHash) {
+    return false;
+  }
   return await bcrypt.compare(candidatePassword, this.passwordHash);
 };
 
