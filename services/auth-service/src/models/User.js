@@ -14,20 +14,17 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: false,
     minlength: [8, 'Password must be at least 8 characters']
-    // Optional for Google OAuth users - they authenticate via Google, not password
   },
   googleId: {
     type: String,
     required: false,
     unique: true,
     sparse: true
-    // Google's unique user ID - used for OAuth sign-in
   },
   authProvider: {
     type: String,
     enum: ['local', 'google'],
     default: 'local'
-    // 'local' = email/password, 'google' = Google OAuth
   },
   firstName: {
     type: String,
@@ -45,26 +42,12 @@ const userSchema = new mongoose.Schema({
     enum: ['clerk', 'doctor', 'nurse', 'paramedic'],
     default: 'clerk'
   },
-  phoneNumber: {
-    type: String,
-    trim: true
-  },
-  department: {
-    type: String,
-    trim: true
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  lastLogin: {
-    type: Date
-  }
-}, {
-  timestamps: true
-});
+  phoneNumber: { type: String, trim: true },
+  department: { type: String, trim: true },
+  isActive: { type: Boolean, default: true },
+  lastLogin: { type: Date }
+}, { timestamps: true });
 
-// Validate: local users need passwordHash, Google users need googleId
 userSchema.pre('save', function(next) {
   if (this.authProvider === 'google' && !this.googleId) {
     next(new Error('Google users must have googleId'));
@@ -75,25 +58,19 @@ userSchema.pre('save', function(next) {
   }
 });
 
-// Index for email (unique index is created automatically)
 userSchema.index({ email: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ department: 1 });
 
-// Virtual for full name
 userSchema.virtual('fullName').get(function() {
   return `${this.firstName} ${this.lastName}`;
 });
 
-// Method to compare password (only for local/auth users with passwordHash)
 userSchema.methods.comparePassword = async function(candidatePassword) {
-  if (!this.passwordHash) {
-    return false;
-  }
+  if (!this.passwordHash) return false;
   return await bcrypt.compare(candidatePassword, this.passwordHash);
 };
 
-// Method to exclude password from JSON output
 userSchema.methods.toJSON = function() {
   const userObject = this.toObject();
   delete userObject.passwordHash;
@@ -101,4 +78,3 @@ userSchema.methods.toJSON = function() {
 };
 
 module.exports = mongoose.model('User', userSchema);
-

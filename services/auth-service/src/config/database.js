@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 /**
  * Connect to MongoDB database
+ * Auth service owns the Users collection
  */
 const connectDB = async () => {
   try {
@@ -9,9 +10,8 @@ const connectDB = async () => {
       // Remove deprecated options, use default settings
     });
 
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    
-    // Handle connection events
+    console.log(`[Auth] MongoDB Connected: ${conn.connection.host}`);
+
     mongoose.connection.on('error', (err) => {
       console.error('MongoDB connection error:', err);
     });
@@ -20,7 +20,6 @@ const connectDB = async () => {
       console.log('MongoDB disconnected');
     });
 
-    // Graceful shutdown
     process.on('SIGINT', async () => {
       await mongoose.connection.close();
       console.log('MongoDB connection closed through app termination');
@@ -33,4 +32,3 @@ const connectDB = async () => {
 };
 
 module.exports = connectDB;
-

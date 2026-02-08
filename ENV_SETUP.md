@@ -59,8 +59,8 @@ Create a `.env` file in the root directory of the project with the following var
 
 ### GOOGLE_CALLBACK_URL
 - **Description**: Full URL for OAuth callback (must match Google Console exactly)
-- **Default**: `http://localhost:3000/api/auth/google/callback`
-- **Example**: `GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback`
+- **Default**: `http://localhost:3001/api/auth/web/google/callback`
+- **Example**: `GOOGLE_CALLBACK_URL=http://localhost:3001/api/auth/web/google/callback`
 - **Required**: No (uses default for localhost)
 
 ### GOOGLE_REDIRECT_AFTER_LOGIN
@@ -105,7 +105,7 @@ ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:808
 # Google OAuth (for "Sign in with Google")
 GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=GOCSPX-your-google-client-secret
-GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback
+GOOGLE_CALLBACK_URL=http://localhost:3001/api/auth/web/google/callback
 GOOGLE_REDIRECT_AFTER_LOGIN=http://localhost:5173
 ```
 
