@@ -4,15 +4,30 @@ Authentication microservice - register, login, Google OAuth, JWT issuance.
 
 ## Endpoints
 
+### Headless (API-only, no browser)
+
 | Method | Path | Description |
 |--------|------|-------------|
 | POST | /api/auth/register | Register user, returns JWT |
 | POST | /api/auth/login | Login, returns JWT |
-| GET | /api/auth/google | Start Google OAuth |
-| GET | /api/auth/google/callback | OAuth callback |
 | GET | /api/auth/me | Current user (requires Bearer token) |
 | POST | /api/auth/verify | Validate token (for other services) |
-| GET | /health | Health check |
+
+### Web (browser redirect flow, optional)
+
+Only available when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /api/auth/web/google | Start Google OAuth (redirects to Google) |
+| GET | /api/auth/web/google/callback | OAuth callback |
+| GET | /api/auth/web/google/failure | OAuth failure handler |
+
+### Health
+
+| Method | Path |
+|--------|------|
+| GET | /health |
 
 ## Run locally
 

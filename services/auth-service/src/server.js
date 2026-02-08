@@ -4,7 +4,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/database');
-const passport = require('./config/passport');
 const authRoutes = require('./routes/authRoutes');
 
 const app = express();
@@ -20,7 +19,15 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(passport.initialize());
+
+// Google OAuth: only load when configured (for web/browser clients)
+const hasGoogleOAuth = process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET;
+if (hasGoogleOAuth) {
+  const passport = require('./config/passport');
+  const googleAuthRoutes = require('./routes/googleAuthRoutes');
+  app.use(passport.initialize());
+  app.use('/api/auth/web', googleAuthRoutes);
+}
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,

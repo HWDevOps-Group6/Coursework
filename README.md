@@ -85,13 +85,22 @@ docker-compose up
 
 ## Auth Service Endpoints
 
+### Headless (default)
+
 | Method | URL | Description |
 |--------|-----|-------------|
 | POST | http://localhost:3001/api/auth/register | Register, returns JWT |
 | POST | http://localhost:3001/api/auth/login | Login, returns JWT |
-| GET | http://localhost:3001/api/auth/google | Start Google OAuth |
 | GET | http://localhost:3001/api/auth/me | Current user (Bearer token) |
 | POST | http://localhost:3001/api/auth/verify | Validate token |
+
+### Web / Google OAuth (optional)
+
+Only when `GOOGLE_*` env vars are set:
+
+| Method | URL |
+|--------|-----|
+| GET | http://localhost:3001/api/auth/web/google |
 
 ## Main API
 

@@ -1,33 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const passport = require('passport');
 const authService = require('../services/authService');
 const { authenticate } = require('../middleware/auth');
 const { validate, schemas } = require('../middleware/validation');
 const { verifyToken, extractTokenFromHeader } = require('../utils/jwt');
 
-// Google OAuth
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-router.get(
-  '/google/callback',
-  passport.authenticate('google', { session: false, failureRedirect: '/api/auth/google/failure' }),
-  (req, res) => {
-    const { token } = req.user;
-    const redirectUrl = process.env.GOOGLE_REDIRECT_AFTER_LOGIN || 'http://localhost:5173';
-    const separator = redirectUrl.includes('?') ? '&' : '?';
-    res.redirect(`${redirectUrl}${separator}token=${token}`);
-  }
-);
-
-router.get('/google/failure', (req, res) => {
-  res.status(401).json({
-    success: false,
-    error: { code: 'GOOGLE_AUTH_FAILED', message: 'Google sign-in failed' }
-  });
-});
-
-// Register / Login
+// Headless auth: register, login, me, verify (no browser required)
 router.post('/register', validate(schemas.register), async (req, res) => {
   try {
     const result = await authService.register(req.body);
