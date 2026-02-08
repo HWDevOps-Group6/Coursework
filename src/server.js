@@ -45,7 +45,7 @@ app.get('/api/me', verifyToken, (req, res) => {
   res.status(200).json({
     success: true,
     data: { user: req.user },
-    message: 'Token valid. For full user profile, call auth-service GET /api/auth/me'
+    message: 'Token valid! Successfully fetched profile'
   });
 });
 
