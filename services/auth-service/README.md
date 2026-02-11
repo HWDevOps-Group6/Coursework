@@ -38,6 +38,29 @@ npm install
 PORT=3001 npm run dev
 ```
 
+## Run as Docker image
+
+Build image:
+
+```bash
+cd services/auth-service
+docker build -t auth-service:latest .
+```
+
+Run container:
+
+```bash
+docker run --name auth-service \
+  --env-file .env \
+  -p 3001:3001 \
+  auth-service:latest
+```
+
+Notes:
+- If MongoDB runs on your host machine, set `MONGODB_URI=mongodb://host.docker.internal:27017/healthcare_db`.
+- If MongoDB runs in another container, use the Mongo container/service name in `MONGODB_URI`.
+- Health endpoint remains available at `http://localhost:3001/health`.
+
 ## Environment
 
 - `PORT` - default 3001
