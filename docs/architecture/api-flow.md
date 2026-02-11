@@ -33,6 +33,17 @@ sequenceDiagram
     AuthMW->>Client: Continue to protected route
 ```
 
+## API Gateway (Implemented)
+
+A single entry point is provided by `src/gateway.js`:
+
+- **Port**: 3000 (configurable via `GATEWAY_PORT` or `PORT`)
+- **`/api/auth`** and **`/api/auth/web`** → proxied to Auth service (default `http://localhost:3001`)
+- **`/api`** (all other API routes) → proxied to Main API (default `http://localhost:3002`)
+- **`/health`** → gateway health plus backend status (auth/main up or down)
+
+Run with: `npm run dev:all` (starts gateway + main API + auth service). Main API runs on 3002 when used behind the gateway.
+
 ## Possible workflow for Protected Route Request Flow
 Since we are dealing with patient records, this is confidential. We should consider a protected route request workflow for the same. Here's a possible workflow
 
@@ -123,7 +134,8 @@ We'll add on to this as we go. Some things we need to discuss:
 ```
 POST   /api/auth/register     - User registration
 POST   /api/auth/login        - User login (returns JWT)
-POST   /api/auth/refresh      - Refresh JWT token
+POST   /api/auth/verify       - Validate JWT token
+GET    /api/auth/me           - Get current user profile
 
 GET    /api/patients          - List patients
 POST   /api/patients          - Create new patient

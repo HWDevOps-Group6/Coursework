@@ -3,12 +3,23 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const mongoose = require('mongoose');
 const connectDB = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
 connectDB();
+
+const requireDb = (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      error: { code: 'SERVICE_UNAVAILABLE', message: 'Database not ready. Start MongoDB or check MONGODB_URI.' },
+    });
+  }
+  next();
+};
 
 app.use(helmet());
 app.use(cors({
@@ -42,6 +53,7 @@ const authLimiter = rateLimit({
 
 app.use('/api/', limiter);
 app.use('/api/auth/', authLimiter);
+app.use('/api/auth', requireDb);
 
 app.get('/health', (req, res) => {
   res.status(200).json({
