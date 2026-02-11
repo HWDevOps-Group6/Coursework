@@ -58,7 +58,7 @@ userSchema.pre('save', function(next) {
   }
 });
 
-userSchema.index({ email: 1 });
+// email index is created automatically by unique: true above
 userSchema.index({ role: 1 });
 userSchema.index({ department: 1 });
 

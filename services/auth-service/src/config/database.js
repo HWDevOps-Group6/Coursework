@@ -5,9 +5,11 @@ const mongoose = require('mongoose');
  * Auth service owns the Users collection
  */
 const connectDB = async () => {
+  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/auth';
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      // Remove deprecated options, use default settings
+    const conn = await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
     });
 
     console.log(`[Auth] MongoDB Connected: ${conn.connection.host}`);
@@ -27,7 +29,6 @@ const connectDB = async () => {
     });
   } catch (error) {
     console.error('Error connecting to MongoDB:', error.message);
-    process.exit(1);
   }
 };
 
