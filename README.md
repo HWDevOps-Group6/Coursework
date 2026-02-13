@@ -1,33 +1,6 @@
 # Healthcare Management System
 
-Healthcare Management System with microservice architecture: Auth service (port 3001) + Main API (port 3000 or 3002). Optional **API Gateway** (port 3000) provides a single entry point.
-
-## Architecture
-
-**With API Gateway (recommended):**
-
-```
-                    ┌─────────────────────────────────────┐
-                    │         API Gateway (3000)           │
-                    │  /api/auth → Auth  /api → Main API   │
-                    └──────────────┬──────────────┬────────┘
-                                   │              │
-         ┌────────────────────────┘              └────────────────────────┐
-         ▼                                                                 ▼
-┌──────────────────┐     ┌─────────┐                            ┌─────────────────┐
-│  Auth Service    │────▶│ MongoDB │                            │   Main API      │
-│  (port 3001)     │     │ (Users) │                            │  (port 3002)    │
-└──────────────────┘     └─────────┘                            └─────────────────┘
-         │                                                                  │
-         │  Issues JWT                                            Verifies JWT
-         └──────────────────────────┬───────────────────────────────────────┘
-                                    │
-                            ┌───────┴───────┐
-                            │    Client     │  Single origin: http://localhost:3000
-                            └───────────────┘
-```
-
-**Without gateway** (direct access): Auth on 3001, Main API on 3000.
+Healthcare Management System with microservice architecture: Auth service, business logic in main service, API gateway to loosely connect services
 
 ## Project Structure
 
