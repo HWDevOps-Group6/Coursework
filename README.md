@@ -53,48 +53,6 @@ Healthcare Management System with microservice architecture: Auth service (port 
 └── Dockerfile              # Main API
 ```
 
-## Quick Start
-
-### Option 1: Run locally
-
-**With API Gateway** (single entry at http://localhost:3000):
-```bash
-npm install
-cd services/auth-service && cp .env.example .env && npm install && cd ../..
-cp .env.example .env
-npm run dev:all
-```
-- Gateway: 3000, Auth: 3001, Main API: 3002. Use **only** `http://localhost:3000` for all requests (e.g. `POST /api/auth/login`, `GET /api/me`).
-
-**Without gateway** (auth + main API on separate ports):
-```bash
-npm run dev:auth   # Terminal 1 – Auth on 3001
-npm run dev       # Terminal 2 – Main API on 3000
-```
-
-**Or manual:**
-```bash
-# Auth service
-cd services/auth-service && cp .env.example .env && npm install && PORT=3001 npm run dev
-
-# Main API (other terminal)
-cp .env.example .env && npm install && npm run dev
-```
-
-**MongoDB** must be running (local or Atlas). Auth service needs `MONGODB_URI` in `services/auth-service/.env`.
-
-### Option 2: Docker Compose
-
-```bash
-# Create .env with JWT_SECRET (and optional GOOGLE_* vars)
-echo "JWT_SECRET=your-secret" > .env
-docker-compose up
-```
-
-- Auth: <http://localhost:3001>
-- API: <http://localhost:3000>
-- MongoDB: localhost:27017
-
 ## API Gateway (when using `npm run dev:all`)
 
 Single base URL: **http://localhost:3000**
@@ -108,9 +66,31 @@ Single base URL: **http://localhost:3000**
 
 ## Auth Service Endpoints
 
-### Headless (default)
+```mermaid
+flowchart TD
+Client[Client_App] --> Gateway["Gateway :3000"]
 
-With gateway use `http://localhost:3000`; without gateway use `http://localhost:3001`.
+Gateway --> GWHealth["GET /health"]
+Gateway --> GWAuthRegister["POST /api/auth/register"]
+Gateway --> GWAuthLogin["POST /api/auth/login"]
+Gateway --> GWAuthMe["GET /api/auth/me (Bearer token)"]
+Gateway --> GWAuthVerify["POST /api/auth/verify"]
+Gateway --> GWMainMe["GET /api/me (Bearer token)"]
+
+GWAuthRegister --> AuthService["Auth_Service :3001"]
+GWAuthLogin --> AuthService
+GWAuthMe --> AuthService
+GWAuthVerify --> AuthService
+
+GWMainMe --> MainService["Main_API :3002"]
+
+AuthService --> IssueJwt["Issue JWT to client"]
+IssueJwt --> Client
+Client --> SendBearer["Authorization: Bearer token"]
+SendBearer --> Gateway
+```
+
+## Endpoints
 
 | Method | URL | Description |
 |--------|-----|-------------|
@@ -118,15 +98,6 @@ With gateway use `http://localhost:3000`; without gateway use `http://localhost:
 | POST | …/api/auth/login | Login, returns JWT |
 | GET | …/api/auth/me | Current user (Bearer token) |
 | POST | …/api/auth/verify | Validate token |
-
-### Web / Google OAuth (optional)
-
-Only when `GOOGLE_*` env vars are set: `GET …/api/auth/web/google`
-
-## Main API
-
-| Method | URL | Description |
-|--------|-----|-------------|
 | GET | …/health | Health check (gateway: aggregated; main: single service) |
 | GET | …/api/me | Validate token (Bearer) |
 
@@ -149,8 +120,6 @@ Only when `GOOGLE_*` env vars are set: `GET …/api/auth/web/google`
 - `PORT` (default 3001)
 - `MONGODB_URI`
 - `JWT_SECRET` (must match main API)
-- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (optional)
-- When using the gateway, set `GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/web/google/callback` so the callback goes through the gateway.
 
 **Main API** (`.env`):
 - `PORT` (default 3000 standalone; use 3002 when behind gateway)
@@ -161,32 +130,3 @@ Only when `GOOGLE_*` env vars are set: `GET …/api/auth/web/google`
 - `GATEWAY_PORT` or `PORT` (default 3000)
 - `AUTH_SERVICE_URL` (default http://localhost:3001)
 - `MAIN_SERVICE_URL` (default http://localhost:3002)
-
-## Documentation
-
-- `ENV_SETUP.md` – Environment configuration
-- `services/auth-service/README.md` – Auth service details
-- `docs/` – Architecture documentation
-
-
-flowchart TD
-Client[Client_App] --> Gateway["Gateway :3000"]
-
-Gateway --> GWHealth["GET /health"]
-Gateway --> GWAuthRegister["POST /api/auth/register"]
-Gateway --> GWAuthLogin["POST /api/auth/login"]
-Gateway --> GWAuthMe["GET /api/auth/me (Bearer token)"]
-Gateway --> GWAuthVerify["POST /api/auth/verify"]
-Gateway --> GWMainMe["GET /api/me (Bearer token)"]
-
-GWAuthRegister --> AuthService["Auth_Service :3001"]
-GWAuthLogin --> AuthService
-GWAuthMe --> AuthService
-GWAuthVerify --> AuthService
-
-GWMainMe --> MainService["Main_API :3002"]
-
-AuthService --> IssueJwt["Issue JWT to client"]
-IssueJwt --> Client
-Client --> SendBearer["Authorization: Bearer token"]
-SendBearer --> Gateway
