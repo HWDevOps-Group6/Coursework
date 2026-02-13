@@ -79,8 +79,6 @@ Client --> SendBearer["Authorization: Bearer token"]
 SendBearer --> Gateway
 ```
 
-## Endpoints
-
 | Method | URL | Description |
 |--------|-----|-------------|
 | POST | …/api/auth/register | Register, returns JWT |
