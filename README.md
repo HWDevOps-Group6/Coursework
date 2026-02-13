@@ -53,17 +53,6 @@ Healthcare Management System with microservice architecture: Auth service (port 
 └── Dockerfile              # Main API
 ```
 
-## API Gateway (when using `npm run dev:all`)
-
-Single base URL: **http://localhost:3000**
-
-| Path | Proxied to | Description |
-|------|------------|-------------|
-| `GET /health` | Gateway | Aggregated health (auth + main status) |
-| `/api/auth/*` | Auth service (3001) | Register, login, me, verify |
-| `GET /api/auth/web/*` | Auth service (3001) | Google OAuth |
-| `GET /api/*` | Main API (3002) | e.g. `/api/me`, future patients/admissions |
-
 ## Auth Service Endpoints
 
 ```mermaid
