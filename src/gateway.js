@@ -10,6 +10,18 @@ const GATEWAY_PORT = process.env.GATEWAY_PORT || process.env.PORT || 3000;
 
 const app = express();
 
+function forwardParsedJsonBody(proxyReq, req) {
+  if (!req.body || !['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return;
+  if (typeof req.body !== 'object') return;
+
+  const bodyData = JSON.stringify(req.body);
+  if (!bodyData || bodyData === '{}') return;
+
+  proxyReq.setHeader('Content-Type', 'application/json');
+  proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+  proxyReq.write(bodyData);
+}
+
 app.use(helmet());
 app.use(cors({
   origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],
@@ -102,6 +114,9 @@ app.use(
     // Express mount strips /api; add it back for main API routes.
     pathRewrite: (path) => (path.startsWith('/api') ? path : `/api${path}`),
     on: {
+      proxyReq(proxyReq, req) {
+        forwardParsedJsonBody(proxyReq, req);
+      },
       error(err, req, res) {
         console.error('[Gateway] Main API proxy error:', err.message);
         res.status(502).json({

@@ -60,6 +60,7 @@ SendBearer --> Gateway
 | POST | …/api/auth/verify | Validate token |
 | GET | …/health | Health check (gateway: aggregated; main: single service) |
 | GET | …/api/me | Validate token (Bearer) |
+| POST | …/api/patients/register | Register patient at service point (clerk role only) |
 
 ## Authentication Flow
 
@@ -67,6 +68,9 @@ SendBearer --> Gateway
 2. **Copy JWT** from response `data.token`.
 3. **Call protected routes** with header: `Authorization: Bearer <token>`.
 4. Main API verifies JWT using shared `JWT_SECRET` (no call to Auth service).
+5. `POST …/api/patients/register` requires role `clerk` and accepts only:
+   - Basic details: `firstName`, `lastName`, `dateOfBirth`, `gender`, `phoneNumber`, `address`, `servicePoint`
+   - Clinical intake notes: `knownDiseases` (string array), `complaints` (string array)
 
 ## Microservice Design Notes
 
