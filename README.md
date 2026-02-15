@@ -61,6 +61,8 @@ SendBearer --> Gateway
 | GET | …/health | Health check (gateway: aggregated; main: single service) |
 | GET | …/api/me | Validate token (Bearer) |
 | POST | …/api/patients/register | Register patient at service point (clerk role only) |
+| GET | …/api/patients/records | Retrieve patient records (doctor, nurse only) |
+| GET | …/api/patients/records/:id | Retrieve a single patient record (doctor, nurse only) |
 
 ## Authentication Flow
 
@@ -69,8 +71,12 @@ SendBearer --> Gateway
 3. **Call protected routes** with header: `Authorization: Bearer <token>`.
 4. Main API verifies JWT using shared `JWT_SECRET` (no call to Auth service).
 5. `POST …/api/patients/register` requires role `clerk` and accepts only:
-   - Basic details: `firstName`, `lastName`, `dateOfBirth`, `gender`, `phoneNumber`, `address`, `servicePoint`
+   - Identity and basic details: `emiratesId`, `firstName`, `lastName`, `dateOfBirth`, `gender`, `phoneNumber`, `address`, `servicePoint`
    - Clinical intake notes: `knownDiseases` (string array), `complaints` (string array)
+6. `GET …/api/patients/records` and `GET …/api/patients/records/:id` require role `doctor` or `nurse`.
+7. Patient registrations are persisted by the main API in the MongoDB `patients` collection (separate from auth `users`).
+8. Duplicate prevention uses a SHA-256 hash of normalized `emiratesId`; only the hash is stored and it is unique per patient.
+9. Patient `id` values are assigned sequentially by the main API (`"1"`, `"2"`, `"3"`, ...).
 
 ## Microservice Design Notes
 
@@ -87,7 +93,9 @@ SendBearer --> Gateway
 
 **Main API** (`.env`):
 - `PORT` (default 3000 standalone; use 3002 when behind gateway)
+- `MONGODB_URI` (MongoDB connection string for patient/domain data)
 - `JWT_SECRET` (must match auth-service)
+- `PATIENT_ID_HASH_SALT` (optional salt for hashing `emiratesId`)
 - `ALLOWED_ORIGINS`
 
 **Gateway** (`.env`, optional):
