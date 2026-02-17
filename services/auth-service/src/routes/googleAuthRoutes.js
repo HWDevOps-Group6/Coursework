@@ -9,6 +9,7 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
+const { sendError } = require('../../../../shared/http/responses');
 
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
@@ -24,13 +25,7 @@ router.get(
 );
 
 router.get('/google/failure', (req, res) => {
-  res.status(401).json({
-    success: false,
-    error: {
-      code: 'GOOGLE_AUTH_FAILED',
-      message: 'Google sign-in failed. This flow requires a browser.'
-    }
-  });
+  return sendError(res, 401, 'GOOGLE_AUTH_FAILED', 'Google sign-in failed. This flow requires a browser.');
 });
 
 module.exports = router;

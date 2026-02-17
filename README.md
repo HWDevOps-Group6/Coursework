@@ -71,8 +71,9 @@ SendBearer --> Gateway
 3. **Call protected routes** with header: `Authorization: Bearer <token>`.
 4. Main API verifies JWT using shared `JWT_SECRET` (no call to Auth service).
 5. `POST …/api/patients/register` requires role `clerk` and accepts only:
-   - Identity and basic details: `emiratesId`, `firstName`, `lastName`, `dateOfBirth`, `gender`, `phoneNumber`, `address`, `servicePoint`
+   - Identity and basic details: `emiratesId`, `firstName`, `lastName`, `dateOfBirth`, `gender`, `phoneNumber`, `address`, `entryRoute`, `servicePoint`
    - Clinical intake notes: `knownDiseases` (string array), `complaints` (string array)
+   - `entryRoute` is required and must be one of: `OPD`, `A&E`
 6. `GET …/api/patients/records` and `GET …/api/patients/records/:id` require role `doctor` or `nurse`.
 7. Patient registrations are persisted by the main API in the MongoDB `patients` collection (separate from auth `users`).
 8. Duplicate prevention uses a SHA-256 hash of normalized `emiratesId`; only the hash is stored and it is unique per patient.

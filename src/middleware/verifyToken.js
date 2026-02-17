@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { sendError } = require('../../shared/http/responses');
 
 /**
  * Lightweight JWT verification middleware for other microservices
@@ -11,10 +12,7 @@ const verifyToken = (req, res, next) => {
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
   if (!token) {
-    return res.status(401).json({
-      success: false,
-      error: { code: 'AUTHENTICATION_REQUIRED', message: 'Authentication token is required' }
-    });
+    return sendError(res, 401, 'AUTHENTICATION_REQUIRED', 'Authentication token is required');
   }
 
   try {
@@ -28,10 +26,7 @@ const verifyToken = (req, res, next) => {
     next();
   } catch (error) {
     const message = error.name === 'TokenExpiredError' ? 'Token has expired' : 'Invalid token';
-    return res.status(401).json({
-      success: false,
-      error: { code: 'INVALID_TOKEN', message }
-    });
+    return sendError(res, 401, 'INVALID_TOKEN', message);
   }
 };
 

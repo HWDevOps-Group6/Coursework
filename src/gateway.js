@@ -3,6 +3,8 @@ const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const cors = require('cors');
 const helmet = require('helmet');
+const { sendError } = require('../shared/http/responses');
+const { buildCorsOptions } = require('../shared/http/cors');
 
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 const MAIN_SERVICE_URL = process.env.MAIN_SERVICE_URL || 'http://localhost:3002';
@@ -23,12 +25,7 @@ function forwardParsedJsonBody(proxyReq, req) {
 }
 
 app.use(helmet());
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+app.use(cors(buildCorsOptions()));
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/auth')) return next();
   express.json()(req, res, next);
@@ -97,10 +94,7 @@ app.use(
       },
       error(err, req, res) {
         console.error('[Gateway] Auth proxy error:', err.message);
-        res.status(502).json({
-          success: false,
-          error: { code: 'BAD_GATEWAY', message: 'Auth service unavailable' },
-        });
+        return sendError(res, 502, 'BAD_GATEWAY', 'Auth service unavailable');
       },
     },
   })
@@ -119,20 +113,14 @@ app.use(
       },
       error(err, req, res) {
         console.error('[Gateway] Main API proxy error:', err.message);
-        res.status(502).json({
-          success: false,
-          error: { code: 'BAD_GATEWAY', message: 'Main API unavailable' },
-        });
+        return sendError(res, 502, 'BAD_GATEWAY', 'Main API unavailable');
       },
     },
   })
 );
 
 app.use('/', (req, res) => {
-  res.status(404).json({
-    success: false,
-    error: { code: 'NOT_FOUND', message: 'Route not found' },
-  });
+  return sendError(res, 404, 'NOT_FOUND', 'Route not found');
 });
 
 app.listen(GATEWAY_PORT, () => {

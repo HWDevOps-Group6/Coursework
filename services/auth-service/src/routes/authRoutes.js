@@ -4,14 +4,15 @@ const authService = require('../services/authService');
 const { authenticate } = require('../middleware/auth');
 const { validate, schemas } = require('../middleware/validation');
 const { verifyToken, extractTokenFromHeader } = require('../utils/jwt');
+const { sendError, sendSuccess } = require('../../../../shared/http/responses');
 
 // Headless auth: register, login, me, verify (no browser required)
 router.post('/register', validate(schemas.register), async (req, res) => {
   try {
     const result = await authService.register(req.body);
-    res.status(201).json({ success: true, data: result, message: 'User registered successfully' });
+    return sendSuccess(res, 201, result, 'User registered successfully');
   } catch (error) {
-    res.status(400).json({ success: false, error: { code: 'REGISTRATION_ERROR', message: error.message } });
+    return sendError(res, 400, 'REGISTRATION_ERROR', error.message);
   }
 });
 
@@ -19,9 +20,9 @@ router.post('/login', validate(schemas.login), async (req, res) => {
   try {
     const { email, password } = req.body;
     const result = await authService.login(email, password);
-    res.status(200).json({ success: true, data: result, message: 'Login successful' });
+    return sendSuccess(res, 200, result, 'Login successful');
   } catch (error) {
-    res.status(401).json({ success: false, error: { code: 'LOGIN_ERROR', message: error.message } });
+    return sendError(res, 401, 'LOGIN_ERROR', error.message);
   }
 });
 
@@ -29,9 +30,9 @@ router.post('/login', validate(schemas.login), async (req, res) => {
 router.get('/me', authenticate, async (req, res) => {
   try {
     const user = await authService.getUserById(req.user.userId);
-    res.status(200).json({ success: true, data: { user }, message: 'User retrieved successfully' });
+    return sendSuccess(res, 200, { user }, 'User retrieved successfully');
   } catch (error) {
-    res.status(404).json({ success: false, error: { code: 'USER_NOT_FOUND', message: error.message } });
+    return sendError(res, 404, 'USER_NOT_FOUND', error.message);
   }
 });
 
@@ -42,28 +43,22 @@ router.get('/me', authenticate, async (req, res) => {
 router.post('/verify', (req, res) => {
   const token = extractTokenFromHeader(req.headers.authorization) || req.body?.token;
   if (!token) {
-    return res.status(400).json({
-      success: false,
-      error: { code: 'TOKEN_REQUIRED', message: 'Token required in Authorization header or body' }
-    });
+    return sendError(res, 400, 'TOKEN_REQUIRED', 'Token required in Authorization header or body');
   }
   try {
     const decoded = verifyToken(token);
-    res.status(200).json({
-      success: true,
-      data: {
-        valid: true,
-        userId: decoded.userId,
-        email: decoded.email,
-        role: decoded.role,
-        department: decoded.department
-      }
+    return sendSuccess(res, 200, {
+      valid: true,
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role,
+      department: decoded.department
     });
   } catch (error) {
-    res.status(401).json({
+    return res.status(401).json({
       success: false,
       data: { valid: false },
-      error: { code: 'INVALID_TOKEN', message: error.message }
+      error: { code: 'INVALID_TOKEN', message: error.message },
     });
   }
 });

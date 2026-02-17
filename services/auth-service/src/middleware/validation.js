@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const { sendError } = require('../../../../shared/http/responses');
 
 const validate = (schema, property = 'body') => {
   return (req, res, next) => {
@@ -8,10 +9,7 @@ const validate = (schema, property = 'body') => {
     });
     if (error) {
       const errors = error.details.map(d => ({ field: d.path.join('.'), message: d.message }));
-      return res.status(400).json({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: 'Invalid input data', details: errors }
-      });
+      return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid input data', errors);
     }
     req[property] = value;
     next();

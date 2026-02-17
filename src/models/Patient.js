@@ -23,6 +23,7 @@ const patientSchema = new mongoose.Schema(
     address: { type: String, trim: true },
     knownDiseases: { type: [String], default: [] },
     complaints: { type: [String], default: [] },
+    entryRoute: { type: String, required: true, enum: ['OPD', 'A&E'], trim: true },
     servicePoint: { type: String, required: true, trim: true },
     registeredBy: { type: String, required: true, trim: true },
     registeredByRole: { type: String, required: true, trim: true },
@@ -31,6 +32,7 @@ const patientSchema = new mongoose.Schema(
 );
 
 patientSchema.index({ servicePoint: 1, createdAt: -1 });
+patientSchema.index({ entryRoute: 1, createdAt: -1 });
 patientSchema.index(
   { emiratesIdHash: 1 },
   {
