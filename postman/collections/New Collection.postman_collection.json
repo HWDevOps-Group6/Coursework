@@ -354,7 +354,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"firstName\": \"Sick\",\n  \"lastName\": \"boi\",\n  \"emiratesId\": \"123456789012345\",\n  \"dateOfBirth\": \"1990-04-12\",\n  \"gender\": \"male\",\n  \"phoneNumber\": \"1234567890\",\n  \"address\": \"12 Example Street\",\n  \"knownDiseases\": [\"asthma\"],\n  \"complaints\": [\"headache\"],\n  \"servicePoint\": \"Outpatient Department\"\n}",
+          "raw": "{\n  \"firstName\": \"Sick\",\n  \"lastName\": \"boi\",\n  \"emiratesId\": \"123456789012345\",\n  \"dateOfBirth\": \"1990-04-12\",\n  \"gender\": \"male\",\n  \"phoneNumber\": \"1234567890\",\n  \"address\": \"12 Example Street\",\n  \"knownDiseases\": [\"asthma\"],\n  \"complaints\": [\"headache\"],\n  \"entryRoute\": \"OPD\",\n  \"servicePoint\": \"Outpatient Department\"\n}",
           "options": {
             "raw": {
               "language": "json"

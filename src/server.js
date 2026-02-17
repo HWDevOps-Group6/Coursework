@@ -69,10 +69,17 @@ const allowedPatientRegistrationFields = new Set([
   'address',
   'knownDiseases',
   'complaints',
+  'entryRoute',
   'servicePoint'
 ]);
 
 const normalizeEmiratesId = (value) => String(value || '').replace(/\D/g, '');
+const normalizeEntryRoute = (value) => {
+  const normalized = String(value || '').trim().toUpperCase().replace(/\s+/g, '');
+  if (normalized === 'OPD') return 'OPD';
+  if (normalized === 'A&E' || normalized === 'AE') return 'A&E';
+  return '';
+};
 const hashPatientIdentifier = (normalizedEmiratesId) =>
   createHash('sha256')
     .update(`${process.env.PATIENT_ID_HASH_SALT || ''}:${normalizedEmiratesId}`)
@@ -133,15 +140,16 @@ app.post('/api/patients/register', verifyToken, authorizeRole('clerk'), async (r
       address,
       knownDiseases = [],
       complaints = [],
+      entryRoute,
       servicePoint
     } = req.body || {};
 
-    if (!emiratesId || !firstName || !lastName || !dateOfBirth || !gender || !servicePoint) {
+    if (!emiratesId || !firstName || !lastName || !dateOfBirth || !gender || !entryRoute || !servicePoint) {
       return sendError(
         res,
         400,
         'VALIDATION_ERROR',
-        'emiratesId, firstName, lastName, dateOfBirth, gender, and servicePoint are required'
+        'emiratesId, firstName, lastName, dateOfBirth, gender, entryRoute, and servicePoint are required'
       );
     }
 
@@ -162,6 +170,11 @@ app.post('/api/patients/register', verifyToken, authorizeRole('clerk'), async (r
       );
     }
 
+    const normalizedEntryRoute = normalizeEntryRoute(entryRoute);
+    if (!normalizedEntryRoute) {
+      return sendError(res, 400, 'VALIDATION_ERROR', 'entryRoute must be either OPD or A&E');
+    }
+
     const emiratesIdHash = hashPatientIdentifier(normalizedEmiratesId);
     const existingPatient = await Patient.findOne({ emiratesIdHash }).lean();
     if (existingPatient) {
@@ -179,6 +192,7 @@ app.post('/api/patients/register', verifyToken, authorizeRole('clerk'), async (r
       address: typeof address === 'string' ? address.trim() : undefined,
       knownDiseases: knownDiseases.map((item) => item.trim()),
       complaints: complaints.map((item) => item.trim()),
+      entryRoute: normalizedEntryRoute,
       servicePoint: servicePoint.trim(),
       registeredBy: req.user.userId,
       registeredByRole: req.user.role
