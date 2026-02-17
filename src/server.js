@@ -10,17 +10,15 @@ const { authorizeRole } = require('./middleware/authorizeRole');
 const { connectDatabase } = require('./config/database');
 const Patient = require('./models/Patient');
 const Counter = require('./models/Counter');
+const { sendError, sendSuccess } = require('../shared/http/responses');
+const { buildCorsOptions } = require('../shared/http/cors');
+const { notFoundHandler, globalErrorHandler } = require('../shared/http/handlers');
 
 // Main API (patients, admissions, referrals, etc.) - auth handled by auth-service
 const app = express();
 
 app.use(helmet());
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(cors(buildCorsOptions()));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -58,11 +56,7 @@ app.get('/health', (req, res) => {
  * GET /api/me validates token locally (no DB) - or use auth-service for full user data
  */
 app.get('/api/me', verifyToken, (req, res) => {
-  res.status(200).json({
-    success: true,
-    data: { user: req.user },
-    message: 'Token valid! Successfully fetched profile'
-  });
+  return sendSuccess(res, 200, { user: req.user }, 'Token valid! Successfully fetched profile');
 });
 
 const allowedPatientRegistrationFields = new Set([
@@ -126,13 +120,7 @@ app.post('/api/patients/register', verifyToken, authorizeRole('clerk'), async (r
     const providedFields = Object.keys(req.body || {});
     const unknownFields = providedFields.filter((field) => !allowedPatientRegistrationFields.has(field));
     if (unknownFields.length > 0) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'INVALID_FIELDS',
-          message: `Unsupported fields: ${unknownFields.join(', ')}`
-        }
-      });
+      return sendError(res, 400, 'INVALID_FIELDS', `Unsupported fields: ${unknownFields.join(', ')}`);
     }
 
     const {
@@ -149,49 +137,35 @@ app.post('/api/patients/register', verifyToken, authorizeRole('clerk'), async (r
     } = req.body || {};
 
     if (!emiratesId || !firstName || !lastName || !dateOfBirth || !gender || !servicePoint) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'emiratesId, firstName, lastName, dateOfBirth, gender, and servicePoint are required'
-        }
-      });
+      return sendError(
+        res,
+        400,
+        'VALIDATION_ERROR',
+        'emiratesId, firstName, lastName, dateOfBirth, gender, and servicePoint are required'
+      );
     }
 
     const normalizedEmiratesId = normalizeEmiratesId(emiratesId);
     if (!/^\d{15}$/.test(normalizedEmiratesId)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'emiratesId must contain exactly 15 digits'
-        }
-      });
+      return sendError(res, 400, 'VALIDATION_ERROR', 'emiratesId must contain exactly 15 digits');
     }
 
     const isStringArray = (value) =>
       Array.isArray(value) && value.every((item) => typeof item === 'string' && item.trim().length > 0);
 
     if (!isStringArray(knownDiseases) || !isStringArray(complaints)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'knownDiseases and complaints must be arrays of non-empty strings'
-        }
-      });
+      return sendError(
+        res,
+        400,
+        'VALIDATION_ERROR',
+        'knownDiseases and complaints must be arrays of non-empty strings'
+      );
     }
 
     const emiratesIdHash = hashPatientIdentifier(normalizedEmiratesId);
     const existingPatient = await Patient.findOne({ emiratesIdHash }).lean();
     if (existingPatient) {
-      return res.status(409).json({
-        success: false,
-        error: {
-          code: 'DUPLICATE_PATIENT',
-          message: 'A patient with this Emirates ID already exists'
-        }
-      });
+      return sendError(res, 409, 'DUPLICATE_PATIENT', 'A patient with this Emirates ID already exists');
     }
 
     const patientRecord = {
@@ -212,20 +186,15 @@ app.post('/api/patients/register', verifyToken, authorizeRole('clerk'), async (r
 
     const savedPatient = await Patient.create(patientRecord);
 
-    return res.status(201).json({
-      success: true,
-      data: { patient: sanitizePatient(savedPatient) },
-      message: 'Patient registered successfully'
-    });
+    return sendSuccess(
+      res,
+      201,
+      { patient: sanitizePatient(savedPatient) },
+      'Patient registered successfully'
+    );
   } catch (error) {
     if (error?.code === 11000 && error?.keyPattern?.emiratesIdHash) {
-      return res.status(409).json({
-        success: false,
-        error: {
-          code: 'DUPLICATE_PATIENT',
-          message: 'A patient with this Emirates ID already exists'
-        }
-      });
+      return sendError(res, 409, 'DUPLICATE_PATIENT', 'A patient with this Emirates ID already exists');
     }
     return next(error);
   }
@@ -235,11 +204,7 @@ app.get('/api/patients/records', verifyToken, authorizeRole('doctor', 'nurse'), 
   try {
   const patients = await Patient.find({}).sort({ createdAt: -1 }).lean();
 
-  return res.status(200).json({
-    success: true,
-    data: { patients },
-    message: 'Patient records retrieved successfully'
-  });
+  return sendSuccess(res, 200, { patients }, 'Patient records retrieved successfully');
   } catch (error) {
     return next(error);
   }
@@ -250,42 +215,17 @@ app.get('/api/patients/records/:id', verifyToken, authorizeRole('doctor', 'nurse
   const patientRecord = await Patient.findOne({ id: req.params.id }).lean();
 
   if (!patientRecord) {
-    return res.status(404).json({
-      success: false,
-      error: {
-        code: 'PATIENT_NOT_FOUND',
-        message: 'Patient record not found'
-      }
-    });
+    return sendError(res, 404, 'PATIENT_NOT_FOUND', 'Patient record not found');
   }
 
-  return res.status(200).json({
-    success: true,
-    data: { patient: patientRecord },
-    message: 'Patient record retrieved successfully'
-  });
+  return sendSuccess(res, 200, { patient: patientRecord }, 'Patient record retrieved successfully');
   } catch (error) {
     return next(error);
   }
 });
 
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: { code: 'NOT_FOUND', message: 'Route not found' }
-  });
-});
-
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
-    success: false,
-    error: {
-      code: 'INTERNAL_SERVER_ERROR',
-      message: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
-    }
-  });
-});
+app.use(notFoundHandler);
+app.use(globalErrorHandler);
 
 const PORT = process.env.PORT || 3000;
 connectDatabase()

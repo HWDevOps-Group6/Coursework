@@ -1,5 +1,6 @@
 const { verifyToken, extractTokenFromHeader } = require('../utils/jwt');
 const User = require('../models/User');
+const { sendError } = require('../../../../shared/http/responses');
 
 /**
  * Authentication middleware - validates JWT and attaches user to request
@@ -9,34 +10,22 @@ const authenticate = async (req, res, next) => {
   try {
     const token = extractTokenFromHeader(req.headers.authorization);
     if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: { code: 'AUTHENTICATION_REQUIRED', message: 'Authentication token is required' }
-      });
+      return sendError(res, 401, 'AUTHENTICATION_REQUIRED', 'Authentication token is required');
     }
 
     let decoded;
     try {
       decoded = verifyToken(token);
     } catch (error) {
-      return res.status(401).json({
-        success: false,
-        error: { code: 'INVALID_TOKEN', message: error.message || 'Invalid or expired token' }
-      });
+      return sendError(res, 401, 'INVALID_TOKEN', error.message || 'Invalid or expired token');
     }
 
     const user = await User.findById(decoded.userId);
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        error: { code: 'USER_NOT_FOUND', message: 'User associated with token not found' }
-      });
+      return sendError(res, 401, 'USER_NOT_FOUND', 'User associated with token not found');
     }
     if (!user.isActive) {
-      return res.status(401).json({
-        success: false,
-        error: { code: 'ACCOUNT_DEACTIVATED', message: 'User account is deactivated' }
-      });
+      return sendError(res, 401, 'ACCOUNT_DEACTIVATED', 'User account is deactivated');
     }
 
     req.user = {
@@ -49,10 +38,7 @@ const authenticate = async (req, res, next) => {
     };
     next();
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: { code: 'AUTHENTICATION_ERROR', message: 'Authentication failed', details: error.message }
-    });
+    return sendError(res, 500, 'AUTHENTICATION_ERROR', 'Authentication failed', error.message);
   }
 };
 
