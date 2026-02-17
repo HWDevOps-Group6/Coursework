@@ -1,0 +1,467 @@
+{
+  "info": {
+    "_postman_id": "f9b641fd-1ef0-4597-a7a8-453dda11e5ca",
+    "name": "Testing Coursework",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Check Main Gateway Health",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "58ad9cdb-56a4-46bc-a329-40d50a329723",
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "2d17e758-8269-40ff-8e84-7398a22d7273",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{main_url}}/health",
+          "host": [
+            "{{main_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Check Auth Service Health",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "e01af24c-dad0-4271-b12e-a946d81dea38",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{auth_url}}/health",
+          "host": [
+            "{{auth_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Check Gateway Service health",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "7de8982a-32a6-4b57-8294-592fbf632c42",
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "bf2b72d1-dc11-4b56-b091-610bb97d233d",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gateway_url}}/health",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Logging in as a Doctor",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "bc8e46c3-e2cf-4576-b476-747b2cc06a5e",
+            "exec": [
+              "pm.test(\"Successful POST request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "f99b81b9-c6ee-4938-9950-05366f88748f",
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "501d84cc-7f39-4439-a4f7-de6b174d73be",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"r_goswami@hospital.com\",\n  \"password\": \"SecurePass123!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/auth/login",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Logging in as a Clerk",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "bc8e46c3-e2cf-4576-b476-747b2cc06a5e",
+            "exec": [
+              "pm.test(\"Successful POST request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "757fd3f7-5db6-4970-a5da-0b2915c2286e",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"rebStorm@hospital.com\",\n  \"password\": \"SecurePass123!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/auth/login",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Retrieving Patient Record",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "bc8e46c3-e2cf-4576-b476-747b2cc06a5e",
+            "exec": [
+              "pm.test(\"Successful POST request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "c9345014-23ae-4a00-91ed-72a3a0f22341",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{vault:doctor_auth}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "id",
+            "value": "1",
+            "type": "text",
+            "uuid": "56ba8010-e5ad-4db0-810f-42f6c067f32e"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/patients/records",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "patients",
+            "records"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Registering patient",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "bc8e46c3-e2cf-4576-b476-747b2cc06a5e",
+            "exec": [
+              "pm.test(\"Successful POST request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "9a03c967-77a7-44fd-8d31-8e21782e4d0e",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{vault:clerk_auth}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Sick\",\n  \"lastName\": \"boi\",\n  \"emiratesId\": \"123456789012345\",\n  \"dateOfBirth\": \"1990-04-12\",\n  \"gender\": \"male\",\n  \"phoneNumber\": \"1234567890\",\n  \"address\": \"12 Example Street\",\n  \"knownDiseases\": [\"asthma\"],\n  \"complaints\": [\"headache\"],\n  \"servicePoint\": \"Outpatient Department\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/patients/register",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "patients",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Checking Profile",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "9995b4e3-c9d3-4867-9e13-404be79a5dcc",
+            "exec": [
+              "pm.test(\"Successful PUT request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "50f270c5-8a0b-401b-8d1f-f62feb2e82de",
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "baf67ed1-f2e7-4e06-93dc-f2f8690e74ee",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{vault:doctor_auth}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n\t\"name\": \"Add your name in the body\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/auth/me",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "id": "cad77108-606f-4fb3-a489-1d038675cf75",
+      "key": "gateway_url",
+      "value": ""
+    },
+    {
+      "id": "11244968-e7da-4544-a770-804d5199a88c",
+      "key": "auth_url",
+      "value": ""
+    },
+    {
+      "id": "fb4d12b0-0e64-4a53-9aef-6451c80c3069",
+      "key": "main_url",
+      "value": ""
+    }
+  ]
+}
