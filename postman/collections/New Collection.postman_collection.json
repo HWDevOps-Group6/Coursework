@@ -251,131 +251,6 @@
       "response": []
     },
     {
-      "name": "Retrieving Patient Record",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "id": "bc8e46c3-e2cf-4576-b476-747b2cc06a5e",
-            "exec": [
-              "pm.test(\"Successful POST request\", function () {",
-              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
-              "});",
-              ""
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "id": "c9345014-23ae-4a00-91ed-72a3a0f22341",
-      "protocolProfileBehavior": {
-        "disableBodyPruning": true
-      },
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{vault:doctor_auth}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "GET",
-        "header": [
-          {
-            "key": "id",
-            "value": "1",
-            "type": "text",
-            "uuid": "56ba8010-e5ad-4db0-810f-42f6c067f32e"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{gateway_url}}/api/patients/records",
-          "host": [
-            "{{gateway_url}}"
-          ],
-          "path": [
-            "api",
-            "patients",
-            "records"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Registering patient",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "id": "bc8e46c3-e2cf-4576-b476-747b2cc06a5e",
-            "exec": [
-              "pm.test(\"Successful POST request\", function () {",
-              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
-              "});",
-              ""
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "id": "9a03c967-77a7-44fd-8d31-8e21782e4d0e",
-      "protocolProfileBehavior": {
-        "disableBodyPruning": true
-      },
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{vault:clerk_auth}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"firstName\": \"Sick\",\n  \"lastName\": \"boi\",\n  \"emiratesId\": \"123456789012345\",\n  \"dateOfBirth\": \"1990-04-12\",\n  \"gender\": \"male\",\n  \"phoneNumber\": \"1234567890\",\n  \"address\": \"12 Example Street\",\n  \"knownDiseases\": [\"asthma\"],\n  \"complaints\": [\"headache\"],\n  \"entryRoute\": \"OPD\",\n  \"servicePoint\": \"Outpatient Department\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{gateway_url}}/api/patients/register",
-          "host": [
-            "{{gateway_url}}"
-          ],
-          "path": [
-            "api",
-            "patients",
-            "register"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
       "name": "Checking Profile",
       "event": [
         {
@@ -441,6 +316,186 @@
             "api",
             "auth",
             "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Registering patient",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "bc8e46c3-e2cf-4576-b476-747b2cc06a5e",
+            "exec": [
+              "pm.test(\"Successful POST request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "9a03c967-77a7-44fd-8d31-8e21782e4d0e",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{vault:clerk_auth}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Sick\",\n  \"lastName\": \"boi\",\n  \"emiratesId\": \"123456789012345\",\n  \"dateOfBirth\": \"1990-04-12\",\n  \"gender\": \"male\",\n  \"phoneNumber\": \"1234567890\",\n  \"address\": \"12 Example Street\",\n  \"knownDiseases\": [\"asthma\"],\n  \"complaints\": [\"headache\"],\n  \"entryRoute\": \"OPD\",\n  \"servicePoint\": \"Outpatient Department\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/patients/register",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "patients",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Append Patient Visit History",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "43b9b255-a5c0-4f43-a306-2dca5df76f8a",
+            "exec": [
+              "pm.test(\"Successful PATCH request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "8a67cb97-4ea4-42fd-947e-ad011f6d95db",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{vault:doctor_auth}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"servicePoint\": \"A&E\",\n  \"entryRoute\": \"A&E\",\n  \"diseases\": [\"asthma\", \"hypertension\"],\n  \"referralDetails\": \"Refer to cardiology for further evaluation\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/patients/records/1/visits",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "patients",
+            "records",
+            "1",
+            "visits"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Retrieve Patient Record By ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "bc8e46c3-e2cf-4576-b476-747b2cc06a5e",
+            "exec": [
+              "pm.test(\"Successful POST request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "c9345014-23ae-4a00-91ed-72a3a0f22341",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{vault:doctor_auth}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/patients/records/1",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "patients",
+            "records",
+            "1"
           ]
         }
       },

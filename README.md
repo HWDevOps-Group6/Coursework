@@ -52,7 +52,9 @@ GWAuthVerify --> AuthService
 
 GWMainMe --> MainService["Main_API :3002"]
 Gateway --> GWPatientReg["POST /api/patients/register"]
+Gateway --> GWPatientRecords["GET/PATCH /api/patients/records/*"]
 GWPatientReg --> PatientRegService["Patient_Registration_Service :3003"]
+GWPatientRecords --> PatientRegService["Patient_Registration_Service :3003"]
 
 AuthService --> IssueJwt["Issue JWT to client"]
 IssueJwt --> Client
@@ -69,8 +71,9 @@ SendBearer --> Gateway
 | GET | …/health | Health check (gateway: aggregated; main: single service) |
 | GET | …/api/me | Validate token (Bearer) |
 | POST | …/api/patients/register | Register patient at service point (clerk role only) |
-| GET | …/api/patients/records | Retrieve patient records (doctor, nurse only) |
-| GET | …/api/patients/records/:id | Retrieve a single patient record (doctor, nurse only) |
+| GET | …/api/patients/records | Retrieve patient records (doctor, nurse, paramedic) |
+| GET | …/api/patients/records/:id | Retrieve a single patient record (doctor, nurse, paramedic) |
+| PATCH | …/api/patients/records/:id/visits | Append visit history with diseases/referral details (doctor, nurse, paramedic) |
 
 ## Authentication Flow
 
@@ -82,17 +85,18 @@ SendBearer --> Gateway
    - Identity and basic details: `emiratesId`, `firstName`, `lastName`, `dateOfBirth`, `gender`, `phoneNumber`, `address`, `entryRoute`, `servicePoint`
    - Clinical intake notes: `knownDiseases` (string array), `complaints` (string array)
    - `entryRoute` is required and must be one of: `OPD`, `A&E`
-6. `GET …/api/patients/records` and `GET …/api/patients/records/:id` require role `doctor` or `nurse`.
+6. `GET …/api/patients/records`, `GET …/api/patients/records/:id`, and `PATCH …/api/patients/records/:id/visits` require role `doctor`, `nurse`, or `paramedic`.
 7. Patient registrations are persisted by the patient registration service in the MongoDB `patients` collection (separate from auth `users`).
 8. Duplicate prevention uses a SHA-256 hash of normalized `emiratesId`; only the hash is stored and it is unique per patient.
-9. Patient `id` values are assigned sequentially by the main API (`"1"`, `"2"`, `"3"`, ...).
+9. Patient `id` values are assigned sequentially by the patient registration service (`"1"`, `"2"`, `"3"`, ...).
+10. Visit updates are append-only via `visitHistory` entries and preserve prior entries for auditability.
 
 ## Microservice Design Notes
 
 - Gateway is only a routing edge and does not contain business logic.
 - Auth service owns identity concerns (credentials, JWT issuing, token verification endpoint).
-- Patient registration service owns `POST /api/patients/register`.
-- Main API owns records retrieval endpoints and validates JWT locally to avoid runtime coupling to auth-service availability.
+- Patient registration service owns `POST /api/patients/register` and all `/api/patients/records*` endpoints.
+- Main API remains focused on non-registration domain endpoints and validates JWT locally to avoid runtime coupling to auth-service availability.
 
 ## Environment Variables
 

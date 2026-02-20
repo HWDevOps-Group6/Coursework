@@ -104,16 +104,18 @@ app.use(
 );
 
 app.use(
-  '/api/patients/register',
+  '/api/patients',
   createProxyMiddleware({
     target: PATIENT_REG_SERVICE_URL,
     changeOrigin: true,
+    // Express mount strips /api/patients; add it back for patient-registration routes.
+    pathRewrite: (path) => (path.startsWith('/api/patients') ? path : `/api/patients${path}`),
     on: {
       proxyReq(proxyReq, req) {
         forwardParsedJsonBody(proxyReq, req);
       },
       error(err, req, res) {
-        console.error('[Gateway] Patient registration proxy error:', err.message);
+        console.error('[Gateway] Patient proxy error:', err.message);
         return sendError(res, 502, 'BAD_GATEWAY', 'Patient registration service unavailable');
       },
     },

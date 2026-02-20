@@ -1,5 +1,17 @@
 const mongoose = require('mongoose');
 
+const visitHistorySchema = new mongoose.Schema(
+  {
+    servicePoint: { type: String, required: true, trim: true },
+    entryRoute: { type: String, trim: true },
+    diseases: { type: [String], default: [] },
+    referralDetails: { type: String, trim: true },
+    updatedBy: { type: String, required: true, trim: true },
+    updatedByRole: { type: String, required: true, trim: true },
+  },
+  { _id: false, timestamps: { createdAt: true, updatedAt: false } }
+);
+
 const patientSchema = new mongoose.Schema(
   {
     id: {
@@ -27,12 +39,14 @@ const patientSchema = new mongoose.Schema(
     servicePoint: { type: String, required: true, trim: true },
     registeredBy: { type: String, required: true, trim: true },
     registeredByRole: { type: String, required: true, trim: true },
+    visitHistory: { type: [visitHistorySchema], default: [] },
   },
   { timestamps: true }
 );
 
 patientSchema.index({ servicePoint: 1, createdAt: -1 });
 patientSchema.index({ entryRoute: 1, createdAt: -1 });
+patientSchema.index({ id: 1, 'visitHistory.createdAt': -1 });
 patientSchema.index(
   { emiratesIdHash: 1 },
   {
