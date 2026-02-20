@@ -79,6 +79,18 @@ Create a `.env` file in the root directory of the project with the following var
   - Include all frontend URLs that will access the API
   - For production, use your actual domain
 
+### PATIENT_REG_SERVICE_URL
+- **Description**: Gateway target URL for patient registration service
+- **Default**: `http://localhost:3003`
+- **Example**: `PATIENT_REG_SERVICE_URL=http://localhost:3003`
+- **Required**: No (has default in gateway)
+
+### PATIENT_REG_SERVICE_PORT
+- **Description**: Port for patient registration service when running standalone
+- **Default**: `3003`
+- **Example**: `PATIENT_REG_SERVICE_PORT=3003`
+- **Required**: No (has default)
+
 ## Example .env File
 
 ```env
@@ -101,6 +113,12 @@ JWT_EXPIRES_IN=24h
 # CORS Configuration
 # Add all frontend URLs that need to access the API
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:8080
+
+# Gateway routing targets
+PATIENT_REG_SERVICE_URL=http://localhost:3003
+
+# Patient registration service
+PATIENT_REG_SERVICE_PORT=3003
 
 # Google OAuth (for "Sign in with Google")
 GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com

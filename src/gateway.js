@@ -8,6 +8,7 @@ const { buildCorsOptions } = require('../shared/http/cors');
 
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 const MAIN_SERVICE_URL = process.env.MAIN_SERVICE_URL || 'http://localhost:3002';
+const PATIENT_REG_SERVICE_URL = process.env.PATIENT_REG_SERVICE_URL || 'http://localhost:3003';
 const GATEWAY_PORT = process.env.GATEWAY_PORT || process.env.PORT || 3000;
 
 const app = express();
@@ -41,9 +42,10 @@ app.get('/ping', (req, res) => {
 
 const PING_MS = 1500;
 app.get('/health', async (req, res) => {
-  const [authOk, mainOk] = await Promise.all([
+  const [authOk, mainOk, patientRegOk] = await Promise.all([
     ping(AUTH_SERVICE_URL, PING_MS),
     ping(MAIN_SERVICE_URL, PING_MS),
+    ping(PATIENT_REG_SERVICE_URL, PING_MS),
   ]);
   res.status(200).json({
     success: true,
@@ -53,6 +55,7 @@ app.get('/health', async (req, res) => {
     backends: {
       auth: authOk ? 'up' : 'down',
       main: mainOk ? 'up' : 'down',
+      patientRegistration: patientRegOk ? 'up' : 'down',
     },
   });
 });
@@ -101,6 +104,23 @@ app.use(
 );
 
 app.use(
+  '/api/patients/register',
+  createProxyMiddleware({
+    target: PATIENT_REG_SERVICE_URL,
+    changeOrigin: true,
+    on: {
+      proxyReq(proxyReq, req) {
+        forwardParsedJsonBody(proxyReq, req);
+      },
+      error(err, req, res) {
+        console.error('[Gateway] Patient registration proxy error:', err.message);
+        return sendError(res, 502, 'BAD_GATEWAY', 'Patient registration service unavailable');
+      },
+    },
+  })
+);
+
+app.use(
   '/api',
   createProxyMiddleware({
     target: MAIN_SERVICE_URL,
@@ -125,7 +145,7 @@ app.use('/', (req, res) => {
 
 app.listen(GATEWAY_PORT, () => {
   console.log(
-    `[Gateway] Running on port ${GATEWAY_PORT} | Auth → ${AUTH_SERVICE_URL} | Main API → ${MAIN_SERVICE_URL}`
+    `[Gateway] Running on port ${GATEWAY_PORT} | Auth → ${AUTH_SERVICE_URL} | Main API → ${MAIN_SERVICE_URL} | Patient Registration → ${PATIENT_REG_SERVICE_URL}`
   );
 });
 

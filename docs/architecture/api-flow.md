@@ -39,10 +39,11 @@ A single entry point is provided by `src/gateway.js`:
 
 - **Port**: 3000 (configurable via `GATEWAY_PORT` or `PORT`)
 - **`/api/auth`** and **`/api/auth/web`** → proxied to Auth service (default `http://localhost:3001`)
+- **`/api/patients/register`** → proxied to Patient Registration service (default `http://localhost:3003`)
 - **`/api`** (all other API routes) → proxied to Main API (default `http://localhost:3002`)
 - **`/health`** → gateway health plus backend status (auth/main up or down)
 
-Run with: `npm run dev:all` (starts gateway + main API + auth service). Main API runs on 3002 when used behind the gateway.
+Run with: `npm run dev:all` (starts gateway + main API + auth service + patient registration service). Main API runs on 3002 when used behind the gateway.
 
 ## Possible workflow for Protected Route Request Flow
 Since we are dealing with patient records, this is confidential. We should consider a protected route request workflow for the same. Here's a possible workflow

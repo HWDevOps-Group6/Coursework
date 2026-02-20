@@ -9,7 +9,8 @@
     "dev:auth": "cd services/auth-service && PORT=3001 npm run dev",
     "dev:gateway": "nodemon src/gateway.js",
     "dev:main": "PORT=3002 nodemon src/server.js",
-    "dev:all": "concurrently \"npm run dev:auth\" \"npm run dev:main\" \"npm run dev:gateway\"",
+    "dev:patient-reg": "PORT=3003 nodemon services/patient-registration-service/src/server.js",
+    "dev:all": "concurrently \"npm run dev:auth\" \"npm run dev:main\" \"npm run dev:patient-reg\" \"npm run dev:gateway\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

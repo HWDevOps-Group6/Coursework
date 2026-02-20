@@ -9,7 +9,7 @@ Healthcare Management System with microservice architecture: Auth service, busin
 │   ├── gateway.js          # API Gateway (proxies /api/auth → auth, /api → main)
 │   ├── middleware/
 │   │   └── verifyToken.js  # JWT verification for protected routes
-│   └── server.js           # Main API
+│   └── server.js           # Main API (patient records endpoints)
 ├── services/
 │   └── auth-service/       # Auth microservice
 │       ├── src/
@@ -22,8 +22,14 @@ Healthcare Management System with microservice architecture: Auth service, busin
 │       │   └── server.js
 │       ├── package.json
 │       └── README.md
-├── docker-compose.yml      # Run all services
-└── Dockerfile              # Main API
+│   └── patient-registration-service/
+│       ├── src/
+│       │   ├── config/
+│       │   ├── middleware/
+│       │   ├── models/
+│       │   └── server.js
+│       └── package.json
+└── shared/
 ```
 
 ## Auth Service Endpoints
@@ -45,6 +51,8 @@ GWAuthMe --> AuthService
 GWAuthVerify --> AuthService
 
 GWMainMe --> MainService["Main_API :3002"]
+Gateway --> GWPatientReg["POST /api/patients/register"]
+GWPatientReg --> PatientRegService["Patient_Registration_Service :3003"]
 
 AuthService --> IssueJwt["Issue JWT to client"]
 IssueJwt --> Client
@@ -75,7 +83,7 @@ SendBearer --> Gateway
    - Clinical intake notes: `knownDiseases` (string array), `complaints` (string array)
    - `entryRoute` is required and must be one of: `OPD`, `A&E`
 6. `GET …/api/patients/records` and `GET …/api/patients/records/:id` require role `doctor` or `nurse`.
-7. Patient registrations are persisted by the main API in the MongoDB `patients` collection (separate from auth `users`).
+7. Patient registrations are persisted by the patient registration service in the MongoDB `patients` collection (separate from auth `users`).
 8. Duplicate prevention uses a SHA-256 hash of normalized `emiratesId`; only the hash is stored and it is unique per patient.
 9. Patient `id` values are assigned sequentially by the main API (`"1"`, `"2"`, `"3"`, ...).
 
@@ -83,7 +91,8 @@ SendBearer --> Gateway
 
 - Gateway is only a routing edge and does not contain business logic.
 - Auth service owns identity concerns (credentials, JWT issuing, token verification endpoint).
-- Main API owns domain endpoints and validates JWT locally to avoid runtime coupling to auth-service availability.
+- Patient registration service owns `POST /api/patients/register`.
+- Main API owns records retrieval endpoints and validates JWT locally to avoid runtime coupling to auth-service availability.
 
 ## Environment Variables
 
@@ -103,3 +112,11 @@ SendBearer --> Gateway
 - `GATEWAY_PORT` or `PORT` (default 3000)
 - `AUTH_SERVICE_URL` (default http://localhost:3001)
 - `MAIN_SERVICE_URL` (default http://localhost:3002)
+- `PATIENT_REG_SERVICE_URL` (default http://localhost:3003)
+
+**Patient Registration Service** (`.env`):
+- `PATIENT_REG_SERVICE_PORT` or `PORT` (default 3003)
+- `MONGODB_URI` (MongoDB connection string for patient data)
+- `JWT_SECRET` (must match auth-service)
+- `PATIENT_ID_HASH_SALT` (optional salt for hashing `emiratesId`)
+- `ALLOWED_ORIGINS`
