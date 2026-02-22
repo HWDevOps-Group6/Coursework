@@ -71,10 +71,22 @@ const normalizeEntryRoute = (value) => {
   if (normalized === 'A&E' || normalized === 'AE') return 'A&E';
   return '';
 };
+const normalizeVisitEntryRoute = (value) => {
+  const normalized = String(value || '').trim();
+  if (!normalized) return '';
+
+  const normalizedRoute = normalized.toUpperCase().replace(/\s+/g, '');
+  if (normalizedRoute === 'OPD') return 'OPD';
+  if (normalizedRoute === 'A&E' || normalizedRoute === 'AE') return 'A&E';
+
+  return normalized.toUpperCase();
+};
 const hashPatientIdentifier = (normalizedEmiratesId) =>
   createHash('sha256')
     .update(`${process.env.PATIENT_ID_HASH_SALT || ''}:${normalizedEmiratesId}`)
     .digest('hex');
+const isStringArray = (value) =>
+  Array.isArray(value) && value.every((item) => typeof item === 'string' && item.trim().length > 0);
 
 const getNextPatientId = async () => {
   const existingCounter = await Counter.findOne({ key: 'patientId' }).lean();
@@ -149,9 +161,6 @@ app.post('/api/patients/register', verifyToken, authorizeRole('clerk'), async (r
       return sendError(res, 400, 'VALIDATION_ERROR', 'emiratesId must contain exactly 15 digits');
     }
 
-    const isStringArray = (value) =>
-      Array.isArray(value) && value.every((item) => typeof item === 'string' && item.trim().length > 0);
-
     if (!isStringArray(knownDiseases) || !isStringArray(complaints)) {
       return sendError(
         res,
@@ -204,6 +213,192 @@ app.post('/api/patients/register', verifyToken, authorizeRole('clerk'), async (r
     return next(error);
   }
 });
+
+app.get('/api/patients/records', verifyToken, authorizeRole('doctor', 'nurse', 'paramedic'), async (req, res, next) => {
+  try {
+    const patients = await Patient.find({}).sort({ createdAt: -1 }).lean();
+    return sendSuccess(
+      res,
+      200,
+      { patients: patients.map((patient) => sanitizePatient(patient)) },
+      'Patient records retrieved successfully'
+    );
+  } catch (error) {
+    return next(error);
+  }
+});
+
+app.get(
+  '/api/patients/records/:id',
+  verifyToken,
+  authorizeRole('doctor', 'nurse', 'paramedic'),
+  async (req, res, next) => {
+    try {
+      const patientRecord = await Patient.findOne({ id: req.params.id }).lean();
+
+      if (!patientRecord) {
+        return sendError(res, 404, 'PATIENT_NOT_FOUND', 'Patient record not found');
+      }
+
+      return sendSuccess(
+        res,
+        200,
+        { patient: sanitizePatient(patientRecord) },
+        'Patient record retrieved successfully'
+      );
+    } catch (error) {
+      return next(error);
+    }
+  }
+);
+
+app.patch(
+  '/api/patients/records/:id/visits',
+  verifyToken,
+  authorizeRole('doctor', 'nurse', 'paramedic'),
+  async (req, res, next) => {
+    try {
+      const allowedVisitFields = new Set(['servicePoint', 'entryRoute', 'diseases', 'referralDetails']);
+      const providedFields = Object.keys(req.body || {});
+      const unknownFields = providedFields.filter((field) => !allowedVisitFields.has(field));
+
+      if (unknownFields.length > 0) {
+        return sendError(res, 400, 'INVALID_FIELDS', `Unsupported fields: ${unknownFields.join(', ')}`);
+      }
+
+      const { servicePoint, entryRoute, diseases, referralDetails } = req.body || {};
+
+      if (typeof servicePoint !== 'string' || !servicePoint.trim()) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'servicePoint is required');
+      }
+
+      if (!isStringArray(diseases)) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'diseases must be an array of non-empty strings');
+      }
+
+      if (
+        referralDetails !== undefined &&
+        (typeof referralDetails !== 'string' || !referralDetails.trim() || referralDetails.trim().length > 1000)
+      ) {
+        return sendError(
+          res,
+          400,
+          'VALIDATION_ERROR',
+          'referralDetails, when provided, must be a non-empty string up to 1000 characters'
+        );
+      }
+
+      const visitEntryRoute =
+        entryRoute === undefined
+          ? (req.user.role === 'paramedic' ? 'A&E' : '')
+          : normalizeVisitEntryRoute(entryRoute);
+      if (entryRoute !== undefined && !visitEntryRoute) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'entryRoute must be a non-empty string when provided');
+      }
+
+      const visitEntry = {
+        servicePoint: servicePoint.trim(),
+        diseases: diseases.map((item) => item.trim()),
+        updatedBy: req.user.userId,
+        updatedByRole: req.user.role
+      };
+
+      if (visitEntryRoute) {
+        visitEntry.entryRoute = visitEntryRoute;
+      }
+      if (typeof referralDetails === 'string' && referralDetails.trim()) {
+        visitEntry.referralDetails = referralDetails.trim();
+      }
+
+      const updatedPatient = await Patient.findOneAndUpdate(
+        { id: req.params.id },
+        { $push: { visitHistory: visitEntry } },
+        { new: true }
+      ).lean();
+
+      if (!updatedPatient) {
+        return sendError(res, 404, 'PATIENT_NOT_FOUND', 'Patient record not found');
+      }
+
+      return sendSuccess(
+        res,
+        200,
+        { patient: sanitizePatient(updatedPatient) },
+        'Patient visit history updated successfully'
+      );
+    } catch (error) {
+      return next(error);
+    }
+  }
+);
+
+app.patch(
+  '/api/patients/records/:id/nursing-notes',
+  verifyToken,
+  authorizeRole('nurse'),
+  async (req, res, next) => {
+    try {
+      const allowedNursingFields = new Set(['medicines', 'treatmentDetails', 'intakeOutput', 'recordedAt']);
+      const providedFields = Object.keys(req.body || {});
+      const unknownFields = providedFields.filter((field) => !allowedNursingFields.has(field));
+
+      if (unknownFields.length > 0) {
+        return sendError(res, 400, 'INVALID_FIELDS', `Unsupported fields: ${unknownFields.join(', ')}`);
+      }
+
+      const { medicines = [], treatmentDetails, intakeOutput, recordedAt } = req.body || {};
+
+      if (!Array.isArray(medicines) || medicines.some((item) => typeof item !== 'string' || !item.trim())) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'medicines must be an array of non-empty strings');
+      }
+
+      if (typeof treatmentDetails !== 'string' || !treatmentDetails.trim()) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'treatmentDetails is required');
+      }
+
+      if (typeof intakeOutput !== 'string' || !intakeOutput.trim()) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'intakeOutput is required');
+      }
+
+      if (typeof recordedAt !== 'string' || !recordedAt.trim()) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'recordedAt is required and must be an ISO date-time string');
+      }
+
+      const parsedRecordedAt = new Date(recordedAt);
+      if (Number.isNaN(parsedRecordedAt.getTime())) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'recordedAt must be a valid ISO date-time string');
+      }
+
+      const nursingNote = {
+        medicines: medicines.map((item) => item.trim()),
+        treatmentDetails: treatmentDetails.trim(),
+        intakeOutput: intakeOutput.trim(),
+        recordedAt: parsedRecordedAt,
+        recordedBy: req.user.userId,
+        recordedByRole: req.user.role
+      };
+
+      const updatedPatient = await Patient.findOneAndUpdate(
+        { id: req.params.id },
+        { $push: { nursingNotes: nursingNote } },
+        { new: true }
+      ).lean();
+
+      if (!updatedPatient) {
+        return sendError(res, 404, 'PATIENT_NOT_FOUND', 'Patient record not found');
+      }
+
+      return sendSuccess(
+        res,
+        200,
+        { patient: sanitizePatient(updatedPatient) },
+        'Nursing note added successfully'
+      );
+    } catch (error) {
+      return next(error);
+    }
+  }
+);
 
 app.use(notFoundHandler);
 app.use(globalErrorHandler);

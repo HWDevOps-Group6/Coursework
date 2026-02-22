@@ -5,10 +5,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
 const { verifyToken } = require('./middleware/verifyToken');
-const { authorizeRole } = require('./middleware/authorizeRole');
 const { connectDatabase } = require('./config/database');
-const Patient = require('./models/Patient');
-const { sendError, sendSuccess } = require('../shared/http/responses');
+const { sendSuccess } = require('../shared/http/responses');
 const { buildCorsOptions } = require('../shared/http/cors');
 const { notFoundHandler, globalErrorHandler } = require('../shared/http/handlers');
 
@@ -55,30 +53,6 @@ app.get('/health', (req, res) => {
  */
 app.get('/api/me', verifyToken, (req, res) => {
   return sendSuccess(res, 200, { user: req.user }, 'Token valid! Successfully fetched profile');
-});
-
-app.get('/api/patients/records', verifyToken, authorizeRole('doctor', 'nurse'), async (req, res, next) => {
-  try {
-  const patients = await Patient.find({}).sort({ createdAt: -1 }).lean();
-
-  return sendSuccess(res, 200, { patients }, 'Patient records retrieved successfully');
-  } catch (error) {
-    return next(error);
-  }
-});
-
-app.get('/api/patients/records/:id', verifyToken, authorizeRole('doctor', 'nurse'), async (req, res, next) => {
-  try {
-  const patientRecord = await Patient.findOne({ id: req.params.id }).lean();
-
-  if (!patientRecord) {
-    return sendError(res, 404, 'PATIENT_NOT_FOUND', 'Patient record not found');
-  }
-
-  return sendSuccess(res, 200, { patient: patientRecord }, 'Patient record retrieved successfully');
-  } catch (error) {
-    return next(error);
-  }
 });
 
 app.use(notFoundHandler);
