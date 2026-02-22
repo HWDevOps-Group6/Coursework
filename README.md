@@ -74,6 +74,7 @@ SendBearer --> Gateway
 | GET | …/api/patients/records | Retrieve patient records (doctor, nurse, paramedic) |
 | GET | …/api/patients/records/:id | Retrieve a single patient record (doctor, nurse, paramedic) |
 | PATCH | …/api/patients/records/:id/visits | Append visit history with diseases/referral details (doctor, nurse, paramedic) |
+| PATCH | …/api/patients/records/:id/nursing-notes | Append nursing chart details (nurse write; doctor, nurse, paramedic read via records endpoints) |
 
 ## Authentication Flow
 
@@ -86,10 +87,12 @@ SendBearer --> Gateway
    - Clinical intake notes: `knownDiseases` (string array), `complaints` (string array)
    - `entryRoute` is required and must be one of: `OPD`, `A&E`
 6. `GET …/api/patients/records`, `GET …/api/patients/records/:id`, and `PATCH …/api/patients/records/:id/visits` require role `doctor`, `nurse`, or `paramedic`.
-7. Patient registrations are persisted by the patient registration service in the MongoDB `patients` collection (separate from auth `users`).
-8. Duplicate prevention uses a SHA-256 hash of normalized `emiratesId`; only the hash is stored and it is unique per patient.
-9. Patient `id` values are assigned sequentially by the patient registration service (`"1"`, `"2"`, `"3"`, ...).
-10. Visit updates are append-only via `visitHistory` entries and preserve prior entries for auditability.
+7. `PATCH …/api/patients/records/:id/nursing-notes` requires role `nurse` and appends `{ medicines[], treatmentDetails, intakeOutput, recordedAt }`.
+8. Nursing notes are append-only and returned as `nursingNotes` in patient record responses for doctor/nurse/paramedic.
+9. Patient registrations are persisted by the patient registration service in the MongoDB `patients` collection (separate from auth `users`).
+10. Duplicate prevention uses a SHA-256 hash of normalized `emiratesId`; only the hash is stored and it is unique per patient.
+11. Patient `id` values are assigned sequentially by the patient registration service (`"1"`, `"2"`, `"3"`, ...).
+12. Visit updates are append-only via `visitHistory` entries and preserve prior entries for auditability.
 
 ## Microservice Design Notes
 

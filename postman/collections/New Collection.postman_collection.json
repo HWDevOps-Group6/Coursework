@@ -442,6 +442,67 @@
       "response": []
     },
     {
+      "name": "Append Nursing Note",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "183160f4-2f6f-4af5-8f0f-cd7ca3339f36",
+            "exec": [
+              "pm.test(\"Successful PATCH request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "f6e9f777-af5b-49ac-8bcf-1aa79850fd1d",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{vault:nurse_auth}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"medicines\": [\"paracetamol 500mg\", \"normal saline\"],\n  \"treatmentDetails\": \"Wound dressing and IV fluid monitoring\",\n  \"intakeOutput\": \"Intake 1200ml, output 900ml\",\n  \"recordedAt\": \"2026-02-20T15:30:00.000Z\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/patients/records/1/nursing-notes",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "patients",
+            "records",
+            "1",
+            "nursing-notes"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "Retrieve Patient Record By ID",
       "event": [
         {

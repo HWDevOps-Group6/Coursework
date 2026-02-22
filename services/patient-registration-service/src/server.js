@@ -332,6 +332,74 @@ app.patch(
   }
 );
 
+app.patch(
+  '/api/patients/records/:id/nursing-notes',
+  verifyToken,
+  authorizeRole('nurse'),
+  async (req, res, next) => {
+    try {
+      const allowedNursingFields = new Set(['medicines', 'treatmentDetails', 'intakeOutput', 'recordedAt']);
+      const providedFields = Object.keys(req.body || {});
+      const unknownFields = providedFields.filter((field) => !allowedNursingFields.has(field));
+
+      if (unknownFields.length > 0) {
+        return sendError(res, 400, 'INVALID_FIELDS', `Unsupported fields: ${unknownFields.join(', ')}`);
+      }
+
+      const { medicines = [], treatmentDetails, intakeOutput, recordedAt } = req.body || {};
+
+      if (!Array.isArray(medicines) || medicines.some((item) => typeof item !== 'string' || !item.trim())) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'medicines must be an array of non-empty strings');
+      }
+
+      if (typeof treatmentDetails !== 'string' || !treatmentDetails.trim()) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'treatmentDetails is required');
+      }
+
+      if (typeof intakeOutput !== 'string' || !intakeOutput.trim()) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'intakeOutput is required');
+      }
+
+      if (typeof recordedAt !== 'string' || !recordedAt.trim()) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'recordedAt is required and must be an ISO date-time string');
+      }
+
+      const parsedRecordedAt = new Date(recordedAt);
+      if (Number.isNaN(parsedRecordedAt.getTime())) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'recordedAt must be a valid ISO date-time string');
+      }
+
+      const nursingNote = {
+        medicines: medicines.map((item) => item.trim()),
+        treatmentDetails: treatmentDetails.trim(),
+        intakeOutput: intakeOutput.trim(),
+        recordedAt: parsedRecordedAt,
+        recordedBy: req.user.userId,
+        recordedByRole: req.user.role
+      };
+
+      const updatedPatient = await Patient.findOneAndUpdate(
+        { id: req.params.id },
+        { $push: { nursingNotes: nursingNote } },
+        { new: true }
+      ).lean();
+
+      if (!updatedPatient) {
+        return sendError(res, 404, 'PATIENT_NOT_FOUND', 'Patient record not found');
+      }
+
+      return sendSuccess(
+        res,
+        200,
+        { patient: sanitizePatient(updatedPatient) },
+        'Nursing note added successfully'
+      );
+    } catch (error) {
+      return next(error);
+    }
+  }
+);
+
 app.use(notFoundHandler);
 app.use(globalErrorHandler);
 
