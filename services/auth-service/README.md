@@ -1,10 +1,10 @@
 # Auth Service (Microservice)
 
-Authentication microservice - register, login, Google OAuth, JWT issuance.
+Authentication microservice - register, login, JWT issuance.
 
 ## Endpoints
 
-### Headless (API-only, no browser)
+### Headless
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -12,16 +12,6 @@ Authentication microservice - register, login, Google OAuth, JWT issuance.
 | POST | /api/auth/login | Login, returns JWT |
 | GET | /api/auth/me | Current user (requires Bearer token) |
 | POST | /api/auth/verify | Validate token (for other services) |
-
-### Web (browser redirect flow, optional)
-
-Only available when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set:
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | /api/auth/web/google | Start Google OAuth (redirects to Google) |
-| GET | /api/auth/web/google/callback | OAuth callback |
-| GET | /api/auth/web/google/failure | OAuth failure handler |
 
 ### Health
 
@@ -55,18 +45,6 @@ docker run --name auth-service \
   -p 3001:3001 \
   auth-service:latest
 ```
-
-Notes:
-- If MongoDB runs on your host machine, set `MONGODB_URI=mongodb://host.docker.internal:27017/healthcare_db`.
-- If MongoDB runs in another container, use the Mongo container/service name in `MONGODB_URI`.
-- Health endpoint remains available at `http://localhost:3001/health`.
-
-## Environment
-
-- `PORT` - default 3001
-- `MONGODB_URI` - MongoDB connection
-- `JWT_SECRET` - Must match main API and other services
-- `GOOGLE_*` - For Google OAuth
 
 ## Other services
 
