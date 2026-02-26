@@ -10,6 +10,7 @@ const { authorizeRole } = require('./middleware/authorizeRole');
 const { connectDatabase } = require('./config/database');
 const Patient = require('./models/Patient');
 const Counter = require('./models/Counter');
+const { AUDIT_SOURCES } = require('./models/audit');
 const { sendError, sendSuccess } = require('../../../shared/http/responses');
 const { buildCorsOptions } = require('../../../shared/http/cors');
 const { notFoundHandler, globalErrorHandler } = require('../../../shared/http/handlers');
@@ -61,7 +62,8 @@ const allowedPatientRegistrationFields = new Set([
   'knownDiseases',
   'complaints',
   'entryRoute',
-  'servicePoint'
+  'servicePoint',
+  'source'
 ]);
 
 const normalizeEmiratesId = (value) => String(value || '').replace(/\D/g, '');
@@ -87,6 +89,11 @@ const hashPatientIdentifier = (normalizedEmiratesId) =>
     .digest('hex');
 const isStringArray = (value) =>
   Array.isArray(value) && value.every((item) => typeof item === 'string' && item.trim().length > 0);
+const resolveAuditSource = (value, fallback = 'manual') => {
+  if (value === undefined || value === null || String(value).trim() === '') return fallback;
+  const normalizedSource = String(value).trim().toLowerCase();
+  return AUDIT_SOURCES.includes(normalizedSource) ? normalizedSource : '';
+};
 
 const getNextPatientId = async () => {
   const existingCounter = await Counter.findOne({ key: 'patientId' }).lean();
@@ -104,14 +111,25 @@ const getNextPatientId = async () => {
 
     await Counter.updateOne(
       { key: 'patientId' },
-      { $setOnInsert: { value: startValue } },
+      {
+        $setOnInsert: {
+          value: startValue,
+          createdBy: 'system',
+          updatedBy: 'system',
+          source: 'api'
+        }
+      },
       { upsert: true }
     );
   }
 
   const counter = await Counter.findOneAndUpdate(
     { key: 'patientId' },
-    { $inc: { value: 1 } },
+    {
+      $inc: { value: 1 },
+      $set: { updatedBy: 'system', source: 'api' },
+      $setOnInsert: { createdBy: 'system' }
+    },
     { new: true, upsert: true, setDefaultsOnInsert: true }
   ).lean();
 
@@ -144,7 +162,8 @@ app.post('/api/patients/register', verifyToken, authorizeRole('clerk'), async (r
       knownDiseases = [],
       complaints = [],
       entryRoute,
-      servicePoint
+      servicePoint,
+      source
     } = req.body || {};
 
     if (!emiratesId || !firstName || !lastName || !dateOfBirth || !gender || !entryRoute || !servicePoint) {
@@ -194,9 +213,16 @@ app.post('/api/patients/register', verifyToken, authorizeRole('clerk'), async (r
       complaints: complaints.map((item) => item.trim()),
       entryRoute: normalizedEntryRoute,
       servicePoint: servicePoint.trim(),
+      createdBy: req.user.userId,
+      updatedBy: req.user.userId,
+      source: resolveAuditSource(source, 'manual'),
       registeredBy: req.user.userId,
       registeredByRole: req.user.role
     };
+
+    if (!patientRecord.source) {
+      return sendError(res, 400, 'VALIDATION_ERROR', 'source must be one of manual, device, api');
+    }
 
     const savedPatient = await Patient.create(patientRecord);
 
@@ -258,7 +284,7 @@ app.patch(
   authorizeRole('doctor', 'nurse', 'paramedic'),
   async (req, res, next) => {
     try {
-      const allowedVisitFields = new Set(['servicePoint', 'entryRoute', 'diseases', 'referralDetails']);
+      const allowedVisitFields = new Set(['servicePoint', 'entryRoute', 'diseases', 'referralDetails', 'source']);
       const providedFields = Object.keys(req.body || {});
       const unknownFields = providedFields.filter((field) => !allowedVisitFields.has(field));
 
@@ -266,7 +292,7 @@ app.patch(
         return sendError(res, 400, 'INVALID_FIELDS', `Unsupported fields: ${unknownFields.join(', ')}`);
       }
 
-      const { servicePoint, entryRoute, diseases, referralDetails } = req.body || {};
+      const { servicePoint, entryRoute, diseases, referralDetails, source } = req.body || {};
 
       if (typeof servicePoint !== 'string' || !servicePoint.trim()) {
         return sendError(res, 400, 'VALIDATION_ERROR', 'servicePoint is required');
@@ -299,9 +325,15 @@ app.patch(
       const visitEntry = {
         servicePoint: servicePoint.trim(),
         diseases: diseases.map((item) => item.trim()),
+        createdBy: req.user.userId,
         updatedBy: req.user.userId,
+        source: resolveAuditSource(source, 'manual'),
         updatedByRole: req.user.role
       };
+
+      if (!visitEntry.source) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'source must be one of manual, device, api');
+      }
 
       if (visitEntryRoute) {
         visitEntry.entryRoute = visitEntryRoute;
@@ -312,7 +344,10 @@ app.patch(
 
       const updatedPatient = await Patient.findOneAndUpdate(
         { id: req.params.id },
-        { $push: { visitHistory: visitEntry } },
+        {
+          $push: { visitHistory: visitEntry },
+          $set: { updatedBy: req.user.userId, source: visitEntry.source }
+        },
         { new: true }
       ).lean();
 
@@ -338,7 +373,7 @@ app.patch(
   authorizeRole('nurse'),
   async (req, res, next) => {
     try {
-      const allowedNursingFields = new Set(['medicines', 'treatmentDetails', 'intakeOutput', 'recordedAt']);
+      const allowedNursingFields = new Set(['medicines', 'treatmentDetails', 'intakeOutput', 'recordedAt', 'source']);
       const providedFields = Object.keys(req.body || {});
       const unknownFields = providedFields.filter((field) => !allowedNursingFields.has(field));
 
@@ -346,7 +381,7 @@ app.patch(
         return sendError(res, 400, 'INVALID_FIELDS', `Unsupported fields: ${unknownFields.join(', ')}`);
       }
 
-      const { medicines = [], treatmentDetails, intakeOutput, recordedAt } = req.body || {};
+      const { medicines = [], treatmentDetails, intakeOutput, recordedAt, source } = req.body || {};
 
       if (!Array.isArray(medicines) || medicines.some((item) => typeof item !== 'string' || !item.trim())) {
         return sendError(res, 400, 'VALIDATION_ERROR', 'medicines must be an array of non-empty strings');
@@ -374,13 +409,23 @@ app.patch(
         treatmentDetails: treatmentDetails.trim(),
         intakeOutput: intakeOutput.trim(),
         recordedAt: parsedRecordedAt,
+        createdBy: req.user.userId,
+        updatedBy: req.user.userId,
+        source: resolveAuditSource(source, 'manual'),
         recordedBy: req.user.userId,
         recordedByRole: req.user.role
       };
 
+      if (!nursingNote.source) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'source must be one of manual, device, api');
+      }
+
       const updatedPatient = await Patient.findOneAndUpdate(
         { id: req.params.id },
-        { $push: { nursingNotes: nursingNote } },
+        {
+          $push: { nursingNotes: nursingNote },
+          $set: { updatedBy: req.user.userId, source: nursingNote.source }
+        },
         { new: true }
       ).lean();
 

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { auditFieldDefinitions } = require('./audit');
 
 const visitHistorySchema = new mongoose.Schema(
   {
@@ -6,10 +7,10 @@ const visitHistorySchema = new mongoose.Schema(
     entryRoute: { type: String, trim: true },
     diseases: { type: [String], default: [] },
     referralDetails: { type: String, trim: true },
-    updatedBy: { type: String, required: true, trim: true },
+    ...auditFieldDefinitions,
     updatedByRole: { type: String, required: true, trim: true },
   },
-  { _id: false, timestamps: { createdAt: true, updatedAt: false } }
+  { _id: false, timestamps: true }
 );
 
 const nursingNoteSchema = new mongoose.Schema(
@@ -18,10 +19,11 @@ const nursingNoteSchema = new mongoose.Schema(
     treatmentDetails: { type: String, required: true, trim: true },
     intakeOutput: { type: String, required: true, trim: true },
     recordedAt: { type: Date, required: true },
+    ...auditFieldDefinitions,
     recordedBy: { type: String, required: true, trim: true },
     recordedByRole: { type: String, required: true, trim: true },
   },
-  { _id: false, timestamps: false }
+  { _id: false, timestamps: true }
 );
 
 const patientSchema = new mongoose.Schema(
@@ -49,6 +51,7 @@ const patientSchema = new mongoose.Schema(
     complaints: { type: [String], default: [] },
     entryRoute: { type: String, required: true, enum: ['OPD', 'A&E'], trim: true },
     servicePoint: { type: String, required: true, trim: true },
+    ...auditFieldDefinitions,
     registeredBy: { type: String, required: true, trim: true },
     registeredByRole: { type: String, required: true, trim: true },
     visitHistory: { type: [visitHistorySchema], default: [] },

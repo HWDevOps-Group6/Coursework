@@ -18,13 +18,7 @@ Create a `.env` file in the root directory of the project with the following var
 - **Note**: Affects error message verbosity (production hides detailed errors)
 
 ### MONGODB_URI
-- **Description**: MongoDB connection string
-- **Default**: None
-- **Example**: `MONGODB_URI=mongodb://localhost:27017/healthcare_db`
-- **Required**: **Yes**
-- **Note**: 
-  - For MongoDB Atlas: `mongodb+srv://username:password@cluster.mongodb.net/healthcare_db`
-  - For Docker: `mongodb://mongo:27017/healthcare_db`
+MONGODB_URI=mongodb+srv://ridhgoswami_db_user:Gk7KljStKQPvfOsI@cluster0.uvglldd.mongodb.net/?appName=Cluster0
 
 ### JWT_SECRET
 - **Description**: Secret key used to sign and verify JWT tokens
