@@ -237,7 +237,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"{{doctor_register_email}}\",\n  \"password\": \"SecurePass123!\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"Doctor\",\n  \"role\": \"doctor\",\n  \"phoneNumber\": \"0500000001\",\n  \"department\": \"General Medicine\"\n}",
+          "raw": "{\n  \"email\": \"{{doctor_register_email}}\",\n  \"password\": \"SecurePass123!\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"Doctor\",\n  \"role\": \"doctor\",\n  \"phoneNumber\": \"0500000001\",\n  \"department\": \"Medicine\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -306,7 +306,76 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"{{nurse_register_email}}\",\n  \"password\": \"SecurePass123!\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"Nurse\",\n  \"role\": \"nurse\",\n  \"phoneNumber\": \"0500000002\",\n  \"department\": \"Nursing\"\n}",
+          "raw": "{\n  \"email\": \"{{nurse_register_email}}\",\n  \"password\": \"SecurePass123!\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"Nurse\",\n  \"role\": \"nurse\",\n  \"phoneNumber\": \"0500000002\",\n  \"department\": [\"Pediatrics\", \"ENT\"]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/auth/register",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Register Clinician",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "69b78007-1d76-4c98-84ff-69b66d5f6f30",
+            "exec": [
+              "const unique = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;",
+              "pm.collectionVariables.set(\"clinician_register_email\", `clinician.${unique}@hospital.com`);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "id": "47a45953-06c3-4586-b90b-f30b20c2fce2",
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test(\"Clinician registered successfully\", function () {",
+              "    pm.expect(json.success).to.eql(true);",
+              "    pm.expect(json.data.user.role).to.eql(\"clinician\");",
+              "    pm.expect(json.data.user.email).to.eql(pm.collectionVariables.get(\"clinician_register_email\"));",
+              "    pm.expect(json.data.token).to.be.a(\"string\").and.not.empty;",
+              "});",
+              "pm.collectionVariables.set(\"clinician_register_token\", json.data.token);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "5da9977b-4be7-4c34-9c63-d61a036fff17",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{clinician_register_email}}\",\n  \"password\": \"SecurePass123!\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"Clinician\",\n  \"role\": \"clinician\",\n  \"phoneNumber\": \"0500000004\",\n  \"department\": [\"Medicine\", \"Oncology\"]\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -559,6 +628,67 @@
         "body": {
           "mode": "raw",
           "raw": "{\n  \"email\": \"{{nurse_register_email}}\",\n  \"password\": \"SecurePass123!\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/auth/login",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Logging in as a Clinician",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "bc8e46c3-e2cf-4576-b476-747b2cc06a5e",
+            "exec": [
+              "pm.test(\"Successful POST request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "e9286678-c750-4226-8bf8-6e0c89b4b1c2",
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "f1289e85-bf50-4bd4-9a2a-7af0f7aa45f0",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{clinician_register_email}}\",\n  \"password\": \"SecurePass123!\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -1597,6 +1727,11 @@
       "value": ""
     },
     {
+      "id": "46f69f95-0f36-4d6b-9a51-c9e56958bbf5",
+      "key": "clinician_register_email",
+      "value": ""
+    },
+    {
       "id": "ee589c06-9227-491e-baa1-cfdd40a9e5b0",
       "key": "doctor_register_token",
       "value": ""
@@ -1609,6 +1744,11 @@
     {
       "id": "5b8ffffd-a3f3-4cb7-a128-21c42fc2dfe8",
       "key": "clerk_register_token",
+      "value": ""
+    },
+    {
+      "id": "6f42f63f-08da-45f4-a6ce-59b4607437bc",
+      "key": "clinician_register_token",
       "value": ""
     },
     {
