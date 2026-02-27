@@ -727,12 +727,88 @@ app.get(
 );
 
 app.patch(
+  '/api/patients/records/:id/prescriptions',
+  verifyToken,
+  authorizeRole('doctor'),
+  async (req, res, next) => {
+    try {
+      const allowedPrescriptionFields = new Set(['medicines', 'prescribedAt', 'notes', 'source']);
+      const providedFields = Object.keys(req.body || {});
+      const unknownFields = providedFields.filter((field) => !allowedPrescriptionFields.has(field));
+
+      if (unknownFields.length > 0) {
+        return sendError(res, 400, 'INVALID_FIELDS', `Unsupported fields: ${unknownFields.join(', ')}`);
+      }
+
+      const { medicines, prescribedAt, notes, source } = req.body || {};
+
+      if (!isStringArray(medicines)) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'medicines must be an array of non-empty strings');
+      }
+
+      if (typeof prescribedAt !== 'string' || !prescribedAt.trim()) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'prescribedAt is required and must be an ISO date-time string');
+      }
+
+      const parsedPrescribedAt = new Date(prescribedAt);
+      if (Number.isNaN(parsedPrescribedAt.getTime())) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'prescribedAt must be a valid ISO date-time string');
+      }
+
+      if (notes !== undefined && (typeof notes !== 'string' || !notes.trim())) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'notes, when provided, must be a non-empty string');
+      }
+
+      const prescription = {
+        medicines: medicines.map((item) => item.trim()),
+        prescribedAt: parsedPrescribedAt,
+        createdBy: req.user.userId,
+        updatedBy: req.user.userId,
+        source: resolveAuditSource(source, 'manual'),
+        prescribedBy: req.user.userId,
+        prescribedByRole: req.user.role
+      };
+
+      if (!prescription.source) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'source must be one of manual, device, api');
+      }
+
+      if (typeof notes === 'string' && notes.trim()) {
+        prescription.notes = notes.trim();
+      }
+
+      const updatedPatient = await Patient.findOneAndUpdate(
+        { id: req.params.id },
+        {
+          $push: { prescriptions: prescription },
+          $set: { updatedBy: req.user.userId, source: prescription.source }
+        },
+        { new: true }
+      ).lean();
+
+      if (!updatedPatient) {
+        return sendError(res, 404, 'PATIENT_NOT_FOUND', 'Patient record not found');
+      }
+
+      return sendSuccess(
+        res,
+        200,
+        { patient: sanitizePatient(updatedPatient) },
+        'Prescription added successfully'
+      );
+    } catch (error) {
+      return next(error);
+    }
+  }
+);
+
+app.patch(
   '/api/patients/records/:id/nursing-notes',
   verifyToken,
   authorizeRole('nurse'),
   async (req, res, next) => {
     try {
-      const allowedNursingFields = new Set(['medicines', 'treatmentDetails', 'intakeOutput', 'recordedAt', 'source']);
+      const allowedNursingFields = new Set(['treatmentDetails', 'intakeOutput', 'recordedAt', 'source']);
       const providedFields = Object.keys(req.body || {});
       const unknownFields = providedFields.filter((field) => !allowedNursingFields.has(field));
 
@@ -740,11 +816,7 @@ app.patch(
         return sendError(res, 400, 'INVALID_FIELDS', `Unsupported fields: ${unknownFields.join(', ')}`);
       }
 
-      const { medicines = [], treatmentDetails, intakeOutput, recordedAt, source } = req.body || {};
-
-      if (!Array.isArray(medicines) || medicines.some((item) => typeof item !== 'string' || !item.trim())) {
-        return sendError(res, 400, 'VALIDATION_ERROR', 'medicines must be an array of non-empty strings');
-      }
+      const { treatmentDetails, intakeOutput, recordedAt, source } = req.body || {};
 
       if (typeof treatmentDetails !== 'string' || !treatmentDetails.trim()) {
         return sendError(res, 400, 'VALIDATION_ERROR', 'treatmentDetails is required');
@@ -764,7 +836,6 @@ app.patch(
       }
 
       const nursingNote = {
-        medicines: medicines.map((item) => item.trim()),
         treatmentDetails: treatmentDetails.trim(),
         intakeOutput: intakeOutput.trim(),
         recordedAt: parsedRecordedAt,

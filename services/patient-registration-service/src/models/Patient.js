@@ -15,13 +15,24 @@ const visitHistorySchema = new mongoose.Schema(
 
 const nursingNoteSchema = new mongoose.Schema(
   {
-    medicines: { type: [String], default: [] },
     treatmentDetails: { type: String, required: true, trim: true },
     intakeOutput: { type: String, required: true, trim: true },
     recordedAt: { type: Date, required: true },
     ...auditFieldDefinitions,
     recordedBy: { type: String, required: true, trim: true },
     recordedByRole: { type: String, required: true, trim: true },
+  },
+  { _id: false, timestamps: true }
+);
+
+const prescriptionSchema = new mongoose.Schema(
+  {
+    medicines: { type: [String], required: true, default: [] },
+    prescribedAt: { type: Date, required: true },
+    notes: { type: String, trim: true },
+    ...auditFieldDefinitions,
+    prescribedBy: { type: String, required: true, trim: true },
+    prescribedByRole: { type: String, required: true, trim: true },
   },
   { _id: false, timestamps: true }
 );
@@ -146,6 +157,7 @@ const patientSchema = new mongoose.Schema(
     registeredBy: { type: String, required: true, trim: true },
     registeredByRole: { type: String, required: true, trim: true },
     visitHistory: { type: [visitHistorySchema], default: [] },
+    prescriptions: { type: [prescriptionSchema], default: [] },
     nursingNotes: { type: [nursingNoteSchema], default: [] },
     inPatientNotes: { type: [inPatientSchema], default: [] },
     diagnosticResults: { type: [DiagnosticResultSchema], default: [] },
@@ -156,6 +168,7 @@ const patientSchema = new mongoose.Schema(
 patientSchema.index({ servicePoint: 1, createdAt: -1 });
 patientSchema.index({ entryRoute: 1, createdAt: -1 });
 patientSchema.index({ id: 1, 'visitHistory.createdAt': -1 });
+patientSchema.index({ id: 1, 'prescriptions.prescribedAt': -1 });
 patientSchema.index({ id: 1, 'nursingNotes.recordedAt': -1 });
 patientSchema.index({ id: 1, 'inPatientNotes.recordedAt': -1 });
 patientSchema.index({ id: 1, 'diagnosticResults.importedAt': -1 });
