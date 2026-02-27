@@ -56,6 +56,7 @@ const patientSchema = new mongoose.Schema(
     registeredByRole: { type: String, required: true, trim: true },
     visitHistory: { type: [visitHistorySchema], default: [] },
     nursingNotes: { type: [nursingNoteSchema], default: [] },
+    inPatientNotes: { type: [inPatientSchema], default: [] }
   },
   { timestamps: true }
 );
@@ -64,6 +65,7 @@ patientSchema.index({ servicePoint: 1, createdAt: -1 });
 patientSchema.index({ entryRoute: 1, createdAt: -1 });
 patientSchema.index({ id: 1, 'visitHistory.createdAt': -1 });
 patientSchema.index({ id: 1, 'nursingNotes.recordedAt': -1 });
+patientSchema.index({ id: 1, 'inPatientNotes.recordedAt': -1 });
 patientSchema.index(
   { emiratesIdHash: 1 },
   {
@@ -73,3 +75,12 @@ patientSchema.index(
 );
 
 module.exports = mongoose.model('Patient', patientSchema);
+
+// InPatient schema
+const inPatientSchema = new mongoose.Schema({
+  name:      { type: String, required: true },
+  ward:      { type: String, required: true },
+  bedNumber: { type: String, required: true },
+  admittedBy:{ type: String },
+  status:    { type: String, enum: ['active', 'discharged'], default: 'active' },
+}, { timestamps: true });
