@@ -937,56 +937,264 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "All Diagnostic Results",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "58ad9cdb-56a4-46bc-a329-40d50a329723",
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "5ca1d6ea-72e3-4981-83c8-75f9be59fe2e",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{doctor_register_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"r_goswami@hospital.com\",\n  \"password\": \"SecurePass123!\"\n}"
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/diagnostics",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "diagnostics"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Import results from machine",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "58ad9cdb-56a4-46bc-a329-40d50a329723",
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "e306a00f-d93b-46a3-8dc9-eda082779902",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{doctor_register_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"r_goswami@hospital.com\",\n  \"password\": \"SecurePass123!\"\n}"
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/diagnostics/import-all?patient=1",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "diagnostics",
+            "import-all"
+          ],
+          "query": [
+            {
+              "key": "patient",
+              "value": "1",
+              "uuid": "dd8c313d-aa8e-4cdc-9453-4898f84eb4f3"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Import results from machine Copy",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "58ad9cdb-56a4-46bc-a329-40d50a329723",
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "f0f55968-b602-4084-b885-8727d852e28d",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{doctor_register_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"r_goswami@hospital.com\",\n  \"password\": \"SecurePass123!\"\n}"
+        },
+        "url": {
+          "raw": "{{gateway_url}}/api/diagnostics/import?machineType=XRAY",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "diagnostics",
+            "import"
+          ],
+          "query": [
+            {
+              "key": "machineType",
+              "value": "XRAY",
+              "uuid": "b148bf22-02d8-4fff-8b98-0f3ce4a80b9f"
+            }
+          ]
+        }
+      },
+      "response": []
     }
   ],
   "variable": [
     {
-      "id": "fc8ebc89-9ccd-4ac8-9193-2c1db0d91a63",
+      "id": "6b8877cb-b8bc-4834-b017-ab1ae6652491",
       "key": "gateway_url",
       "value": ""
     },
     {
-      "id": "2829d474-cdce-40b7-822c-3968b64dfd3f",
+      "id": "912fc6e6-1154-4c7a-8de9-4efa07481a40",
       "key": "auth_url",
       "value": ""
     },
     {
-      "id": "744dd600-a743-465a-9e97-18915e0e7e85",
+      "id": "e7a60f6d-c880-42f1-8efe-d61d5aa7ea4f",
       "key": "patient_reg_url",
       "value": ""
     },
     {
-      "id": "b2e6da7b-1dae-44b9-9d58-ef86a7cce53a",
+      "id": "d2852abd-8c86-4155-80da-636bb77ecfc6",
       "key": "diagnostics_vitals_url",
       "value": ""
     },
     {
-      "id": "44bf6cfb-09bc-4121-ad79-73122a213d7a",
+      "id": "9720897a-7caa-49b2-a792-6387e98ae4cd",
       "key": "doctor_register_email",
       "value": ""
     },
     {
-      "id": "65a9614a-ad83-4425-bb55-7cc7b6e8d7d4",
+      "id": "79ed3c2e-abc2-464b-9f73-1937d1159f7f",
       "key": "nurse_register_email",
       "value": ""
     },
     {
-      "id": "110d3e50-6c15-4a58-b569-ceeec6c3835d",
+      "id": "cfb91abc-c864-43a0-92e1-d8f72df47dfc",
       "key": "clerk_register_email",
       "value": ""
     },
     {
-      "id": "799eb706-ccd6-4c4b-9ab6-10c2d2317bef",
+      "id": "d3d7d6fa-44ea-4a41-8148-9a82fcf11d9a",
       "key": "doctor_register_token",
       "value": ""
     },
     {
-      "id": "e9d7b98e-dcd4-41c3-8c0f-fb8b74e4f1e9",
+      "id": "302646b7-18c0-445a-8e13-192ae0ddc440",
       "key": "nurse_register_token",
       "value": ""
     },
     {
-      "id": "716cc4a2-2aa2-4ba8-bc2d-4ecfdf54fe72",
+      "id": "aa2eca13-4a1d-40d7-8979-d12aca520c88",
       "key": "clerk_register_token",
       "value": ""
     }
