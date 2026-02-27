@@ -40,11 +40,11 @@ A single entry point is provided by `src/gateway.js`:
 - **Port**: 3000 (configurable via `GATEWAY_PORT` or `PORT`)
 - **`/api/auth`** and **`/api/auth/web`** → proxied to Auth service (default `http://localhost:3001`)
 - **`/api/patients/register`** → proxied to Patient Registration service (default `http://localhost:3003`)
-- **`/api/patients/records`**, **`/api/patients/records/:id/visits`**, and **`/api/patients/records/:id/nursing-notes`** → proxied to Patient Registration service (default `http://localhost:3003`)
-- **`/api`** (all other API routes) → proxied to Main API (default `http://localhost:3002`)
-- **`/health`** → gateway health plus backend status (auth/main up or down)
+- **`/api/patients/records`**, **`/api/patients/records/:id/visits`**, **`/api/patients/records/:id/prescriptions`**, and **`/api/patients/records/:id/nursing-notes`** → proxied to Patient Registration service (default `http://localhost:3003`)
+- **`/api/diagnostics`** and **`/api/vitals`** → proxied to Diagnostics & Vitals service (default `http://localhost:3004`)
+- **`/health`** → gateway health plus backend status (auth/patient/diagnostics up or down)
 
-Run with: `npm run dev:all` (starts gateway + main API + auth service + patient registration service). Main API runs on 3002 when used behind the gateway.
+Run with: `npm run dev:all` (starts gateway + auth service + patient registration service + diagnostics & vitals service).
 
 ## Possible workflow for Protected Route Request Flow
 Since we are dealing with patient records, this is confidential. We should consider a protected route request workflow for the same. Here's a possible workflow
@@ -143,6 +143,7 @@ POST   /api/patients/register             - Register new patient (clerk)
 GET    /api/patients/records              - List patient records (doctor/nurse/paramedic)
 GET    /api/patients/records/:id          - Get patient record by internal id (doctor/nurse/paramedic)
 PATCH  /api/patients/records/:id/visits   - Append visit history entry (doctor/nurse/paramedic)
+PATCH  /api/patients/records/:id/prescriptions - Append prescription entry (doctor)
 PATCH  /api/patients/records/:id/nursing-notes - Append nursing chart entry (nurse write; doctor/nurse/paramedic read)
 
 GET    /api/admissions        - List admissions (with filters)

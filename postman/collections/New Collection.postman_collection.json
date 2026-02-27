@@ -988,6 +988,79 @@
           "response": []
         },
         {
+          "name": "Append Prescription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "2d1e95e8-18d1-4ef8-b4a2-8d4fd7e1aa11",
+                "exec": [
+                  "pm.test(\"Successful PATCH request\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "a92f5f8a-7cb9-4eb3-aabc-ae863bc4513c",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "2fbde80b-2513-4f95-9f4c-861e3f6ccf99",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctor_register_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"medicines\": [\"paracetamol 500mg\", \"amoxicillin 250mg\"],\n  \"prescribedAt\": \"2026-02-20T15:30:00.000Z\",\n  \"notes\": \"Take after meals for 5 days\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/patients/records/{{diag_patient_id}}/prescriptions",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "records",
+                "{{diag_patient_id}}",
+                "prescriptions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Append Nursing Note",
           "event": [
             {
@@ -1037,7 +1110,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"medicines\": [\"paracetamol 500mg\", \"normal saline\"],\n  \"treatmentDetails\": \"Wound dressing and IV fluid monitoring\",\n  \"intakeOutput\": \"Intake 1200ml, output 900ml\",\n  \"recordedAt\": \"2026-02-20T15:30:00.000Z\"\n}",
+              "raw": "{\n  \"treatmentDetails\": \"Wound dressing and IV fluid monitoring\",\n  \"intakeOutput\": \"Intake 1200ml, output 900ml\",\n  \"recordedAt\": \"2026-02-20T15:30:00.000Z\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2039,102 +2112,102 @@
   ],
   "variable": [
     {
-      "id": "f438b290-d1a2-44dd-8d7b-8aa82b970ae6",
+      "id": "796234db-c497-4cc7-b1a9-89fb5534f70a",
       "key": "gateway_url",
       "value": ""
     },
     {
-      "id": "0f5ba5bb-ee83-4886-b22f-103e98551921",
+      "id": "95215a06-1ae9-426e-91c1-6d4c8a3d1058",
       "key": "auth_url",
       "value": ""
     },
     {
-      "id": "f9f39d70-7d94-4211-9b46-0f18019d089d",
+      "id": "90aff00c-fe96-4979-9d85-6759b1a0d38b",
       "key": "patient_reg_url",
       "value": ""
     },
     {
-      "id": "fe339d66-b844-4276-858d-6248a3798a31",
+      "id": "be86164b-76af-43c3-b330-015e864882f4",
       "key": "diagnostics_vitals_url",
       "value": ""
     },
     {
-      "id": "c6e56c15-f3d9-471e-a91b-c7ce8bc9e31f",
+      "id": "9b6000c9-3ca2-4a9e-85bd-9b88acb59acd",
       "key": "doctor_register_email",
       "value": ""
     },
     {
-      "id": "040eda1f-40a0-423e-88dc-2fb971413799",
+      "id": "7a3030af-61b7-4877-bd0e-774315ba6707",
       "key": "nurse_register_email",
       "value": ""
     },
     {
-      "id": "4bb37d13-af11-4a94-856c-b2f79fd89020",
+      "id": "23c4cc14-956e-45bd-82e9-e10595427d80",
       "key": "clerk_register_email",
       "value": ""
     },
     {
-      "id": "3f4c0008-2445-4fcd-aa2d-52e893b5893b",
+      "id": "fbc65250-18bb-450e-8eed-a6c25bdfbde6",
       "key": "clinician_register_email",
       "value": ""
     },
     {
-      "id": "48028845-679c-4031-bb75-9da2fdd9c2b0",
+      "id": "ef65f1af-4cd8-4bc6-88df-b22e980979f6",
       "key": "doctor_register_token",
       "value": ""
     },
     {
-      "id": "b970d146-5fb9-436b-a6c7-e57a36912afc",
+      "id": "3a6f190c-4f82-4d35-a1c3-004c788e2d48",
       "key": "nurse_register_token",
       "value": ""
     },
     {
-      "id": "257c43d9-2f02-4401-982d-098dfe6a7794",
+      "id": "36d111dd-cc4e-4f38-8182-158f3c8e1370",
       "key": "clerk_register_token",
       "value": ""
     },
     {
-      "id": "18f31350-df50-4a9e-9ccc-9d314c65c5d2",
+      "id": "19c74670-ec8d-4519-94bd-040ad07aa2ff",
       "key": "clinician_register_token",
       "value": ""
     },
     {
-      "id": "b2f33ab3-ac52-4ef4-9bf3-c088bc924233",
+      "id": "a655d42d-2f45-4b88-b3c4-a4b00c618156",
       "key": "diag_patient_id",
       "value": ""
     },
     {
-      "id": "3f349907-027a-41b4-aab5-7e1b4b276fe2",
+      "id": "01d92947-0777-4bbf-a84a-4aa480614749",
       "key": "diag_machine_type",
       "value": "XRAY"
     },
     {
-      "id": "2510278e-5600-4e19-bd22-5d94880d1d46",
+      "id": "65acb2b5-4b2b-4a19-841d-e35e644c418d",
       "key": "diag_result_id",
       "value": ""
     },
     {
-      "id": "3847f3d4-e4a7-4073-bea5-c627eb6217f7",
+      "id": "83e1f36f-1cee-4de2-a224-13a91feaac20",
       "key": "appointment_date",
       "value": ""
     },
     {
-      "id": "095225a8-9b86-4173-9383-a5d26d12097c",
+      "id": "a568f90e-71d7-4e4c-8873-6af10bf71967",
       "key": "appointment_datetime_utc",
       "value": ""
     },
     {
-      "id": "1dda5bbd-8a43-42b9-b9f8-3300b1fe110a",
+      "id": "1a1b28fb-c3aa-4d66-99f9-dcbb52d953ed",
       "key": "appointment_doctor_id",
       "value": ""
     },
     {
-      "id": "2805735a-d024-4d30-9163-9dcd937e2de5",
+      "id": "48c81aea-e9b4-47dd-9f95-21d08d3a212a",
       "key": "appointment_doctor_name",
       "value": ""
     },
     {
-      "id": "943fe136-388a-4360-b0f7-d213b84ad14c",
+      "id": "c1418042-5725-4322-b1a0-c5b91b9a1d0c",
       "key": "appointment_id",
       "value": ""
     }

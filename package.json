@@ -2,16 +2,15 @@
   "name": "healthcare-management-system",
   "version": "1.0.0",
   "description": "Healthcare Management System with NodeJS REST API, MongoDB, and JWT authentication",
-  "main": "src/server.js",
+  "main": "src/gateway.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "start": "node src/gateway.js",
+    "dev": "nodemon src/gateway.js",
     "dev:auth": "cd services/auth-service && PORT=3001 npm run dev",
     "dev:gateway": "nodemon src/gateway.js",
-    "dev:main": "PORT=3002 nodemon src/server.js",
     "dev:patient-reg": "PORT=3003 nodemon services/patient-registration-service/src/server.js",
     "dev:diagnostics-vitals": "PORT=3004 nodemon services/diagnostics-vitals-service/server.js",
-    "dev:all": "concurrently \"npm run dev:auth\" \"npm run dev:main\" \"npm run dev:patient-reg\" \"npm run dev:diagnostics-vitals\" \"npm run dev:gateway\"",
+    "dev:all": "concurrently \"npm run dev:auth\" \"npm run dev:patient-reg\" \"npm run dev:diagnostics-vitals\" \"npm run dev:gateway\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
