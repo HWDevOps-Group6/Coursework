@@ -1,22 +1,20 @@
 const { verifyToken } = require('./middleware/verifyToken');
 const { authorizeRole } = require('./middleware/authorizeRole');
 const Vitals = require('../models/vitals');
-const AuditLog = require('../models/AuditLog');
+const { auditFieldDefinitions } = require('../../patient-registration-service/src/models/audit');
 
 exports.addVitals = async (req, res) => {
   try {
+    const source = req.body.source || 'device';
+    const createdBy = req.user?.name || 'IoT Device';
+    const updatedBy = createdBy;
     const vitals = await Vitals.create({
       patientId: req.params.patientId,
       ...req.body,
-      enteredBy: req.body.source === 'manual' ? req.user?.name : 'IoT Device',
+      source,
+      createdBy,
+      updatedBy,
     });
-
-    await AuditLog.create({
-      action: `Vitals recorded for patient ${req.params.patientId}`,
-      actor: vitals.enteredBy,
-      source: vitals.source,
-    });
-
     res.status(201).json(vitals);
   } catch (err) {
     res.status(400).json({ error: err.message });

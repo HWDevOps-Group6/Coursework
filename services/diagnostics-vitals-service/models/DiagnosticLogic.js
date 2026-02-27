@@ -1,7 +1,15 @@
 // Business logic for importing and managing diagnostic results from machines
 
-const DiagnosticResult = require("../models/DiagnosticResult");
+const DiagnosticResult = require("./DiagnosticSchema");
+const mongoose = require("mongoose");
 const MACHINE_TYPES = ["XRAY", "CT", "MRI", "PCR", "ULTRASOUND", "BLOODWORK"];
+
+const maybePopulateVerifiedBy = (query) => {
+  if (mongoose.models.User) {
+    return query.populate("verifiedBy", "name role");
+  }
+  return query;
+};
 
 const fetchFromMachineAPI = async (machineType) => {
   const templates = {
@@ -61,8 +69,7 @@ const fetchFromMachineAPI = async (machineType) => {
     importSource: "api",
     importedAt:  new Date(),
     rawPayload:  { source: machineType, polledAt: new Date().toISOString() },
-    // NOTE: In real usage, patient + patientId come from the machine payload or req.body override
-    patient:   null,
+    // NOTE: In real usage, patientId comes from the machine payload or req.body override
     patientId: `P-${10000 + Math.floor(Math.random() * 9000)}`,
   }));
 };
@@ -71,21 +78,23 @@ const fetchFromMachineAPI = async (machineType) => {
 // importFromMachine
 // POST /api/diagnostics/import/:machineType
 // ─────────────────────────────────────────────────────────────────────────────
+// Always require patientId for import
 const importFromMachine = async (machineType, overrides = {}) => {
   if (!MACHINE_TYPES.includes(machineType)) {
     throw new Error(`Unknown machine type: ${machineType}. Valid types: ${MACHINE_TYPES.join(", ")}`);
+  }
+  if (!overrides.patientId) {
+    throw new Error("patientId is required for importing diagnostics");
   }
 
   const rawResults = await fetchFromMachineAPI(machineType);
 
   const saved = [];
   for (const raw of rawResults) {
-    // Allow caller to override patientId / patient ref from req.body
     const payload = {
       ...raw,
       machineType,
-      ...(overrides.patientId && { patientId: overrides.patientId }),
-      ...(overrides.patient   && { patient:   overrides.patient }),
+      patientId: overrides.patientId,
       ...(overrides.machineId && { machineId: overrides.machineId }),
     };
 
@@ -104,18 +113,18 @@ const importFromMachine = async (machineType, overrides = {}) => {
 // importAllMachines
 // POST /api/diagnostics/import-all
 // ─────────────────────────────────────────────────────────────────────────────
-const importAllMachines = async () => {
+// Require patientId for importAllMachines as well
+const importAllMachines = async (patientId) => {
+  if (!patientId) throw new Error("patientId is required for importing diagnostics from all machines");
   const summary = {};
-
   for (const machineType of MACHINE_TYPES) {
     try {
-      const results = await importFromMachine(machineType);
+      const results = await importFromMachine(machineType, { patientId });
       summary[machineType] = { success: true, imported: results.length };
     } catch (err) {
       summary[machineType] = { success: false, error: err.message };
     }
   }
-
   return summary;
 };
 
@@ -123,19 +132,19 @@ const importAllMachines = async () => {
 // getAllResults
 // GET /api/diagnostics?machineType=CT&status=critical&page=1&limit=20
 // ─────────────────────────────────────────────────────────────────────────────
+// Require patientId for getAllResults
 const getAllResults = async (query = {}) => {
-  const { machineType, status, page = 1, limit = 20 } = query;
+  const { machineType, status, page = 1, limit = 20, patientId } = query;
+  if (!patientId) throw new Error("patientId is required to fetch diagnostic results");
 
-  const filter = { isArchived: false };
+  const filter = { isArchived: false, patientId };
   if (machineType) filter.machineType = machineType.toUpperCase();
   if (status)      filter.status      = status.toLowerCase();
 
   const skip  = (Number(page) - 1) * Number(limit);
   const total = await DiagnosticResult.countDocuments(filter);
 
-  const data = await DiagnosticResult.find(filter)
-    .populate("patient",    "name dateOfBirth")
-    .populate("verifiedBy", "name role")
+  const data = await maybePopulateVerifiedBy(DiagnosticResult.find(filter))
     .sort({ importedAt: -1 })
     .skip(skip)
     .limit(Number(limit));
@@ -154,9 +163,7 @@ const getAllResults = async (query = {}) => {
 // GET /api/diagnostics/:id
 // ─────────────────────────────────────────────────────────────────────────────
 const getResultById = async (id) => {
-  return DiagnosticResult.findById(id)
-    .populate("patient",    "name dateOfBirth")
-    .populate("verifiedBy", "name role");
+  return maybePopulateVerifiedBy(DiagnosticResult.findById(id));
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -164,8 +171,8 @@ const getResultById = async (id) => {
 // GET /api/diagnostics/patient/:patientId
 // ─────────────────────────────────────────────────────────────────────────────
 const getResultsByPatient = async (patientId) => {
-  return DiagnosticResult.find({ patientId, isArchived: false })
-    .populate("verifiedBy", "name role")
+  if (!patientId) throw new Error("patientId is required to fetch diagnostic results by patient");
+  return maybePopulateVerifiedBy(DiagnosticResult.find({ patientId, isArchived: false }))
     .sort({ importedAt: -1 });
 };
 
@@ -174,13 +181,12 @@ const getResultsByPatient = async (patientId) => {
 // GET /api/diagnostics/machine/:machineType
 // ─────────────────────────────────────────────────────────────────────────────
 const getResultsByMachine = async (machineType, query = {}) => {
-  const { status } = query;
-  const filter = { machineType, isArchived: false };
+  const { status, patientId } = query;
+  if (!patientId) throw new Error("patientId is required to fetch diagnostic results by machine");
+  const filter = { machineType, isArchived: false, patientId };
   if (status) filter.status = status.toLowerCase();
 
-  return DiagnosticResult.find(filter)
-    .populate("patient",    "name dateOfBirth")
-    .populate("verifiedBy", "name role")
+  return maybePopulateVerifiedBy(DiagnosticResult.find(filter))
     .sort({ importedAt: -1 });
 };
 
@@ -188,10 +194,9 @@ const getResultsByMachine = async (machineType, query = {}) => {
 // getCriticalResults
 // GET /api/diagnostics/critical
 // ─────────────────────────────────────────────────────────────────────────────
-const getCriticalResults = async () => {
-  return DiagnosticResult.find({ status: "critical", isArchived: false })
-    .populate("patient",    "name dateOfBirth")
-    .populate("verifiedBy", "name role")
+const getCriticalResults = async (patientId) => {
+  if (!patientId) throw new Error("patientId is required to fetch critical diagnostic results");
+  return maybePopulateVerifiedBy(DiagnosticResult.find({ status: "critical", isArchived: false, patientId }))
     .sort({ importedAt: -1 });
 };
 
@@ -228,14 +233,15 @@ const deleteResult = async (id) => {
 // getImportStats
 // GET /api/diagnostics/stats
 // ─────────────────────────────────────────────────────────────────────────────
-const getImportStats = async () => {
+const getImportStats = async (patientId) => {
+  if (!patientId) throw new Error("patientId is required to fetch diagnostic import stats");
   const [total, critical, pending, abnormal, byMachine] = await Promise.all([
-    DiagnosticResult.countDocuments({ isArchived: false }),
-    DiagnosticResult.countDocuments({ status: "critical",  isArchived: false }),
-    DiagnosticResult.countDocuments({ status: "pending",   isArchived: false }),
-    DiagnosticResult.countDocuments({ status: "abnormal",  isArchived: false }),
+    DiagnosticResult.countDocuments({ isArchived: false, patientId }),
+    DiagnosticResult.countDocuments({ status: "critical",  isArchived: false, patientId }),
+    DiagnosticResult.countDocuments({ status: "pending",   isArchived: false, patientId }),
+    DiagnosticResult.countDocuments({ status: "abnormal",  isArchived: false, patientId }),
     DiagnosticResult.aggregate([
-      { $match: { isArchived: false } },
+      { $match: { isArchived: false, patientId } },
       { $group: { _id: "$machineType", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]),
@@ -247,6 +253,7 @@ const getImportStats = async () => {
   const today = await DiagnosticResult.countDocuments({
     importedAt:  { $gte: startOfDay },
     isArchived:  false,
+    patientId,
   });
 
   return {
