@@ -39,7 +39,7 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     required: [true, 'Role is required'],
-    enum: ['clerk', 'doctor', 'nurse', 'paramedic'],
+    enum: ['clerk', 'doctor', 'nurse', 'paramedic', 'clinician', 'admin'],
     default: 'clerk'
   },
   phoneNumber: { type: String, trim: true },
