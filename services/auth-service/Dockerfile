@@ -2,10 +2,13 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci --omit=dev
+COPY services/auth-service/package*.json ./services/auth-service/
+RUN npm ci --omit=dev --prefix ./services/auth-service
 
-COPY src ./src
+COPY shared ./shared
+COPY services/auth-service/src ./services/auth-service/src
+
+WORKDIR /app/services/auth-service
 
 ENV NODE_ENV=production
 ENV PORT=3001
