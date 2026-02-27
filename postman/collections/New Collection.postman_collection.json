@@ -1967,6 +1967,14 @@
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Save first diagnostic result id\", function () {",
+                  "    const json = pm.response.json();",
+                  "    const rows = Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];",
+                  "    if (rows.length > 0) {",
+                  "        const resultId = rows[0]?._id || rows[0]?.id || \"\";",
+                  "        if (resultId) pm.collectionVariables.set(\"diag_result_id\", resultId);",
+                  "    }",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -2112,103 +2120,123 @@
   ],
   "variable": [
     {
-      "id": "796234db-c497-4cc7-b1a9-89fb5534f70a",
+      "id": "a313eae5-f618-4c66-9606-f1410d88dafa",
       "key": "gateway_url",
       "value": ""
     },
     {
-      "id": "95215a06-1ae9-426e-91c1-6d4c8a3d1058",
+      "id": "d8723d33-7f84-4685-bc7f-9a16ed114606",
       "key": "auth_url",
       "value": ""
     },
     {
-      "id": "90aff00c-fe96-4979-9d85-6759b1a0d38b",
+      "id": "6e252d10-a6fc-4b15-ac0c-d1c17f7faed7",
       "key": "patient_reg_url",
       "value": ""
     },
     {
-      "id": "be86164b-76af-43c3-b330-015e864882f4",
+      "id": "092a15c9-f0bd-41bc-a612-83502068a8e2",
       "key": "diagnostics_vitals_url",
       "value": ""
     },
     {
-      "id": "9b6000c9-3ca2-4a9e-85bd-9b88acb59acd",
+      "id": "e5a3be8e-06aa-43b2-835c-b3f2fd03be21",
       "key": "doctor_register_email",
       "value": ""
     },
     {
-      "id": "7a3030af-61b7-4877-bd0e-774315ba6707",
+      "id": "48849a71-5c05-465b-a73f-7075f804bbe5",
       "key": "nurse_register_email",
       "value": ""
     },
     {
-      "id": "23c4cc14-956e-45bd-82e9-e10595427d80",
+      "id": "a81d9525-6e88-416a-a39a-4adb550e1033",
       "key": "clerk_register_email",
       "value": ""
     },
     {
-      "id": "fbc65250-18bb-450e-8eed-a6c25bdfbde6",
+      "id": "1d949d8f-1c80-47c8-a626-7266c93eedc2",
       "key": "clinician_register_email",
       "value": ""
     },
     {
-      "id": "ef65f1af-4cd8-4bc6-88df-b22e980979f6",
+      "id": "2108ad63-2326-4d8c-ab2e-b125b1927f0c",
       "key": "doctor_register_token",
       "value": ""
     },
     {
-      "id": "3a6f190c-4f82-4d35-a1c3-004c788e2d48",
+      "id": "09699146-82d2-4f1e-a8c5-4264cbcb47fe",
       "key": "nurse_register_token",
       "value": ""
     },
     {
-      "id": "36d111dd-cc4e-4f38-8182-158f3c8e1370",
+      "id": "8ce52e76-2a82-4727-bae8-ddc5c1531b28",
       "key": "clerk_register_token",
       "value": ""
     },
     {
-      "id": "19c74670-ec8d-4519-94bd-040ad07aa2ff",
+      "id": "927c8652-550a-4d6c-aec5-c1459d23ebd4",
       "key": "clinician_register_token",
       "value": ""
     },
     {
-      "id": "a655d42d-2f45-4b88-b3c4-a4b00c618156",
+      "id": "e6ea1411-5e1f-4100-86a4-e817f4fc2018",
       "key": "diag_patient_id",
       "value": ""
     },
     {
-      "id": "01d92947-0777-4bbf-a84a-4aa480614749",
+      "id": "3a9d4bea-e590-407b-b432-8ece9916813f",
       "key": "diag_machine_type",
       "value": "XRAY"
     },
     {
-      "id": "65acb2b5-4b2b-4a19-841d-e35e644c418d",
+      "id": "de63e1e6-e8e3-4634-87b1-31fe42eaa85f",
       "key": "diag_result_id",
       "value": ""
     },
     {
-      "id": "83e1f36f-1cee-4de2-a224-13a91feaac20",
+      "id": "e6de8bf2-4b05-4743-b640-692ab0a77028",
       "key": "appointment_date",
       "value": ""
     },
     {
-      "id": "a568f90e-71d7-4e4c-8873-6af10bf71967",
+      "id": "f64b3dd8-6bb0-46a5-95d6-96883f00f6b8",
       "key": "appointment_datetime_utc",
       "value": ""
     },
     {
-      "id": "1a1b28fb-c3aa-4d66-99f9-dcbb52d953ed",
+      "id": "890666c8-de1b-46e4-86d1-51279057d019",
       "key": "appointment_doctor_id",
       "value": ""
     },
     {
-      "id": "48c81aea-e9b4-47dd-9f95-21d08d3a212a",
+      "id": "93a9a240-12e6-4832-9b7a-ab429de8e180",
       "key": "appointment_doctor_name",
       "value": ""
     },
     {
-      "id": "c1418042-5725-4322-b1a0-c5b91b9a1d0c",
+      "id": "fbff990c-d7d9-4fc6-9bfe-a43de8bc4ff9",
       "key": "appointment_id",
+      "value": ""
+    },
+    {
+      "id": "10b66e3a-decd-4e22-832f-112ca182fa9b",
+      "key": "doctor_auth_token",
+      "value": ""
+    },
+    {
+      "id": "b5aa4df2-3d17-4e20-b75a-115c351e5c6e",
+      "key": "clerk_auth_token",
+      "value": ""
+    },
+    {
+      "id": "56578e3f-1b2b-4ff4-9d99-177331a94556",
+      "key": "nurse_auth_token",
+      "value": ""
+    },
+    {
+      "id": "4b883522-8614-41a1-9303-7bd6a9475773",
+      "key": "clinician_auth_token",
       "value": ""
     }
   ]
