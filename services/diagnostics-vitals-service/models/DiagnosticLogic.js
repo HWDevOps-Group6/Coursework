@@ -1,7 +1,15 @@
 // Business logic for importing and managing diagnostic results from machines
 
 const DiagnosticResult = require("./DiagnosticSchema");
+const mongoose = require("mongoose");
 const MACHINE_TYPES = ["XRAY", "CT", "MRI", "PCR", "ULTRASOUND", "BLOODWORK"];
+
+const maybePopulateVerifiedBy = (query) => {
+  if (mongoose.models.User) {
+    return query.populate("verifiedBy", "name role");
+  }
+  return query;
+};
 
 const fetchFromMachineAPI = async (machineType) => {
   const templates = {
@@ -136,8 +144,7 @@ const getAllResults = async (query = {}) => {
   const skip  = (Number(page) - 1) * Number(limit);
   const total = await DiagnosticResult.countDocuments(filter);
 
-  const data = await DiagnosticResult.find(filter)
-    .populate("verifiedBy", "name role")
+  const data = await maybePopulateVerifiedBy(DiagnosticResult.find(filter))
     .sort({ importedAt: -1 })
     .skip(skip)
     .limit(Number(limit));
@@ -156,8 +163,7 @@ const getAllResults = async (query = {}) => {
 // GET /api/diagnostics/:id
 // ─────────────────────────────────────────────────────────────────────────────
 const getResultById = async (id) => {
-  return DiagnosticResult.findById(id)
-    .populate("verifiedBy", "name role");
+  return maybePopulateVerifiedBy(DiagnosticResult.findById(id));
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -166,8 +172,7 @@ const getResultById = async (id) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const getResultsByPatient = async (patientId) => {
   if (!patientId) throw new Error("patientId is required to fetch diagnostic results by patient");
-  return DiagnosticResult.find({ patientId, isArchived: false })
-    .populate("verifiedBy", "name role")
+  return maybePopulateVerifiedBy(DiagnosticResult.find({ patientId, isArchived: false }))
     .sort({ importedAt: -1 });
 };
 
@@ -181,8 +186,7 @@ const getResultsByMachine = async (machineType, query = {}) => {
   const filter = { machineType, isArchived: false, patientId };
   if (status) filter.status = status.toLowerCase();
 
-  return DiagnosticResult.find(filter)
-    .populate("verifiedBy", "name role")
+  return maybePopulateVerifiedBy(DiagnosticResult.find(filter))
     .sort({ importedAt: -1 });
 };
 
@@ -192,8 +196,7 @@ const getResultsByMachine = async (machineType, query = {}) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const getCriticalResults = async (patientId) => {
   if (!patientId) throw new Error("patientId is required to fetch critical diagnostic results");
-  return DiagnosticResult.find({ status: "critical", isArchived: false, patientId })
-    .populate("verifiedBy", "name role")
+  return maybePopulateVerifiedBy(DiagnosticResult.find({ status: "critical", isArchived: false, patientId }))
     .sort({ importedAt: -1 });
 };
 
