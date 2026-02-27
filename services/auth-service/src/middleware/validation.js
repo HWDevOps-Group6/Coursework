@@ -30,7 +30,7 @@ const schemas = {
       }),
     firstName: Joi.string().trim().required().messages({ 'any.required': 'First name is required' }),
     lastName: Joi.string().trim().required().messages({ 'any.required': 'Last name is required' }),
-    role: Joi.string().valid('clerk', 'doctor', 'nurse', 'paramedic').default('clerk'),
+    role: Joi.string().valid('clerk', 'doctor', 'nurse', 'paramedic', 'clinician', 'admin').default('clerk'),
     phoneNumber: Joi.string().trim().allow('', null).optional(),
     department: Joi.string().trim().allow('', null).optional()
   }),

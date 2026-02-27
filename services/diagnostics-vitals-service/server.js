@@ -94,7 +94,7 @@ app.get('/api/vitals/:patientId', verifyToken, authorizeRole("doctor"), async (r
 // IMPORT ROUTES
 // ──────────────────────────────────────────────────────────────────────────
 
-app.post("/import/:machineType", verifyToken, authorizeRole("doctor"), async (req, res) => {
+app.post("/import/:machineType", verifyToken, authorizeRole("doctor", "clinician"), async (req, res) => {
   try {
     const { machineType } = req.params;
     const results = await importFromMachine(machineType.toUpperCase(), req.body);
@@ -109,7 +109,7 @@ app.post("/import/:machineType", verifyToken, authorizeRole("doctor"), async (re
   }
 });
 
-app.post("/import-all", verifyToken, authorizeRole("doctor"), async (req, res) => {
+app.post("/import-all", verifyToken, authorizeRole("doctor", "clinician"), async (req, res) => {
   try {
     const { patientId } = req.body || {};
     const summary = await importAllMachines(patientId);
@@ -123,7 +123,7 @@ app.post("/import-all", verifyToken, authorizeRole("doctor"), async (req, res) =
 // READ ROUTES
 // ──────────────────────────────────────────────────────────────────────────
 
-app.get("/stats", verifyToken, authorizeRole("doctor"), async (req, res) => {
+app.get("/stats", verifyToken, authorizeRole("doctor", "clinician"), async (req, res) => {
   try {
     const stats = await getImportStats(req.query.patientId);
     res.status(200).json({ success: true, data: stats });
@@ -132,7 +132,7 @@ app.get("/stats", verifyToken, authorizeRole("doctor"), async (req, res) => {
   }
 });
 
-app.get("/critical", verifyToken, authorizeRole("doctor"), async (req, res) => {
+app.get("/critical", verifyToken, authorizeRole("doctor", "clinician"), async (req, res) => {
   try {
     const results = await getCriticalResults(req.query.patientId);
     res.status(200).json({ success: true, count: results.length, data: results });
@@ -141,7 +141,7 @@ app.get("/critical", verifyToken, authorizeRole("doctor"), async (req, res) => {
   }
 });
 
-app.get("/", verifyToken, authorizeRole("doctor"), async (req, res) => {
+app.get("/", verifyToken, authorizeRole("doctor", "clinician"), async (req, res) => {
   try {
     const results = await getAllResults(req.query);
     res.status(200).json({ success: true, ...results });
@@ -150,7 +150,7 @@ app.get("/", verifyToken, authorizeRole("doctor"), async (req, res) => {
   }
 });
 
-app.get("/machine/:machineType", verifyToken, authorizeRole("doctor"), async (req, res) => {
+app.get("/machine/:machineType", verifyToken, authorizeRole("doctor", "clinician"), async (req, res) => {
   try {
     const results = await getResultsByMachine(req.params.machineType.toUpperCase(), req.query);
     res.status(200).json({ success: true, count: results.length, data: results });
@@ -159,7 +159,7 @@ app.get("/machine/:machineType", verifyToken, authorizeRole("doctor"), async (re
   }
 });
 
-app.get("/patient/:patientId", verifyToken, authorizeRole("doctor"), async (req, res) => {
+app.get("/patient/:patientId", verifyToken, authorizeRole("doctor", "clinician"), async (req, res) => {
   try {
     const results = await getResultsByPatient(req.params.patientId);
     res.status(200).json({ success: true, count: results.length, data: results });
@@ -168,7 +168,7 @@ app.get("/patient/:patientId", verifyToken, authorizeRole("doctor"), async (req,
   }
 });
 
-app.get("/:id", verifyToken, authorizeRole("doctor"), async (req, res) => {
+app.get("/:id", verifyToken, authorizeRole("doctor", "clinician"), async (req, res) => {
   try {
     const result = await getResultById(req.params.id);
     if (!result) return res.status(404).json({ success: false, message: "Result not found" });
@@ -182,7 +182,7 @@ app.get("/:id", verifyToken, authorizeRole("doctor"), async (req, res) => {
 // UPDATE / DELETE ROUTES
 // ──────────────────────────────────────────────────────────────────────────
 
-app.patch("/:id/verify", verifyToken, authorizeRole("doctor"), async (req, res) => {
+app.patch("/:id/verify", verifyToken, authorizeRole("doctor", "clinician"), async (req, res) => {
   try {
     const result = await verifyResult(req.params.id, req.user._id);
     res.status(200).json({ success: true, message: "Result verified", data: result });
