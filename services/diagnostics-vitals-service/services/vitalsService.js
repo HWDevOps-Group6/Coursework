@@ -1,7 +1,8 @@
+const { verifyToken } = require('./middleware/verifyToken');
+const { authorizeRole } = require('./middleware/authorizeRole');
 const Vitals = require('../models/vitals');
 const AuditLog = require('../models/AuditLog');
 
-// ✅ Must use exports.functionName — not module.exports = {}
 exports.addVitals = async (req, res) => {
   try {
     const vitals = await Vitals.create({

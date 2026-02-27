@@ -26,6 +26,14 @@ const nursingNoteSchema = new mongoose.Schema(
   { _id: false, timestamps: true }
 );
 
+const inPatientSchema = new mongoose.Schema({
+  name:      { type: String, required: true },
+  ward:      { type: String, required: true },
+  bedNumber: { type: String, required: true },
+  admittedBy:{ type: String },
+  status:    { type: String, enum: ['active', 'discharged'], default: 'active' },
+}, { timestamps: true });
+
 const patientSchema = new mongoose.Schema(
   {
     id: {
@@ -75,12 +83,3 @@ patientSchema.index(
 );
 
 module.exports = mongoose.model('Patient', patientSchema);
-
-// InPatient schema
-const inPatientSchema = new mongoose.Schema({
-  name:      { type: String, required: true },
-  ward:      { type: String, required: true },
-  bedNumber: { type: String, required: true },
-  admittedBy:{ type: String },
-  status:    { type: String, enum: ['active', 'discharged'], default: 'active' },
-}, { timestamps: true });
