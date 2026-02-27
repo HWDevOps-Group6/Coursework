@@ -1,6 +1,26 @@
 const User = require('../models/User');
+const DoctorSchedule = require('../models/DoctorSchedule');
 const bcrypt = require('bcryptjs');
 const { generateToken } = require('../utils/jwt');
+
+const buildDefaultHalfHourSlots = () => {
+  const slots = [];
+  for (let hour = 9; hour < 17; hour += 1) {
+    const fromHour = String(hour).padStart(2, '0');
+    const toHour = String(hour + 1).padStart(2, '0');
+    slots.push({ startTime: `${fromHour}:00`, endTime: `${fromHour}:30` });
+    slots.push({ startTime: `${fromHour}:30`, endTime: `${toHour}:00` });
+  }
+  return slots;
+};
+
+const buildDefaultWeeklyAvailability = () => {
+  const dailySlots = buildDefaultHalfHourSlots();
+  return Array.from({ length: 7 }, (_, dayOfWeek) => ({
+    dayOfWeek,
+    slots: dailySlots
+  }));
+};
 
 const normalizeDepartmentInput = (department) => {
   if (Array.isArray(department)) {
@@ -35,6 +55,29 @@ const register = async (userData) => {
     authProvider: 'local'
   });
   await user.save();
+
+  if (user.role === 'doctor') {
+    const doctorName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+    const departmentValue = Array.isArray(user.department) && user.department.length > 0
+      ? user.department[0]
+      : undefined;
+
+    await DoctorSchedule.findOneAndUpdate(
+      { doctorId: user._id.toString() },
+      {
+        $setOnInsert: {
+          doctorId: user._id.toString(),
+          doctorName,
+          department: departmentValue,
+          weeklyAvailability: buildDefaultWeeklyAvailability(),
+          createdBy: user._id.toString(),
+          updatedBy: user._id.toString(),
+          source: 'api'
+        }
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  }
 
   const token = generateToken(user);
   return { user: user.toJSON(), token };
@@ -98,4 +141,20 @@ const getUserById = async (userId) => {
   return user.toJSON();
 };
 
-module.exports = { register, login, findOrCreateFromGoogle, getUserById };
+const listDoctors = async () => {
+  const doctors = await User.find({ role: 'doctor', isActive: true })
+    .select('_id firstName lastName email department')
+    .sort({ firstName: 1, lastName: 1 })
+    .lean();
+
+  return doctors.map((doctor) => ({
+    id: doctor._id.toString(),
+    firstName: doctor.firstName,
+    lastName: doctor.lastName,
+    fullName: `${doctor.firstName} ${doctor.lastName}`.trim(),
+    email: doctor.email,
+    department: doctor.department || []
+  }));
+};
+
+module.exports = { register, login, findOrCreateFromGoogle, getUserById, listDoctors };

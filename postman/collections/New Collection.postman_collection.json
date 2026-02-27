@@ -6,6 +6,338 @@
   },
   "item": [
     {
+      "name": "Appointments",
+      "item": [
+        {
+          "name": "Appointments - Resolve Doctor Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "appt-resolve-doctor-test",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Stores doctor id and name\", function () {",
+                  "    const json = pm.response.json();",
+                  "    const doctor = json?.data?.user;",
+                  "    pm.expect(doctor).to.be.an(\"object\");",
+                  "    pm.expect(doctor.role).to.eql(\"doctor\");",
+                  "    pm.collectionVariables.set(\"appointment_doctor_id\", doctor.userId || doctor._id || doctor.id);",
+                  "    pm.collectionVariables.set(\"appointment_doctor_name\", `${doctor.firstName || \"\"} ${doctor.lastName || \"\"}`.trim());",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "appt-resolve-doctor-profile",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctor_register_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/auth/me",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Appointments - Upsert Doctor Schedule",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "appt-upsert-schedule-pre",
+                "exec": [
+                  "const now = new Date();",
+                  "const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));",
+                  "const yyyy = tomorrow.getUTCFullYear();",
+                  "const mm = String(tomorrow.getUTCMonth() + 1).padStart(2, \"0\");",
+                  "const dd = String(tomorrow.getUTCDate()).padStart(2, \"0\");",
+                  "const date = `${yyyy}-${mm}-${dd}`;",
+                  "pm.collectionVariables.set(\"appointment_date\", date);",
+                  "pm.collectionVariables.set(\"appointment_datetime_utc\", `${date}T10:00:00.000Z`);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "id": "appt-upsert-schedule-test",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "appt-upsert-doctor-schedule",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctor_register_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorName\": \"{{appointment_doctor_name}}\",\n  \"department\": \"Medicine\",\n  \"weeklyAvailability\": [\n    {\n      \"dayOfWeek\": 1,\n      \"slots\": [\n        { \"startTime\": \"09:00\", \"endTime\": \"12:00\" },\n        { \"startTime\": \"14:00\", \"endTime\": \"17:00\" }\n      ]\n    },\n    {\n      \"dayOfWeek\": 2,\n      \"slots\": [\n        { \"startTime\": \"09:00\", \"endTime\": \"12:00\" }\n      ]\n    },\n    {\n      \"dayOfWeek\": 3,\n      \"slots\": [\n        { \"startTime\": \"09:00\", \"endTime\": \"12:00\" }\n      ]\n    },\n    {\n      \"dayOfWeek\": 4,\n      \"slots\": [\n        { \"startTime\": \"09:00\", \"endTime\": \"12:00\" }\n      ]\n    },\n    {\n      \"dayOfWeek\": 5,\n      \"slots\": [\n        { \"startTime\": \"09:00\", \"endTime\": \"12:00\" }\n      ]\n    }\n  ],\n  \"source\": \"manual\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/patients/doctors/{{appointment_doctor_id}}/schedule",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "doctors",
+                "{{appointment_doctor_id}}",
+                "schedule"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Appointments - Get Doctor Availability",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "appt-availability-test",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "appt-get-doctor-availability",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clerk_register_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/patients/doctors/{{appointment_doctor_id}}/availability?date={{appointment_date}}",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "doctors",
+                "{{appointment_doctor_id}}",
+                "availability"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "{{appointment_date}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Appointments - Book Patient Appointment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "appt-booking-test",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Appointment booked\", function () {",
+                  "    pm.expect(json.success).to.eql(true);",
+                  "    pm.expect(json.data.appointment).to.be.an(\"object\");",
+                  "});",
+                  "pm.collectionVariables.set(\"appointment_id\", json.data.appointment._id || \"\");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "6aaa0d77-fd95-48b8-981a-ce342b58d3b6",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "appt-book-for-patient",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clerk_register_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": \"{{appointment_doctor_id}}\",\n  \"doctorName\": \"{{appointment_doctor_name}}\",\n  \"appointmentDateTime\": \"{{appointment_datetime_utc}}\",\n  \"durationMinutes\": 30,\n  \"reason\": \"Follow-up consultation\",\n  \"source\": \"manual\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/patients/records/{{diag_patient_id}}/appointments",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "records",
+                "{{diag_patient_id}}",
+                "appointments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Appointments - List Patient Appointments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "appt-list-test",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Contains appointments array\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.data.appointments).to.be.an(\"array\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "appt-list-by-patient",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{clerk_register_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/patients/records/{{diag_patient_id}}/appointments",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "records",
+                "{{diag_patient_id}}",
+                "appointments"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "a994fa34-f76d-4df0-b96f-31c6335326c5"
+    },
+    {
       "name": "Check Auth Service Health",
       "event": [
         {
@@ -444,7 +776,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"{{clerk_register_email}}\",\n  \"password\": \"SecurePass123!\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"Clerk\",\n  \"role\": \"clerk\",\n  \"phoneNumber\": \"0500000003\",\n  \"department\": \"Front Desk\"\n}",
+          "raw": "{\n  \"email\": \"{{clerk_register_email}}\",\n  \"password\": \"SecurePass123!\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"Clerk\",\n  \"role\": \"clerk\",\n  \"phoneNumber\": \"0500000003\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -792,8 +1124,9 @@
               "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
               "});",
               "const json = pm.response.json();",
-              "if (json && json.data && json.data.id) {",
-              "    pm.collectionVariables.set(\"diag_patient_id\", json.data.id);",
+              "const patientId = json?.data?.patient?.id || json?.data?.id || \"\";",
+              "if (patientId) {",
+              "    pm.collectionVariables.set(\"diag_patient_id\", patientId);",
               "}"
             ],
             "type": "text/javascript",
@@ -1153,6 +1486,18 @@
               "pm.test(\"Status code is 200\", function () {",
               "    pm.response.to.have.status(200);",
               "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "3d3e138f-976b-4e74-802c-69c318981324",
+            "exec": [
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -1692,78 +2037,103 @@
   ],
   "variable": [
     {
-      "id": "43121f22-a9af-49e3-b7b3-021492b83017",
+      "id": "c4e9eeb4-128d-40ef-b2fe-4b17081e8a76",
       "key": "gateway_url",
       "value": ""
     },
     {
-      "id": "f1e635af-da48-4935-99b5-bbdac6ddb966",
+      "id": "c2f7b1d5-8ff1-42f4-9e1d-5f67e3427b74",
       "key": "auth_url",
       "value": ""
     },
     {
-      "id": "6644fe53-27ba-450c-877f-69dd3a58ed72",
+      "id": "ad59afa4-1f5c-43a3-a926-7a13970984c8",
       "key": "patient_reg_url",
       "value": ""
     },
     {
-      "id": "d0c0b387-f0ef-4522-b89f-bc269b63f9b2",
+      "id": "71938189-9e9b-43b0-8c4e-269730a9c8db",
       "key": "diagnostics_vitals_url",
       "value": ""
     },
     {
-      "id": "2286321e-5bdc-4f09-8e73-af101695cce1",
+      "id": "26432ae7-dfff-4fce-80b3-22771adf032c",
       "key": "doctor_register_email",
       "value": ""
     },
     {
-      "id": "a88571d7-ac15-4b32-894f-97355a3b2f5d",
+      "id": "fa4bf503-fe57-4d5b-9b1f-5d75b5fe9b21",
       "key": "nurse_register_email",
       "value": ""
     },
     {
-      "id": "17281a05-fbe5-4a60-8cfe-11a70be6cedf",
+      "id": "ea7e6344-3a71-4a46-98b4-aa91b53981e6",
       "key": "clerk_register_email",
       "value": ""
     },
     {
-      "id": "46f69f95-0f36-4d6b-9a51-c9e56958bbf5",
-      "key": "clinician_register_email",
-      "value": ""
-    },
-    {
-      "id": "ee589c06-9227-491e-baa1-cfdd40a9e5b0",
+      "id": "8282a397-aee4-472b-be88-bea29f06bdf4",
       "key": "doctor_register_token",
       "value": ""
     },
     {
-      "id": "5da0bd79-5b2f-408c-a58a-b2d32c86d2d8",
+      "id": "5f0cc2a9-0898-4210-a1db-f439fdb231e3",
       "key": "nurse_register_token",
       "value": ""
     },
     {
-      "id": "5b8ffffd-a3f3-4cb7-a128-21c42fc2dfe8",
+      "id": "a8d82471-ad0f-4b01-abe5-8d6502c4d2c7",
       "key": "clerk_register_token",
       "value": ""
     },
     {
-      "id": "6f42f63f-08da-45f4-a6ce-59b4607437bc",
-      "key": "clinician_register_token",
-      "value": ""
-    },
-    {
-      "id": "34e3b394-8977-4538-a938-912c7f6ab126",
+      "id": "5e50167b-3906-424d-a85b-8f94fea0636c",
       "key": "diag_patient_id",
       "value": ""
     },
     {
-      "id": "00d4468e-7c16-401f-82d4-8ec7cec7b91b",
+      "id": "73bf9c34-bb06-474b-b594-c1b7441c1487",
       "key": "diag_machine_type",
       "value": "XRAY"
     },
     {
-      "id": "2b10fb75-cc5f-4bd1-a518-6d0a284e3be4",
+      "id": "3cc7752e-27b8-43b2-8f1f-ecfd9ccb1abe",
       "key": "diag_result_id",
+      "value": ""
+    },
+    {
+      "id": "7d462d21-b5b5-470d-9a84-8eb6e40894cf",
+      "key": "appointment_date",
+      "value": ""
+    },
+    {
+      "id": "3de1f582-2ce8-469d-b362-8d0dbfaf17fe",
+      "key": "appointment_datetime_utc",
+      "value": ""
+    },
+    {
+      "id": "e6a9e21a-d87b-48b6-876a-f02a89c2d854",
+      "key": "clinician_register_email",
+      "value": ""
+    },
+    {
+      "id": "ac051a73-2bda-4a1f-a7ac-58c7158c620e",
+      "key": "clinician_register_token",
+      "value": ""
+    },
+    {
+      "id": "1bd088a3-6c91-40c7-8ce4-1169f92e1b96",
+      "key": "appointment_doctor_id",
+      "value": ""
+    },
+    {
+      "id": "f14e8d54-05f2-4ef5-923c-b265df88f75a",
+      "key": "appointment_doctor_name",
+      "value": ""
+    },
+    {
+      "id": "76e1f9f7-e174-475c-aae2-577e7dbcfd0a",
+      "key": "appointment_id",
       "value": ""
     }
   ]
