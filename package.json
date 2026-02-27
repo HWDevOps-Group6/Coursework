@@ -1,6 +1,10 @@
 {
   "name": "healthcare-management-system",
   "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "services/*"
+  ],
   "description": "Healthcare Management System with NodeJS REST API, MongoDB, and JWT authentication",
   "main": "src/gateway.js",
   "scripts": {
