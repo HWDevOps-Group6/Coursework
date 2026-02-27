@@ -75,7 +75,7 @@ app.use(
       },
       error(err, req, res) {
         console.error('[Gateway] Diagnostics/Vitals proxy error:', err.message);
-        return sendError(res, 502, 'BAD_GATEWAY', 'Diagnostics/Vitals service unavailable');
+        return sendError(res, 502, 'BAD_GATEWAY', 'Diagnostics&Vitals service unavailable');
       },
     },
   })

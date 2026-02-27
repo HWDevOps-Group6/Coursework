@@ -5,12 +5,6 @@ const mongoose = require("mongoose");
 const DiagnosticResultSchema = new mongoose.Schema(
   {
     // ── Patient reference ─────────────────────────────────────────────
-    patient: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Patient",
-      required: [true, "Patient reference is required"],
-    },
-
     patientId: {
       type: String,
       required: true,
