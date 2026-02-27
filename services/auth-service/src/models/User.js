@@ -1,6 +1,18 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+const ALLOWED_DEPARTMENTS = [
+  'Medicine',
+  'Surgery',
+  'Orthopedics',
+  'Pediatrics',
+  'ENT',
+  'Ophthalmology',
+  'Gynecology',
+  'Dermatology',
+  'Oncology'
+];
+
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
@@ -43,12 +55,40 @@ const userSchema = new mongoose.Schema({
     default: 'clerk'
   },
   phoneNumber: { type: String, trim: true },
-  department: { type: String, trim: true },
+  department: {
+    type: [{ type: String, trim: true, enum: ALLOWED_DEPARTMENTS }],
+    validate: [
+      {
+        validator: function(departments) {
+          if (!['doctor', 'nurse', 'clinician'].includes(this.role)) return true;
+          return Array.isArray(departments) && departments.length > 0;
+        },
+        message: 'Doctors, nurses, and clinicians must belong to at least one department'
+      },
+      {
+        validator: function(departments) {
+          if (this.role !== 'doctor') return true;
+          return Array.isArray(departments) && departments.length === 1;
+        },
+        message: 'Doctors must belong to exactly one department'
+      }
+    ]
+  },
   isActive: { type: Boolean, default: true },
   lastLogin: { type: Date }
 }, { timestamps: true });
 
 userSchema.pre('save', function(next) {
+  if (typeof this.department === 'string') {
+    this.department = this.department.trim() ? [this.department.trim()] : [];
+  }
+
+  if (Array.isArray(this.department)) {
+    this.department = this.department
+      .map((dept) => (typeof dept === 'string' ? dept.trim() : dept))
+      .filter(Boolean);
+  }
+
   if (this.authProvider === 'google' && !this.googleId) {
     next(new Error('Google users must have googleId'));
   } else if (this.authProvider === 'local' && !this.passwordHash) {

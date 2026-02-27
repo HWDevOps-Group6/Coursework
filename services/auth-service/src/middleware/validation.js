@@ -1,6 +1,20 @@
 const Joi = require('joi');
 const { sendError } = require('../../../../shared/http/responses');
 
+const ALLOWED_DEPARTMENTS = [
+  'Medicine',
+  'Surgery',
+  'Orthopedics',
+  'Pediatrics',
+  'ENT',
+  'Ophthalmology',
+  'Gynecology',
+  'Dermatology',
+  'Oncology'
+];
+
+const CARE_ROLES = ['doctor', 'nurse', 'clinician'];
+
 const validate = (schema, property = 'body') => {
   return (req, res, next) => {
     const { error, value } = schema.validate(req[property], {
@@ -32,7 +46,49 @@ const schemas = {
     lastName: Joi.string().trim().required().messages({ 'any.required': 'Last name is required' }),
     role: Joi.string().valid('clerk', 'doctor', 'nurse', 'paramedic', 'clinician', 'admin').default('clerk'),
     phoneNumber: Joi.string().trim().allow('', null).optional(),
-    department: Joi.string().trim().allow('', null).optional()
+    department: Joi.alternatives()
+      .try(
+        Joi.string().trim(),
+        Joi.array().items(Joi.string().trim()).min(1)
+      )
+      .allow(null, '')
+      .optional()
+  }).custom((value, helpers) => {
+    const rawDepartment = value.department;
+    let departments = [];
+
+    if (Array.isArray(rawDepartment)) {
+      departments = rawDepartment.map((item) => item.trim()).filter(Boolean);
+    } else if (typeof rawDepartment === 'string') {
+      const trimmed = rawDepartment.trim();
+      departments = trimmed ? [trimmed] : [];
+    }
+
+    const hasInvalidDepartment = departments.some((dept) => !ALLOWED_DEPARTMENTS.includes(dept));
+    if (hasInvalidDepartment) {
+      return helpers.error('any.custom', {
+        message: `department must be one or more of: ${ALLOWED_DEPARTMENTS.join(', ')}`
+      });
+    }
+
+    if (CARE_ROLES.includes(value.role)) {
+      if (departments.length === 0) {
+        return helpers.error('any.custom', {
+          message: `${value.role} must belong to at least one department`
+        });
+      }
+
+      if (value.role === 'doctor' && departments.length !== 1) {
+        return helpers.error('any.custom', {
+          message: 'doctor must belong to exactly one department'
+        });
+      }
+    }
+
+    value.department = departments.length ? departments : undefined;
+    return value;
+  }, 'role-based department validation').messages({
+    'any.custom': '{{#message}}'
   }),
   login: Joi.object({
     email: Joi.string().email().required().messages({ 'string.email': 'Please provide a valid email address', 'any.required': 'Email is required' }),
