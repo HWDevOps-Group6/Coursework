@@ -7,7 +7,6 @@ const { sendError } = require('../shared/http/responses');
 const { buildCorsOptions } = require('../shared/http/cors');
 
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
-const MAIN_SERVICE_URL = process.env.MAIN_SERVICE_URL || 'http://localhost:3002';
 const PATIENT_REG_SERVICE_URL = process.env.PATIENT_REG_SERVICE_URL || 'http://localhost:3003';
 const DIAGNOSTICS_VITALS_SERVICE_URL = process.env.DIAGNOSTICS_VITALS_SERVICE_URL || 'http://localhost:3004';
 const GATEWAY_PORT = process.env.GATEWAY_PORT || process.env.PORT || 3000;
@@ -43,9 +42,8 @@ app.get('/ping', (req, res) => {
 
 const PING_MS = 1500;
 app.get('/health', async (req, res) => {
-  const [authOk, mainOk, patientRegOk, diagnosticsVitalsOk] = await Promise.all([
+  const [authOk, patientRegOk, diagnosticsVitalsOk] = await Promise.all([
     ping(AUTH_SERVICE_URL, PING_MS),
-    ping(MAIN_SERVICE_URL, PING_MS),
     ping(PATIENT_REG_SERVICE_URL, PING_MS),
     ping(DIAGNOSTICS_VITALS_SERVICE_URL, PING_MS),
   ]);
@@ -56,7 +54,6 @@ app.get('/health', async (req, res) => {
     timestamp: new Date().toISOString(),
     backends: {
       auth: authOk ? 'up' : 'down',
-      main: mainOk ? 'up' : 'down',
       patientRegistration: patientRegOk ? 'up' : 'down',
       diagnosticsVitals: diagnosticsVitalsOk ? 'up' : 'down',
     },
@@ -164,24 +161,9 @@ app.use(
   })
 );
 
-app.use(
-  '/api',
-  createProxyMiddleware({
-    target: MAIN_SERVICE_URL,
-    changeOrigin: true,
-    // Express mount strips /api; add it back for main API routes.
-    pathRewrite: (path) => (path.startsWith('/api') ? path : `/api${path}`),
-    on: {
-      proxyReq(proxyReq, req) {
-        forwardParsedJsonBody(proxyReq, req);
-      },
-      error(err, req, res) {
-        console.error('[Gateway] Main API proxy error:', err.message);
-        return sendError(res, 502, 'BAD_GATEWAY', 'Main API unavailable');
-      },
-    },
-  })
-);
+app.use('/api', (req, res) => {
+  return sendError(res, 404, 'NOT_FOUND', 'API route not found');
+});
 
 app.use('/', (req, res) => {
   return sendError(res, 404, 'NOT_FOUND', 'Route not found');
@@ -189,7 +171,7 @@ app.use('/', (req, res) => {
 
 app.listen(GATEWAY_PORT, () => {
   console.log(
-    `[Gateway] Running on port ${GATEWAY_PORT} | Auth → ${AUTH_SERVICE_URL} | Main API → ${MAIN_SERVICE_URL} | Patient Registration → ${PATIENT_REG_SERVICE_URL} | Diagnostics/Vitals → ${DIAGNOSTICS_VITALS_SERVICE_URL}`
+    `[Gateway] Running on port ${GATEWAY_PORT} | Auth → ${AUTH_SERVICE_URL} | Patient Registration → ${PATIENT_REG_SERVICE_URL} | Diagnostics/Vitals → ${DIAGNOSTICS_VITALS_SERVICE_URL}`
   );
 });
 
