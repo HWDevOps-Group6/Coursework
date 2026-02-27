@@ -60,7 +60,7 @@ app.get('/health', (req, res) => {
 
 
 // Vitals endpoints (logic inlined)
-app.post('/api/vitals/:patientId', verifyToken, authorizeRole("doctor"), async (req, res) => {
+app.post('/api/vitals/:patientId', verifyToken, authorizeRole("doctor", "nurse"), async (req, res) => {
   try {
     const source = req.body?.source || 'device';
     const createdBy = req.user?.name || 'IoT Device';
