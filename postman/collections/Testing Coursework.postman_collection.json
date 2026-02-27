@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "f9b641fd-1ef0-4597-a7a8-453dda11e5ca",
+    "_postman_id": "e6f4b47f-d0b6-4fc8-bac3-842eba4e82a2",
     "name": "Testing Coursework",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -14,7 +14,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
+                "id": "a2ba7255-948b-4b54-8e50-fe950a5fc05b",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -26,7 +26,7 @@
               }
             }
           ],
-          "id": "e01af24c-dad0-4271-b12e-a946d81dea38",
+          "id": "92b0fc9e-9e63-47ba-9f06-1e21d64a1214",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -51,7 +51,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
+                "id": "a64c4549-f8d4-4206-adae-bd2ffe859fe8",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -65,7 +65,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "7de8982a-32a6-4b57-8294-592fbf632c42",
+                "id": "7a3d9122-9f4c-4161-903e-5cc3ea1628ed",
                 "exec": [
                   ""
                 ],
@@ -75,7 +75,7 @@
               }
             }
           ],
-          "id": "bf2b72d1-dc11-4b56-b091-610bb97d233d",
+          "id": "1509e37b-6544-4fc7-a8d9-9115a529fec2",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -100,7 +100,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
+                "id": "39c971b9-b4a7-49fb-8c48-7e7891581712",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -114,7 +114,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "58ad9cdb-56a4-46bc-a329-40d50a329723",
+                "id": "ec2b38e5-0190-420f-ac5b-de0191fc1c4d",
                 "exec": [
                   ""
                 ],
@@ -124,7 +124,7 @@
               }
             }
           ],
-          "id": "2d17e758-8269-40ff-8e84-7398a22d7273",
+          "id": "a5d83197-951a-4f39-a3f0-688635afac76",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -149,7 +149,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
+                "id": "a0475fa7-01ad-4147-8c17-5973b9a10e48",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -163,7 +163,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "58ad9cdb-56a4-46bc-a329-40d50a329723",
+                "id": "779856ac-3482-4e3e-a4ac-bb0fe2580b99",
                 "exec": [
                   ""
                 ],
@@ -173,7 +173,7 @@
               }
             }
           ],
-          "id": "fba8415d-5415-4bbf-a4d1-54a8b8b740e0",
+          "id": "e6245721-e8a6-4e59-9e99-c1f11cbf7c42",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -193,7 +193,7 @@
           "response": []
         }
       ],
-      "id": "eb2e9f41-7ad4-4e0a-a025-e0519c5543d6"
+      "id": "18ca5775-5085-4672-aba2-b56692235148"
     },
     {
       "name": "Authentication & Staff",
@@ -204,7 +204,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "194fe8a3-85ea-4e9d-ab2c-359f12168f75",
+                "id": "10478f57-f4a8-4335-bdca-8f31098aeb97",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
                   "    pm.response.to.have.status(201);",
@@ -226,7 +226,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "525e52ce-beff-4ae5-809e-3a6774aca7fe",
+                "id": "4715acb4-cb5a-45a7-9663-2dbd463cd13d",
                 "exec": [
                   ""
                 ],
@@ -236,7 +236,7 @@
               }
             }
           ],
-          "id": "be9efd8c-5d3f-426f-b395-2f11885ad8d2",
+          "id": "da152861-f141-44f0-ae6e-05cfd9ecb588",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -272,7 +272,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "ec2d84c3-e756-4cb1-960a-1f1de1158e1d",
+                "id": "8e910ce0-6292-4519-8959-5a41e74b0e85",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
                   "    pm.response.to.have.status(201);",
@@ -292,7 +292,7 @@
               }
             }
           ],
-          "id": "2f23e6af-2ea7-496e-8f4a-4798cf6be57c",
+          "id": "5a6d373e-fffd-427c-8dde-85400179f9f7",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -328,7 +328,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "47a45953-06c3-4586-b90b-f30b20c2fce2",
+                "id": "139d1ab7-61e0-4459-84c6-3be95d6b90a0",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
                   "    pm.response.to.have.status(201);",
@@ -348,7 +348,7 @@
               }
             }
           ],
-          "id": "5da9977b-4be7-4c34-9c63-d61a036fff17",
+          "id": "ca4760f8-2f84-423e-b91e-39d5a3b27a92",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -384,7 +384,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "0f6cd30c-5908-4154-a66f-9fe4900d5861",
+                "id": "f333f8b3-f08e-438c-b650-083ce31ecbb9",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
                   "    pm.response.to.have.status(201);",
@@ -406,7 +406,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "cf7d44c7-6ea2-4705-b03c-bb14bc3f3a0f",
+                "id": "99ed66ea-7bc3-4bae-9f73-a33cc049e935",
                 "exec": [
                   ""
                 ],
@@ -416,7 +416,7 @@
               }
             }
           ],
-          "id": "fcae2586-b668-48ec-8f4f-00fbf2425f4f",
+          "id": "6c151aaf-4433-4518-b51e-e31db105c712",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -452,12 +452,19 @@
             {
               "listen": "test",
               "script": {
-                "id": "bc8e46c3-e2cf-4576-b476-747b2cc06a5e",
+                "id": "4ee51074-1b59-4b17-b2f7-932c7a4d8dd3",
                 "exec": [
                   "pm.test(\"Successful POST request\", function () {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});",
-                  ""
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var token = jsonData.data && jsonData.data.token ? jsonData.data.token : jsonData.token;",
+                  "pm.collectionVariables.set(\"doctor_auth_token\", token);",
+                  "",
+                  "pm.test(\"Token was successfully extracted\", function () {",
+                  "    pm.expect(token).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -467,7 +474,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "f99b81b9-c6ee-4938-9950-05366f88748f",
+                "id": "68353f86-f7a0-47bb-aa71-54acf5480c83",
                 "exec": [
                   ""
                 ],
@@ -477,7 +484,7 @@
               }
             }
           ],
-          "id": "501d84cc-7f39-4439-a4f7-de6b174d73be",
+          "id": "b94b5b92-4c23-412f-8a7b-204c3f5bf4f7",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -513,12 +520,19 @@
             {
               "listen": "test",
               "script": {
-                "id": "bc8e46c3-e2cf-4576-b476-747b2cc06a5e",
+                "id": "7205cec9-95c1-43ca-bd94-2a2e95c4037c",
                 "exec": [
                   "pm.test(\"Successful POST request\", function () {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});",
-                  ""
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var token = jsonData.data && jsonData.data.token ? jsonData.data.token : jsonData.token;",
+                  "pm.collectionVariables.set(\"clerk_auth_token\", token);",
+                  "",
+                  "pm.test(\"Token was successfully extracted\", function () {",
+                  "    pm.expect(token).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -528,7 +542,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "79b35960-8e7e-41e3-a281-cc6d61816cca",
+                "id": "0d0f4dd8-1fcb-4f20-8736-c20aca00423b",
                 "exec": [
                   ""
                 ],
@@ -538,7 +552,7 @@
               }
             }
           ],
-          "id": "757fd3f7-5db6-4970-a5da-0b2915c2286e",
+          "id": "01c8aa7c-9fdd-4d42-82dd-7d050da7da2f",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -574,12 +588,19 @@
             {
               "listen": "test",
               "script": {
-                "id": "bc8e46c3-e2cf-4576-b476-747b2cc06a5e",
+                "id": "765674eb-82d6-433d-91fd-0ac63254319b",
                 "exec": [
                   "pm.test(\"Successful POST request\", function () {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});",
-                  ""
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var token = jsonData.data && jsonData.data.token ? jsonData.data.token : jsonData.token;",
+                  "pm.collectionVariables.set(\"nurse_auth_token\", token);",
+                  "",
+                  "pm.test(\"Token was successfully extracted\", function () {",
+                  "    pm.expect(token).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -589,7 +610,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "df096ddd-1643-4e1a-98fc-1182ca8fb86d",
+                "id": "30296076-1254-45f6-9458-6980a6b842ce",
                 "exec": [
                   ""
                 ],
@@ -599,7 +620,7 @@
               }
             }
           ],
-          "id": "256a4051-ccc9-4ce7-9fd8-538627e65012",
+          "id": "7e7d3f53-ac42-418c-af76-c7353325cafe",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -635,12 +656,19 @@
             {
               "listen": "test",
               "script": {
-                "id": "bc8e46c3-e2cf-4576-b476-747b2cc06a5e",
+                "id": "56bef4a5-d5d3-4ea1-b009-79d01fdd3cda",
                 "exec": [
                   "pm.test(\"Successful POST request\", function () {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});",
-                  ""
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "var token = jsonData.data && jsonData.data.token ? jsonData.data.token : jsonData.token;",
+                  "pm.collectionVariables.set(\"clinician_auth_token\", token);",
+                  "",
+                  "pm.test(\"Token was successfully extracted\", function () {",
+                  "    pm.expect(token).to.be.a('string').and.to.have.length.above(0);",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -650,7 +678,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "e9286678-c750-4226-8bf8-6e0c89b4b1c2",
+                "id": "c7e7915c-2cbf-4e6e-960e-fa325459931d",
                 "exec": [
                   ""
                 ],
@@ -660,7 +688,7 @@
               }
             }
           ],
-          "id": "f1289e85-bf50-4bd4-9a2a-7af0f7aa45f0",
+          "id": "ebfc3820-df32-44a3-922e-f522fe3e949b",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -696,7 +724,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "9995b4e3-c9d3-4867-9e13-404be79a5dcc",
+                "id": "4243ff1f-04f9-4a56-8327-3aba4edafce7",
                 "exec": [
                   "pm.test(\"Successful PUT request\", function () {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
@@ -711,7 +739,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "50f270c5-8a0b-401b-8d1f-f62feb2e82de",
+                "id": "401e0dcf-ff51-4f8b-b897-92460d9a497d",
                 "exec": [
                   ""
                 ],
@@ -721,7 +749,7 @@
               }
             }
           ],
-          "id": "baf67ed1-f2e7-4e06-93dc-f2f8690e74ee",
+          "id": "cf93e40b-34db-4973-9f5d-a96efca16ba4",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -762,7 +790,7 @@
           "response": []
         }
       ],
-      "id": "8eebd62e-6ed8-4216-aa8f-f0a1d9066f50"
+      "id": "7e14b0ad-3b6b-434b-a5bb-a82907667bad"
     },
     {
       "name": "Patient Management",
@@ -773,7 +801,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "bc8e46c3-e2cf-4576-b476-747b2cc06a5e",
+                "id": "e13898c3-6b39-4e06-82fd-a233079d4a74",
                 "exec": [
                   "pm.test(\"Successful POST request\", function () {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
@@ -792,7 +820,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "7a33c520-7814-4b07-8649-46a42aacb1d5",
+                "id": "df127f1b-0e11-4761-9010-367b9f2a025d",
                 "exec": [
                   ""
                 ],
@@ -802,7 +830,7 @@
               }
             }
           ],
-          "id": "9a03c967-77a7-44fd-8d31-8e21782e4d0e",
+          "id": "687cf81b-20b2-4902-835e-193d08c808b4",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -812,7 +840,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{vault:clerk_auth}}",
+                  "value": "{{clerk_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -848,7 +876,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "bc8e46c3-e2cf-4576-b476-747b2cc06a5e",
+                "id": "467dcaa2-d09a-4b16-b7f9-3b3b74bae497",
                 "exec": [
                   "pm.test(\"Successful POST request\", function () {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
@@ -863,7 +891,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "cfebb88c-0539-4712-9107-ac94c8882ef0",
+                "id": "43268288-61a5-4ddd-afc3-1829a9d04e5a",
                 "exec": [
                   ""
                 ],
@@ -873,7 +901,7 @@
               }
             }
           ],
-          "id": "c9345014-23ae-4a00-91ed-72a3a0f22341",
+          "id": "5cc59da3-bec2-4484-b92c-b2be0b6072ee",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -883,7 +911,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_register_token}}",
+                  "value": "{{doctor_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -920,7 +948,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "43b9b255-a5c0-4f43-a306-2dca5df76f8a",
+                "id": "c3902114-30be-4acc-b1cf-a5c16153f4a1",
                 "exec": [
                   "pm.test(\"Successful PATCH request\", function () {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
@@ -935,7 +963,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "d3188274-f019-43af-b321-7a2f03b7fdfd",
+                "id": "6341a28b-ef3c-4e29-9d27-cc66609780b8",
                 "exec": [
                   ""
                 ],
@@ -945,7 +973,7 @@
               }
             }
           ],
-          "id": "8a67cb97-4ea4-42fd-947e-ad011f6d95db",
+          "id": "e7fb303b-4c95-4b2d-86c8-074f7df1c9fb",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -955,7 +983,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_register_token}}",
+                  "value": "{{doctor_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -993,7 +1021,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "2d1e95e8-18d1-4ef8-b4a2-8d4fd7e1aa11",
+                "id": "aafd930b-0831-4438-80f5-663997d2b358",
                 "exec": [
                   "pm.test(\"Successful PATCH request\", function () {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
@@ -1008,7 +1036,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "a92f5f8a-7cb9-4eb3-aabc-ae863bc4513c",
+                "id": "21ff5e03-867f-4455-b71c-caa6766cfa99",
                 "exec": [
                   ""
                 ],
@@ -1018,7 +1046,7 @@
               }
             }
           ],
-          "id": "2fbde80b-2513-4f95-9f4c-861e3f6ccf99",
+          "id": "dc074c7d-3e2e-4a1a-bfc8-6e827e0b9462",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -1028,7 +1056,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_register_token}}",
+                  "value": "{{doctor_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -1066,7 +1094,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "183160f4-2f6f-4af5-8f0f-cd7ca3339f36",
+                "id": "04752ce9-d2f6-4424-bf56-6cd8668302b7",
                 "exec": [
                   "pm.test(\"Successful PATCH request\", function () {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
@@ -1081,7 +1109,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "5dce680b-6af2-40ab-933d-13cdfebd0851",
+                "id": "d78d91ad-9b9b-4201-9a3b-dc65226363f6",
                 "exec": [
                   ""
                 ],
@@ -1091,7 +1119,7 @@
               }
             }
           ],
-          "id": "f6e9f777-af5b-49ac-8bcf-1aa79850fd1d",
+          "id": "e23194c4-9c8b-49dd-b94b-57ad00be592f",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -1101,7 +1129,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{nurse_register_token}}",
+                  "value": "{{nurse_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -1134,7 +1162,7 @@
           "response": []
         }
       ],
-      "id": "96ec4af0-e6ab-48e7-8970-baa1a8370d13"
+      "id": "a91beb3d-a8ec-409f-bdd2-d5755051d027"
     },
     {
       "name": "Appointments",
@@ -1145,7 +1173,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "appt-resolve-doctor-test",
+                "id": "e8632e9e-9158-45a4-bfc3-6cce702abf45",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -1163,9 +1191,21 @@
                 "packages": {},
                 "requests": {}
               }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "af431f4f-73b4-44d3-b7b2-5ecd16ce7900",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
           ],
-          "id": "appt-resolve-doctor-profile",
+          "id": "e21acaf4-07de-4bea-9169-1a705f6e91b7",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -1175,7 +1215,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_register_token}}",
+                  "value": "{{doctor_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -1202,7 +1242,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "appt-availability-test",
+                "id": "8d9d3736-6036-42da-bc7d-00d9f6267b28",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -1212,9 +1252,21 @@
                 "packages": {},
                 "requests": {}
               }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "7a40b98b-604b-4245-9247-477562338b6d",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
           ],
-          "id": "appt-get-doctor-availability",
+          "id": "a87833f9-d856-4ecb-8aa4-5a55d037c071",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -1224,7 +1276,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{clerk_register_token}}",
+                  "value": "{{clerk_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -1246,7 +1298,8 @@
               "query": [
                 {
                   "key": "date",
-                  "value": "{{appointment_date}}"
+                  "value": "{{appointment_date}}",
+                  "uuid": "6420b312-a511-4808-bd63-0f9e68d29f97"
                 }
               ]
             }
@@ -1259,7 +1312,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "appt-upsert-schedule-pre",
+                "id": "28fcc2bc-2c2f-47b7-a8b0-c2ed0e9210e5",
                 "exec": [
                   "const now = new Date();",
                   "const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));",
@@ -1278,7 +1331,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "appt-upsert-schedule-test",
+                "id": "9babc100-88c5-4c68-b4ef-ac2e243c62d0",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -1290,7 +1343,7 @@
               }
             }
           ],
-          "id": "appt-upsert-doctor-schedule",
+          "id": "3eaa8c6a-d9b6-40da-9c51-9c624c342643",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -1300,7 +1353,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_register_token}}",
+                  "value": "{{doctor_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -1338,7 +1391,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "appt-booking-test",
+                "id": "f9e0fd65-f1ad-4ec9-aa72-976842ed4556",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
                   "    pm.response.to.have.status(201);",
@@ -1358,7 +1411,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "6aaa0d77-fd95-48b8-981a-ce342b58d3b6",
+                "id": "0a150ffc-515e-4791-9f84-89f7b3b507bf",
                 "exec": [
                   ""
                 ],
@@ -1368,7 +1421,7 @@
               }
             }
           ],
-          "id": "appt-book-for-patient",
+          "id": "8f9798c3-ca1c-47d3-a4cb-b5cc7fceeab0",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -1378,7 +1431,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{clerk_register_token}}",
+                  "value": "{{clerk_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -1416,7 +1469,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "appt-list-test",
+                "id": "86bbbc94-e365-4427-9421-71320b5d7345",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -1430,9 +1483,21 @@
                 "packages": {},
                 "requests": {}
               }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "2ba4e6dc-a8bd-4e87-88a8-ad66c10fee09",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
           ],
-          "id": "appt-list-by-patient",
+          "id": "a77337dd-32e6-43c4-bdef-dc9a13d0a2c9",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -1442,7 +1507,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{clerk_register_token}}",
+                  "value": "{{clerk_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -1466,7 +1531,7 @@
           "response": []
         }
       ],
-      "id": "d4805808-fcc2-42ec-aeb7-b8a7d8ef310c"
+      "id": "8aa4520f-3911-4a5d-90ff-06c544e1fa98"
     },
     {
       "name": "Vitals",
@@ -1477,7 +1542,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "vitals-record-test",
+                "id": "a839445c-d1ba-477b-8ae9-24e2b6d1c65b",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
                   "    pm.response.to.have.status(201);",
@@ -1491,7 +1556,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "2c69d76e-014c-4ea6-b46c-c235fc3e02a0",
+                "id": "e795ef78-e890-4418-984e-8c8b7800e7d6",
                 "exec": [
                   ""
                 ],
@@ -1501,7 +1566,7 @@
               }
             }
           ],
-          "id": "vitals-record-request",
+          "id": "5c000040-cac5-43c5-8a61-06c1f386e47f",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -1511,7 +1576,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_register_token}}",
+                  "value": "{{nurse_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -1547,7 +1612,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "vitals-get-test",
+                "id": "40c0770a-c0ca-414f-834f-2c9b2cb2b444",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -1561,7 +1626,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "3d3e138f-976b-4e74-802c-69c318981324",
+                "id": "c3199dbd-9949-4ecf-8c89-11490b5a9b84",
                 "exec": [
                   ""
                 ],
@@ -1571,7 +1636,7 @@
               }
             }
           ],
-          "id": "vitals-get-request",
+          "id": "088c653f-c6ac-42ff-b0d6-bbb558c2b961",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -1581,7 +1646,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_register_token}}",
+                  "value": "{{doctor_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -1603,7 +1668,7 @@
           "response": []
         }
       ],
-      "id": "1b3748af-843f-4fc8-9aa6-0c38e74fafe7"
+      "id": "b5defc4b-f2c1-41b7-847a-7e20aaf59939"
     },
     {
       "name": "Diagnostics",
@@ -1614,7 +1679,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
+                "id": "51f114c5-e5e8-4846-94cc-66eaf6e0b8a7",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -1628,7 +1693,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "58ad9cdb-56a4-46bc-a329-40d50a329723",
+                "id": "ff6e5de3-b834-4def-8840-c2907dc0daa8",
                 "exec": [
                   ""
                 ],
@@ -1638,7 +1703,7 @@
               }
             }
           ],
-          "id": "5ca1d6ea-72e3-4981-83c8-75f9be59fe2e",
+          "id": "d2d69c99-aa4e-42ea-80b3-8f71d0488b5d",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -1648,7 +1713,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_register_token}}",
+                  "value": "{{doctor_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -1667,23 +1732,28 @@
               "query": [
                 {
                   "key": "patientId",
-                  "value": "{{diag_patient_id}}"
+                  "value": "{{diag_patient_id}}",
+                  "uuid": "459ead40-db4c-4562-8926-190262ccde84"
                 },
                 {
                   "key": "machineType",
-                  "value": "CT"
+                  "value": "CT",
+                  "uuid": "7b06ab62-f172-4f0c-9008-b5052bc0552b"
                 },
                 {
                   "key": "status",
-                  "value": "critical"
+                  "value": "critical",
+                  "uuid": "e34db3ed-c53a-4407-805a-f35028f57f5b"
                 },
                 {
                   "key": "page",
-                  "value": "1"
+                  "value": "1",
+                  "uuid": "9fc088a1-8cc7-477e-92e0-ee294a95a0f0"
                 },
                 {
                   "key": "limit",
-                  "value": "20"
+                  "value": "20",
+                  "uuid": "1484c649-6d0b-47ba-94d6-16dd15ea0158"
                 }
               ]
             }
@@ -1696,7 +1766,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
+                "id": "4d31050c-10fb-48ec-9af8-7dc8f442337c",
                 "exec": [
                   "pm.test(\"Status code is 201\", function () {",
                   "    pm.response.to.have.status(201);",
@@ -1714,7 +1784,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "58ad9cdb-56a4-46bc-a329-40d50a329723",
+                "id": "795889b4-595c-4a49-b513-dd2caab09a61",
                 "exec": [
                   ""
                 ],
@@ -1724,7 +1794,7 @@
               }
             }
           ],
-          "id": "e306a00f-d93b-46a3-8dc9-eda082779902",
+          "id": "c12cd299-bd4b-447b-b93b-baffeced58bd",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -1734,7 +1804,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_register_token}}",
+                  "value": "{{clinician_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -1771,7 +1841,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
+                "id": "96889bc0-9bfa-4182-b3ea-fd7f9dc2e943",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -1785,7 +1855,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "58ad9cdb-56a4-46bc-a329-40d50a329723",
+                "id": "e007dea1-97a6-4cae-a57b-68568a1f5ec1",
                 "exec": [
                   ""
                 ],
@@ -1795,7 +1865,7 @@
               }
             }
           ],
-          "id": "f0f55968-b602-4084-b885-8727d852e28d",
+          "id": "36608b88-c331-48f8-8e3b-ea68253d8fe9",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -1805,7 +1875,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_register_token}}",
+                  "value": "{{clinician_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -1839,7 +1909,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "diag-stats-test",
+                "id": "3036ad0f-5b70-4f16-a755-0b4a4b708c0b",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -1849,9 +1919,21 @@
                 "packages": {},
                 "requests": {}
               }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "4556bb07-ca8f-4154-83d5-39b4322ef8d9",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
           ],
-          "id": "diag-stats-request",
+          "id": "4594ff89-3b30-4de9-a4f3-8c04f627b9c4",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -1861,7 +1943,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_register_token}}",
+                  "value": "{{doctor_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -1881,7 +1963,8 @@
               "query": [
                 {
                   "key": "patientId",
-                  "value": "{{diag_patient_id}}"
+                  "value": "{{diag_patient_id}}",
+                  "uuid": "944c8fde-4ba4-4123-a668-6f795e10abe0"
                 }
               ]
             }
@@ -1894,7 +1977,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "diag-machine-test",
+                "id": "d817405f-72ca-4ddd-9901-4594fb500681",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -1908,7 +1991,7 @@
             {
               "listen": "prerequest",
               "script": {
-                "id": "58eff697-8abc-4926-979f-334154a2b2ee",
+                "id": "b795ac5f-a97c-47e4-9221-bad59201c4ed",
                 "exec": [
                   ""
                 ],
@@ -1918,7 +2001,7 @@
               }
             }
           ],
-          "id": "diag-machine-request",
+          "id": "e4d58c9d-629e-414b-87dd-18f4a877a325",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -1928,7 +2011,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_register_token}}",
+                  "value": "{{clinician_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -1963,7 +2046,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "diag-by-patient-test",
+                "id": "a6bc1870-5932-4220-a30b-9e77884c439c",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -1981,9 +2064,21 @@
                 "packages": {},
                 "requests": {}
               }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "39f655e5-0f36-4e37-ab0d-ac265621cc9c",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
           ],
-          "id": "diag-by-patient-request",
+          "id": "ea097a2c-50b2-4b44-a667-29e435ac1614",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -1993,7 +2088,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_register_token}}",
+                  "value": "{{doctor_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -2021,7 +2116,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "diag-by-id-test",
+                "id": "01a68091-9b2b-4562-aec5-29dd1a5b1b17",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -2031,9 +2126,21 @@
                 "packages": {},
                 "requests": {}
               }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "facfa639-f8b7-412b-9249-0a771b833f32",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
           ],
-          "id": "diag-by-id-request",
+          "id": "40e6530e-a711-43f8-ad9a-2cbb87850c93",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -2043,7 +2150,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_register_token}}",
+                  "value": "{{clinician_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -2070,7 +2177,7 @@
             {
               "listen": "test",
               "script": {
-                "id": "diag-verify-test",
+                "id": "41883499-c57a-4e6d-bb3f-3318cbee6945",
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
@@ -2080,9 +2187,21 @@
                 "packages": {},
                 "requests": {}
               }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "cf11ed49-32d2-4bb6-89ec-fbad88767f52",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
           ],
-          "id": "diag-verify-request",
+          "id": "420fe253-770e-45e9-a320-bde933ea4508",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -2092,7 +2211,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{doctor_register_token}}",
+                  "value": "{{doctor_auth_token}}",
                   "type": "string"
                 }
               ]
@@ -2115,129 +2234,129 @@
           "response": []
         }
       ],
-      "id": "b7189dc8-37d3-4969-a6b9-034057635bb5"
+      "id": "e014c672-78aa-4d1f-bb94-5b31016219ac"
     }
   ],
   "variable": [
     {
-      "id": "3cc37d5f-22a1-4e73-9952-eb07dbe426e1",
+      "id": "ba281ab1-425a-457e-ae61-f49cc5333c94",
       "key": "gateway_url",
       "value": "http://localhost:3000"
     },
     {
-      "id": "51eee812-665e-4c99-936b-6c55f6f539c0",
+      "id": "f5c74647-92d8-4459-962d-e6a57d67d142",
       "key": "auth_url",
       "value": "http://localhost:3001"
     },
     {
-      "id": "4cb278fc-eae3-4f79-81dd-fcac1e275a70",
+      "id": "73328e8c-97a5-466a-885f-be82dcc54510",
       "key": "patient_reg_url",
       "value": "http://localhost:3003"
     },
     {
-      "id": "b2e899cb-c4bf-427c-aa52-8a1051baf913",
+      "id": "7a6c816e-cb69-4ef9-bd11-358801a7a4ff",
       "key": "diagnostics_vitals_url",
       "value": "http://localhost:3004"
     },
     {
-      "id": "2523f2ca-5f3b-435c-b5e2-aab8e888023a",
+      "id": "2fbc7bcf-0762-493f-ad60-49ccf6cc43fc",
       "key": "doctor_register_email",
       "value": "doctortest1@coolhospital.com"
     },
     {
-      "id": "53a4d94f-a424-4a2c-a4f4-e4e30f4355e0",
+      "id": "7411bca8-1349-42c8-9484-6df455450f32",
       "key": "nurse_register_email",
       "value": "nursetest1@coolhospital.com"
     },
     {
-      "id": "2fdf393a-079e-4f85-99c3-8ac7f5f93aee",
+      "id": "96e33b4a-864b-476f-a759-c9bb69bbfd16",
       "key": "clerk_register_email",
       "value": "clerktest1@coolhospital.com"
     },
     {
-      "id": "beb318f6-4544-4a14-9b02-84b92b3065a2",
+      "id": "14fbe62c-882a-4aa5-9080-27eaf42ef8a9",
       "key": "clinician_register_email",
       "value": "cliniciantest1@coolhospital.com"
     },
     {
-      "id": "a135016e-3bb8-41cb-b71b-56f6d3189746",
+      "id": "54e96870-6f2a-4954-b72a-3e52f1caf2a0",
       "key": "doctor_register_token",
-      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWExOWVmODUxOWJiZjU4ZTY4Yzk3OWMiLCJlbWFpbCI6ImRvY3RvcnRlc3QxQGNvb2xob3NwaXRhbC5jb20iLCJyb2xlIjoiZG9jdG9yIiwiZGVwYXJ0bWVudCI6WyJNZWRpY2luZSJdLCJpYXQiOjE3NzIxOTk2NzIsImV4cCI6MTc4MDgzOTY3Mn0.aNGGzj23hxRxnFopxiEL4qXImlGqE9HMvhJvhhti5Z4"
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWExOTE2NTExOGYyYzQ1ZTgzYjk3ZmMiLCJlbWFpbCI6ImRvY3RvcnRlc3QxQGNvb2xob3NwaXRhbC5jb20i..."
     },
     {
-      "id": "09cb2439-88e2-476c-bc31-cd3235516403",
+      "id": "6fb6eac7-15c2-4bf1-a379-43f9a358245c",
       "key": "nurse_register_token",
-      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWExOWVmODUxOWJiZjU4ZTY4Yzk3YTAiLCJlbWFpbCI6Im51cnNldGVzdDFAY29vbGhvc3BpdGFsLmNvbSIsInJvbGUiOiJudXJzZSIsImRlcGFydG1lbnQiOlsiUGVkaWF0cmljcyIsIkVOVCJdLCJpYXQiOjE3NzIxOTk2NzIsImV4cCI6MTc4MDgzOTY3Mn0.0RZm2o6YtRVu6gCNk-VqonCufMddLCNFgjeWDtt4EUM"
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWExOTE2NTExOGYyYzQ1ZTgzYjk4MDAiLCJlbWFpbCI6Im51cnNldGVzdDFAY29vbGhvc3BpdGFsLmNvbSIs..."
     },
     {
-      "id": "e4079777-0601-48a6-9d8a-af89ab2f6f3f",
+      "id": "efe445f9-bcdd-41a3-a4b7-697567bf073f",
       "key": "clerk_register_token",
-      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWExOWVmOTUxOWJiZjU4ZTY4Yzk3YTYiLCJlbWFpbCI6ImNsZXJrdGVzdDFAY29vbGhvc3BpdGFsLmNvbSIsInJvbGUiOiJjbGVyayIsImRlcGFydG1lbnQiOltdLCJpYXQiOjE3NzIxOTk2NzMsImV4cCI6MTc4MDgzOTY3M30.XGrTQNzJHi4AeG_J9fyATA35GKDKBqpYgnCfhXJMQHQ"
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWExOTE2NjExOGYyYzQ1ZTgzYjk4MDYiLCJlbWFpbCI6ImNsZXJrdGVzdDFAY29vbGhvc3BpdGFsLmNvbSIs..."
     },
     {
-      "id": "cc4e263f-635c-486b-b6a3-be5eadd03fc6",
+      "id": "365607b7-e9b5-4259-a730-5011a9d30bfb",
       "key": "clinician_register_token",
-      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWExOWVmOTUxOWJiZjU4ZTY4Yzk3YTMiLCJlbWFpbCI6ImNsaW5pY2lhbnRlc3QxQGNvb2xob3NwaXRhbC5jb20iLCJyb2xlIjoiY2xpbmljaWFuIiwiZGVwYXJ0bWVudCI6WyJNZWRpY2luZSIsIk9uY29sb2d5Il0sImlhdCI6MTc3MjE5OTY3MywiZXhwIjoxNzgwODM5NjczfQ.j-YAdlqoEd7oBqv9n5nvyJ96m_dJVZrUh-USpTqOFIo"
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWExOTE2NjExOGYyYzQ1ZTgzYjk4MDMiLCJlbWFpbCI6ImNsaW5pY2lhbnRlc3QxQGNvb2xob3NwaXRhbC5j..."
     },
     {
-      "id": "d614bfcd-139e-4743-bf44-0f51565b5449",
+      "id": "cd13f6a0-e1b0-4884-ae48-c663c32872b5",
       "key": "diag_patient_id",
       "value": "1"
     },
     {
-      "id": "22992147-af21-42e4-9995-3435d4a6e9cc",
+      "id": "8394be43-f064-4db0-9691-ae08481e2cd8",
       "key": "diag_machine_type",
       "value": "CT"
     },
     {
-      "id": "441f0d92-4321-4458-9f76-8906c710194c",
+      "id": "d23e15f3-31d6-4062-83ac-b4ac90e8b707",
       "key": "diag_result_id",
-      "value": "69a1a0496f218eeef12c1dc3"
+      "value": "69a1916a45b99e169f0ff23a"
     },
     {
-      "id": "efa04051-a98e-4c3a-927c-95fb696db4e7",
+      "id": "3b0b21f1-2583-46f1-ba7b-b99479ae7a79",
       "key": "appointment_date",
       "value": "2026-02-28"
     },
     {
-      "id": "63399cc7-a0ab-4012-b455-63e7d0c04bfb",
+      "id": "150a9de2-8c71-4954-95a7-6fe618c9fac0",
       "key": "appointment_datetime_utc",
       "value": "2026-02-28T10:00:00.000Z"
     },
     {
-      "id": "12c4c72f-1168-4a4c-8871-1d615c527ec8",
+      "id": "66e89af6-5c9c-4bad-a354-0e6b8ca3f098",
       "key": "appointment_doctor_id",
-      "value": "69a19ef8519bbf58e68c979c"
+      "value": "69a19165118f2c45e83b97fc"
     },
     {
-      "id": "f7d56bdf-5926-4db8-9c7d-4cac6414098f",
+      "id": "22a99bce-4734-41e2-9503-1fa6f929a3f5",
       "key": "appointment_doctor_name",
       "value": "Test Doctor"
     },
     {
-      "id": "a75e7788-764f-4cc5-808b-d8646a1d8f87",
+      "id": "30f91608-9921-403b-bc81-9d29ab0dde37",
       "key": "appointment_id",
-      "value": "69a19efc6715c8ddf2daac3a"
+      "value": "69a1916957c1d7bd5cf190d7"
     },
     {
-      "id": "b4dc87b3-6c7b-401e-bc55-f765b9eb60c1",
+      "id": "a2c3a537-c74a-4490-9b8a-9b6a3d829ad9",
       "key": "doctor_auth_token",
-      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWExOWVmODUxOWJiZjU4ZTY4Yzk3OWMiLCJlbWFpbCI6ImRvY3RvcnRlc3QxQGNvb2xob3NwaXRhbC5jb20iLCJyb2xlIjoiZG9jdG9yIiwiZGVwYXJ0bWVudCI6WyJNZWRpY2luZSJdLCJpYXQiOjE3NzIxOTk2NzQsImV4cCI6MTc4MDgzOTY3NH0.iQ8oSWr2OzrE3dpWeOCltNbj_0rqe1_Q8804MUQuZE0"
+      "value": ""
     },
     {
-      "id": "63dc6ffb-bddc-4c3f-90c0-ddc74103cad3",
+      "id": "881f3b8f-b888-49fc-b0df-f916d2941240",
       "key": "clerk_auth_token",
-      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWExOWVmOTUxOWJiZjU4ZTY4Yzk3YTYiLCJlbWFpbCI6ImNsZXJrdGVzdDFAY29vbGhvc3BpdGFsLmNvbSIsInJvbGUiOiJjbGVyayIsImRlcGFydG1lbnQiOltdLCJpYXQiOjE3NzIxOTk2NzQsImV4cCI6MTc4MDgzOTY3NH0.RUTdYNFeeXqO9GeSU54o7b1Nd2PUX8r9BhLxTg--vnc"
+      "value": ""
     },
     {
-      "id": "2f9305ad-68c0-45ee-a714-e97d567cc1f7",
+      "id": "0cac5f48-6ea9-4da7-9898-5c9e01b39f95",
       "key": "nurse_auth_token",
-      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWExOWVmODUxOWJiZjU4ZTY4Yzk3YTAiLCJlbWFpbCI6Im51cnNldGVzdDFAY29vbGhvc3BpdGFsLmNvbSIsInJvbGUiOiJudXJzZSIsImRlcGFydG1lbnQiOlsiUGVkaWF0cmljcyIsIkVOVCJdLCJpYXQiOjE3NzIxOTk2NzUsImV4cCI6MTc4MDgzOTY3NX0.6spdH3mSANgTNEd_HpSrp8X47_Ohh9banYAk6-gyRYI"
+      "value": ""
     },
     {
-      "id": "254c6a96-c20b-4c4c-9483-acf456bcbca4",
+      "id": "3dd9bb3d-9ece-4434-b3c6-d9a8704cc3c9",
       "key": "clinician_auth_token",
-      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWExOWVmOTUxOWJiZjU4ZTY4Yzk3YTMiLCJlbWFpbCI6ImNsaW5pY2lhbnRlc3QxQGNvb2xob3NwaXRhbC5jb20iLCJyb2xlIjoiY2xpbmljaWFuIiwiZGVwYXJ0bWVudCI6WyJNZWRpY2luZSIsIk9uY29sb2d5Il0sImlhdCI6MTc3MjE5OTY3NSwiZXhwIjoxNzgwODM5Njc1fQ.SK3kEK_XmtzwZnkgHpmWDvLal8Qw0DJ1zfo98dVCicc"
+      "value": ""
     }
   ]
 }
