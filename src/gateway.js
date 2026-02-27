@@ -88,7 +88,8 @@ app.use(
   createProxyMiddleware({
     target: DIAGNOSTICS_VITALS_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: (path) => path, // keep path as-is so /api/vitals/... hits service route
+    // Express mount strips /api/vitals; add it back for vitals service routes.
+    pathRewrite: (path) => (path.startsWith('/api/vitals') ? path : `/api/vitals${path}`),
     on: {
       proxyReq(proxyReq, req) {
         forwardParsedJsonBody(proxyReq, req);

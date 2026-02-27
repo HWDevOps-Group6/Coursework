@@ -6,6 +6,24 @@ const { validate, schemas } = require('../middleware/validation');
 const { verifyToken, extractTokenFromHeader } = require('../utils/jwt');
 const { sendError, sendSuccess } = require('../../../../shared/http/responses');
 
+const authorizeRoles = (...allowedRoles) => (req, res, next) => {
+  const role = req.user?.role;
+  if (!role) {
+    return sendError(res, 403, 'ROLE_MISSING', 'User role is required for this action');
+  }
+
+  if (!allowedRoles.includes(role)) {
+    return sendError(
+      res,
+      403,
+      'INSUFFICIENT_ROLE',
+      `This action requires one of: ${allowedRoles.join(', ')}`
+    );
+  }
+
+  return next();
+};
+
 // Headless auth: register, login, me, verify (no browser required)
 router.post('/register', validate(schemas.register), async (req, res) => {
   try {
@@ -33,6 +51,15 @@ router.get('/me', authenticate, async (req, res) => {
     return sendSuccess(res, 200, { user }, 'User retrieved successfully');
   } catch (error) {
     return sendError(res, 404, 'USER_NOT_FOUND', error.message);
+  }
+});
+
+router.get('/staff/doctors', authenticate, authorizeRoles('clerk', 'admin', 'doctor', 'nurse', 'paramedic', 'clinician'), async (req, res) => {
+  try {
+    const doctors = await authService.listDoctors();
+    return sendSuccess(res, 200, { doctors }, 'Doctor list retrieved successfully');
+  } catch (error) {
+    return sendError(res, 500, 'DOCTOR_LIST_ERROR', error.message);
   }
 });
 
