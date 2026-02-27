@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { sendError } = require('../../shared/http/responses');
+const { sendError } = require('../../../shared/http/responses');
 
 /**
  * Lightweight JWT verification middleware for other microservices

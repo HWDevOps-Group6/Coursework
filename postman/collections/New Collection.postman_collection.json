@@ -141,6 +141,55 @@
       "response": []
     },
     {
+      "name": "Check Diagnostics+Vitals Health",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "58ad9cdb-56a4-46bc-a329-40d50a329723",
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "fba8415d-5415-4bbf-a4d1-54a8b8b740e0",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{patient_reg_url}}/health",
+          "host": [
+            "{{patient_reg_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "Register Doctor",
       "event": [
         {
@@ -892,47 +941,52 @@
   ],
   "variable": [
     {
-      "id": "d56ab55f-5d9a-46c5-b2eb-8fcdf072ae24",
+      "id": "fc8ebc89-9ccd-4ac8-9193-2c1db0d91a63",
       "key": "gateway_url",
       "value": ""
     },
     {
-      "id": "e7e784f0-2dfe-4a26-9903-e96d586b4e45",
+      "id": "2829d474-cdce-40b7-822c-3968b64dfd3f",
       "key": "auth_url",
       "value": ""
     },
     {
-      "id": "b5318efe-49c2-49c5-8461-a80a480d5390",
+      "id": "744dd600-a743-465a-9e97-18915e0e7e85",
       "key": "patient_reg_url",
       "value": ""
     },
     {
-      "id": "db1babe4-3015-4c3f-83ad-0fd1c4f68adc",
+      "id": "b2e6da7b-1dae-44b9-9d58-ef86a7cce53a",
+      "key": "diagnostics_vitals_url",
+      "value": ""
+    },
+    {
+      "id": "44bf6cfb-09bc-4121-ad79-73122a213d7a",
       "key": "doctor_register_email",
       "value": ""
     },
     {
-      "id": "ff20f1e1-9fbb-422c-8887-620bae48d7fc",
+      "id": "65a9614a-ad83-4425-bb55-7cc7b6e8d7d4",
       "key": "nurse_register_email",
       "value": ""
     },
     {
-      "id": "00222d6c-02ad-46d2-8c3d-ec831ed19d66",
+      "id": "110d3e50-6c15-4a58-b569-ceeec6c3835d",
       "key": "clerk_register_email",
       "value": ""
     },
     {
-      "id": "aee70f05-ddfa-44cc-b32b-98efbfabc010",
+      "id": "799eb706-ccd6-4c4b-9ab6-10c2d2317bef",
       "key": "doctor_register_token",
       "value": ""
     },
     {
-      "id": "1cb4f4d1-4476-4078-af5d-5e2944e29c5a",
+      "id": "e9d7b98e-dcd4-41c3-8c0f-fb8b74e4f1e9",
       "key": "nurse_register_token",
       "value": ""
     },
     {
-      "id": "5f819b42-4cd0-4c3d-87d2-c31198d0befc",
+      "id": "716cc4a2-2aa2-4ba8-bc2d-4ecfdf54fe72",
       "key": "clerk_register_token",
       "value": ""
     }

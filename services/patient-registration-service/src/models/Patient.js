@@ -26,12 +26,96 @@ const nursingNoteSchema = new mongoose.Schema(
   { _id: false, timestamps: true }
 );
 
+
 const inPatientSchema = new mongoose.Schema({
   name:      { type: String, required: true },
   ward:      { type: String, required: true },
   bedNumber: { type: String, required: true },
   admittedBy:{ type: String },
   status:    { type: String, enum: ['active', 'discharged'], default: 'active' },
+}, { timestamps: true });
+
+// ── DiagnosticResult subdocument schema ─────────────────────────────
+const DiagnosticResultSchema = new mongoose.Schema({
+  patient: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Patient",
+    required: [true, "Patient reference is required"],
+  },
+  patientId: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  accessionNo: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+  },
+  machineType: {
+    type: String,
+    required: true,
+    enum: ["XRAY", "CT", "MRI", "PCR", "ULTRASOUND", "BLOODWORK"],
+    uppercase: true,
+  },
+  machineId: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  finding: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  result: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  status: {
+    type: String,
+    required: true,
+    enum: ["normal", "abnormal", "critical", "pending"],
+    default: "pending",
+    lowercase: true,
+  },
+  reportedBy: {
+    type: String,
+    trim: true,
+  },
+  verifiedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+  },
+  verifiedAt: {
+    type: Date,
+    default: null,
+  },
+  importSource: {
+    type: String,
+    enum: ["api", "manual", "hl7", "dicom", "lis"],
+    default: "api",
+  },
+  importedAt: {
+    type: Date,
+    default: Date.now,
+  },
+  rawPayload: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null,
+  },
+  notes: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+  isArchived: {
+    type: Boolean,
+    default: false,
+  },
 }, { timestamps: true });
 
 const patientSchema = new mongoose.Schema(
@@ -64,7 +148,8 @@ const patientSchema = new mongoose.Schema(
     registeredByRole: { type: String, required: true, trim: true },
     visitHistory: { type: [visitHistorySchema], default: [] },
     nursingNotes: { type: [nursingNoteSchema], default: [] },
-    inPatientNotes: { type: [inPatientSchema], default: [] }
+    inPatientNotes: { type: [inPatientSchema], default: [] },
+    diagnosticResults: { type: [DiagnosticResultSchema], default: [] },
   },
   { timestamps: true }
 );
@@ -74,6 +159,7 @@ patientSchema.index({ entryRoute: 1, createdAt: -1 });
 patientSchema.index({ id: 1, 'visitHistory.createdAt': -1 });
 patientSchema.index({ id: 1, 'nursingNotes.recordedAt': -1 });
 patientSchema.index({ id: 1, 'inPatientNotes.recordedAt': -1 });
+patientSchema.index({ id: 1, 'diagnosticResults.importedAt': -1 });
 patientSchema.index(
   { emiratesIdHash: 1 },
   {

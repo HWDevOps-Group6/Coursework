@@ -1,6 +1,6 @@
 // Business logic for importing and managing diagnostic results from machines
 
-const DiagnosticResult = require("../models/DiagnosticResult");
+const DiagnosticResult = require("./DiagnosticSchema");
 const MACHINE_TYPES = ["XRAY", "CT", "MRI", "PCR", "ULTRASOUND", "BLOODWORK"];
 
 const fetchFromMachineAPI = async (machineType) => {
