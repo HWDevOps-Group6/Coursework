@@ -62,16 +62,14 @@ app.get('/health', (req, res) => {
 // Vitals endpoints (logic inlined)
 app.post('/api/vitals/:patientId', verifyToken, authorizeRole("doctor"), async (req, res) => {
   try {
+    const source = req.body?.source || 'device';
+    const createdBy = req.user?.name || 'IoT Device';
     const vitals = await Vitals.create({
       patientId: req.params.patientId,
       ...req.body,
-      enteredBy: req.body.source === 'manual' ? req.user?.name : 'IoT Device',
-    });
-
-    await AuditLog.create({
-      action: `Vitals recorded for patient ${req.params.patientId}`,
-      actor: vitals.enteredBy,
-      source: vitals.source,
+      source,
+      createdBy,
+      updatedBy: createdBy,
     });
 
     res.status(201).json(vitals);
@@ -113,7 +111,8 @@ app.post("/import/:machineType", verifyToken, authorizeRole("doctor"), async (re
 
 app.post("/import-all", verifyToken, authorizeRole("doctor"), async (req, res) => {
   try {
-    const summary = await importAllMachines();
+    const { patientId } = req.body || {};
+    const summary = await importAllMachines(patientId);
     res.status(201).json({ success: true, message: "All machines polled successfully", summary });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -126,7 +125,7 @@ app.post("/import-all", verifyToken, authorizeRole("doctor"), async (req, res) =
 
 app.get("/stats", verifyToken, authorizeRole("doctor"), async (req, res) => {
   try {
-    const stats = await getImportStats();
+    const stats = await getImportStats(req.query.patientId);
     res.status(200).json({ success: true, data: stats });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -135,7 +134,7 @@ app.get("/stats", verifyToken, authorizeRole("doctor"), async (req, res) => {
 
 app.get("/critical", verifyToken, authorizeRole("doctor"), async (req, res) => {
   try {
-    const results = await getCriticalResults();
+    const results = await getCriticalResults(req.query.patientId);
     res.status(200).json({ success: true, count: results.length, data: results });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

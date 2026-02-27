@@ -63,18 +63,38 @@ app.get('/health', async (req, res) => {
   });
 });
 // Proxy diagnostics and vitals endpoints
+// Proxy diagnostics endpoints (strip /api/diagnostics prefix so service sees /...)
 app.use(
-  ['/api/diagnostics', '/api/vitals'],
+  '/api/diagnostics',
   createProxyMiddleware({
     target: DIAGNOSTICS_VITALS_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: (path, req) => path, // keep path as is
+    pathRewrite: (path) => path.replace(/^\/api\/diagnostics/, '') || '/',
     on: {
       proxyReq(proxyReq, req) {
         forwardParsedJsonBody(proxyReq, req);
       },
       error(err, req, res) {
-        console.error('[Gateway] Diagnostics/Vitals proxy error:', err.message);
+        console.error('[Gateway] Diagnostics proxy error:', err.message);
+        return sendError(res, 502, 'BAD_GATEWAY', 'Diagnostics&Vitals service unavailable');
+      },
+    },
+  })
+);
+
+// Proxy vitals endpoints (forward /api/vitals/* as-is to service)
+app.use(
+  '/api/vitals',
+  createProxyMiddleware({
+    target: DIAGNOSTICS_VITALS_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => path, // keep path as-is so /api/vitals/... hits service route
+    on: {
+      proxyReq(proxyReq, req) {
+        forwardParsedJsonBody(proxyReq, req);
+      },
+      error(err, req, res) {
+        console.error('[Gateway] Vitals proxy error:', err.message);
         return sendError(res, 502, 'BAD_GATEWAY', 'Diagnostics&Vitals service unavailable');
       },
     },

@@ -50,7 +50,6 @@ const DiagnosticResultSchema = new mongoose.Schema({
   accessionNo: {
     type: String,
     required: true,
-    unique: true,
     trim: true,
   },
   machineType: {
