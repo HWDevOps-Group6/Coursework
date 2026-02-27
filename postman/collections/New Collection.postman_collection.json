@@ -988,6 +988,79 @@
           "response": []
         },
         {
+          "name": "Append Prescription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "2d1e95e8-18d1-4ef8-b4a2-8d4fd7e1aa11",
+                "exec": [
+                  "pm.test(\"Successful PATCH request\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "a92f5f8a-7cb9-4eb3-aabc-ae863bc4513c",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "2fbde80b-2513-4f95-9f4c-861e3f6ccf99",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctor_register_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"medicines\": [\"paracetamol 500mg\", \"amoxicillin 250mg\"],\n  \"prescribedAt\": \"2026-02-20T15:30:00.000Z\",\n  \"notes\": \"Take after meals for 5 days\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/patients/records/{{diag_patient_id}}/prescriptions",
+              "host": [
+                "{{gateway_url}}"
+              ],
+              "path": [
+                "api",
+                "patients",
+                "records",
+                "{{diag_patient_id}}",
+                "prescriptions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Append Nursing Note",
           "event": [
             {
@@ -1037,7 +1110,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"medicines\": [\"paracetamol 500mg\", \"normal saline\"],\n  \"treatmentDetails\": \"Wound dressing and IV fluid monitoring\",\n  \"intakeOutput\": \"Intake 1200ml, output 900ml\",\n  \"recordedAt\": \"2026-02-20T15:30:00.000Z\"\n}",
+              "raw": "{\n  \"treatmentDetails\": \"Wound dressing and IV fluid monitoring\",\n  \"intakeOutput\": \"Intake 1200ml, output 900ml\",\n  \"recordedAt\": \"2026-02-20T15:30:00.000Z\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
