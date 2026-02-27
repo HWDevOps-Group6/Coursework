@@ -1,15 +1,7 @@
-// src/services/diagnosticService.js
 // Business logic for importing and managing diagnostic results from machines
 
 const DiagnosticResult = require("../models/DiagnosticResult");
-
-// ── Machine registry ───────────────────────────────────────────────────────
 const MACHINE_TYPES = ["XRAY", "CT", "MRI", "PCR", "ULTRASOUND", "BLOODWORK"];
-
-// ── Simulated machine API fetch (replace with real machine API calls) ──────
-// In production, replace each case with the actual HTTP call to the machine:
-//   const response = await axios.get(`http://${machineHost}/api/results/latest`);
-//   return response.data.results;
 
 const fetchFromMachineAPI = async (machineType) => {
   const templates = {

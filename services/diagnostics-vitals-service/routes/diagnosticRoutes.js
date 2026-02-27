@@ -1,6 +1,4 @@
-// src/routes/diagnosticRoutes.js
 // All routes for diagnostic result import and management
-
 const express = require("express");
 const router  = express.Router();
 

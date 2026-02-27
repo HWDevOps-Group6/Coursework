@@ -1,4 +1,3 @@
-// src/models/DiagnosticResult.js
 // Stores results imported from X-Ray, CT, MRI, PCR machines via API
 
 const mongoose = require("mongoose");

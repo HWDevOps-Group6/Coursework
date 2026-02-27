@@ -6,55 +6,6 @@
   },
   "item": [
     {
-      "name": "Check Main Gateway Health",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
-            "exec": [
-              "pm.test(\"Status code is 200\", function () {",
-              "    pm.response.to.have.status(200);",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        },
-        {
-          "listen": "prerequest",
-          "script": {
-            "id": "58ad9cdb-56a4-46bc-a329-40d50a329723",
-            "exec": [
-              ""
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "id": "2d17e758-8269-40ff-8e84-7398a22d7273",
-      "protocolProfileBehavior": {
-        "disableBodyPruning": true
-      },
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{main_url}}/health",
-          "host": [
-            "{{main_url}}"
-          ],
-          "path": [
-            "health"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
       "name": "Check Auth Service Health",
       "event": [
         {
@@ -132,6 +83,55 @@
           "raw": "{{gateway_url}}/health",
           "host": [
             "{{gateway_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Check Patient Registration Health",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "58ad9cdb-56a4-46bc-a329-40d50a329723",
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "2d17e758-8269-40ff-8e84-7398a22d7273",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{patient_reg_url}}/health",
+          "host": [
+            "{{patient_reg_url}}"
           ],
           "path": [
             "health"
@@ -730,15 +730,14 @@
           }
         },
         "url": {
-          "raw": "{{gateway_url}}/api/patients/records/1",
+          "raw": "{{gateway_url}}/api/patients/records",
           "host": [
             "{{gateway_url}}"
           ],
           "path": [
             "api",
             "patients",
-            "records",
-            "1"
+            "records"
           ]
         }
       },
@@ -893,47 +892,47 @@
   ],
   "variable": [
     {
-      "id": "22c6cafd-f0bf-4ea5-846a-a4b76975ee2f",
+      "id": "d56ab55f-5d9a-46c5-b2eb-8fcdf072ae24",
       "key": "gateway_url",
       "value": ""
     },
     {
-      "id": "efac3141-be92-4b4e-97ec-c2ccc3eb23d7",
+      "id": "e7e784f0-2dfe-4a26-9903-e96d586b4e45",
       "key": "auth_url",
       "value": ""
     },
     {
-      "id": "6f2b0f70-642c-47ec-ba4c-4768bb5433bb",
-      "key": "main_url",
+      "id": "b5318efe-49c2-49c5-8461-a80a480d5390",
+      "key": "patient_reg_url",
       "value": ""
     },
     {
-      "id": "9365683a-b0f5-4473-a95a-fcf9e0b2ee9c",
+      "id": "db1babe4-3015-4c3f-83ad-0fd1c4f68adc",
       "key": "doctor_register_email",
       "value": ""
     },
     {
-      "id": "944f7cc9-54af-46e9-89f1-d45a6e8da841",
+      "id": "ff20f1e1-9fbb-422c-8887-620bae48d7fc",
       "key": "nurse_register_email",
       "value": ""
     },
     {
-      "id": "4593b3d3-c183-4d4d-8396-bcabdbabf625",
+      "id": "00222d6c-02ad-46d2-8c3d-ec831ed19d66",
       "key": "clerk_register_email",
       "value": ""
     },
     {
-      "id": "f8bd7931-4958-4909-9f57-4f9c91d8e5c5",
+      "id": "aee70f05-ddfa-44cc-b32b-98efbfabc010",
       "key": "doctor_register_token",
       "value": ""
     },
     {
-      "id": "bdd99a3f-469c-4031-9e3c-622feb95d180",
+      "id": "1cb4f4d1-4476-4078-af5d-5e2944e29c5a",
       "key": "nurse_register_token",
       "value": ""
     },
     {
-      "id": "1263203d-d0c2-462d-bb22-c1fa8cd62633",
+      "id": "5f819b42-4cd0-4c3d-87d2-c31198d0befc",
       "key": "clerk_register_token",
       "value": ""
     }
