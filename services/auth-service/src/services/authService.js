@@ -2,6 +2,22 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const { generateToken } = require('../utils/jwt');
 
+const normalizeDepartmentInput = (department) => {
+  if (Array.isArray(department)) {
+    const cleaned = department
+      .map((dept) => (typeof dept === 'string' ? dept.trim() : dept))
+      .filter(Boolean);
+    return cleaned.length ? cleaned : undefined;
+  }
+
+  if (typeof department === 'string') {
+    const trimmed = department.trim();
+    return trimmed ? [trimmed] : undefined;
+  }
+
+  return undefined;
+};
+
 const register = async (userData) => {
   const { email, password, firstName, lastName, role, phoneNumber, department } = userData;
   const existingUser = await User.findOne({ email: email.toLowerCase() });
@@ -15,7 +31,7 @@ const register = async (userData) => {
     lastName,
     role: role || 'clerk',
     phoneNumber,
-    department,
+    department: normalizeDepartmentInput(department),
     authProvider: 'local'
   });
   await user.save();
