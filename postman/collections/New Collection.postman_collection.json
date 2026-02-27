@@ -178,9 +178,9 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{patient_reg_url}}/health",
+          "raw": "{{diagnostics_vitals_url}}/health",
           "host": [
-            "{{patient_reg_url}}"
+            "{{diagnostics_vitals_url}}"
           ],
           "path": [
             "health"
@@ -661,7 +661,10 @@
               "pm.test(\"Successful POST request\", function () {",
               "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
               "});",
-              ""
+              "const json = pm.response.json();",
+              "if (json && json.data && json.data.id) {",
+              "    pm.collectionVariables.set(\"diag_patient_id\", json.data.id);",
+              "}"
             ],
             "type": "text/javascript",
             "packages": {},
@@ -700,7 +703,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"firstName\": \"Sick\",\n  \"lastName\": \"boi\",\n  \"emiratesId\": \"123456789012345\",\n  \"dateOfBirth\": \"1990-04-12\",\n  \"gender\": \"male\",\n  \"phoneNumber\": \"1234567890\",\n  \"address\": \"12 Example Street\",\n  \"knownDiseases\": [\"asthma\"],\n  \"complaints\": [\"headache\"],\n  \"entryRoute\": \"OPD\",\n  \"servicePoint\": \"Outpatient Department\"\n}",
+          "raw": "{\n  \"firstName\": \"Sick\",\n  \"lastName\": \"boi\",\n  \"emiratesId\": \"123456789012347\",\n  \"dateOfBirth\": \"1990-04-12\",\n  \"gender\": \"male\",\n  \"phoneNumber\": \"1234567890\",\n  \"address\": \"12 Example Street\",\n  \"knownDiseases\": [\"asthma\"],\n  \"complaints\": [\"headache\"],\n  \"entryRoute\": \"OPD\",\n  \"servicePoint\": \"Outpatient Department\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -779,14 +782,15 @@
           }
         },
         "url": {
-          "raw": "{{gateway_url}}/api/patients/records",
+          "raw": "{{gateway_url}}/api/patients/records/",
           "host": [
             "{{gateway_url}}"
           ],
           "path": [
             "api",
             "patients",
-            "records"
+            "records",
+            ""
           ]
         }
       },
@@ -850,7 +854,7 @@
           }
         },
         "url": {
-          "raw": "{{gateway_url}}/api/patients/records/1/visits",
+          "raw": "{{gateway_url}}/api/patients/records/{{diag_patient_id}}/visits",
           "host": [
             "{{gateway_url}}"
           ],
@@ -858,7 +862,7 @@
             "api",
             "patients",
             "records",
-            "1",
+            "{{diag_patient_id}}",
             "visits"
           ]
         }
@@ -923,7 +927,7 @@
           }
         },
         "url": {
-          "raw": "{{gateway_url}}/api/patients/records/1/nursing-notes",
+          "raw": "{{gateway_url}}/api/patients/records/{{diag_patient_id}}/nursing-notes",
           "host": [
             "{{gateway_url}}"
           ],
@@ -931,8 +935,127 @@
             "api",
             "patients",
             "records",
-            "1",
+            "{{diag_patient_id}}",
             "nursing-notes"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Record Patient Vitals",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "vitals-record-test",
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "2c69d76e-014c-4ea6-b46c-c235fc3e02a0",
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "vitals-record-request",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{doctor_register_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"temperature\": 37.2,\n  \"bp_systolic\": 120,\n  \"bp_diastolic\": 80,\n  \"pulse\": 76,\n  \"source\": \"manual\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{diagnostics_vitals_url}}/api/vitals/{{diag_patient_id}}",
+          "host": [
+            "{{diagnostics_vitals_url}}"
+          ],
+          "path": [
+            "api",
+            "vitals",
+            "{{diag_patient_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Recent Patient Vitals",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "vitals-get-test",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "vitals-get-request",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{doctor_register_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gateway_url}}/api/vitals/{{diag_patient_id}}",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "vitals",
+            "{{diag_patient_id}}"
           ]
         }
       },
@@ -985,18 +1108,36 @@
         },
         "method": "GET",
         "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"r_goswami@hospital.com\",\n  \"password\": \"SecurePass123!\"\n}"
-        },
         "url": {
-          "raw": "{{gateway_url}}/api/diagnostics",
+          "raw": "{{gateway_url}}/api/diagnostics?patientId={{diag_patient_id}}&machineType=CT&status=critical&page=1&limit=20",
           "host": [
             "{{gateway_url}}"
           ],
           "path": [
             "api",
             "diagnostics"
+          ],
+          "query": [
+            {
+              "key": "patientId",
+              "value": "{{diag_patient_id}}"
+            },
+            {
+              "key": "machineType",
+              "value": "CT"
+            },
+            {
+              "key": "status",
+              "value": "critical"
+            },
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "20"
+            }
           ]
         }
       },
@@ -1010,9 +1151,13 @@
           "script": {
             "id": "0effb736-1371-4b33-bb0c-a9433ea0a315",
             "exec": [
-              "pm.test(\"Status code is 200\", function () {",
-              "    pm.response.to.have.status(200);",
-              "});"
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "const json = pm.response.json();",
+              "if (json && json.data && json.data.length) {",
+              "    pm.collectionVariables.set(\"diag_result_id\", json.data[0]._id);",
+              "}"
             ],
             "type": "text/javascript",
             "packages": {},
@@ -1051,24 +1196,23 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"r_goswami@hospital.com\",\n  \"password\": \"SecurePass123!\"\n}"
+          "raw": "{\n  \"patientId\": \"{{diag_patient_id}}\",\n  \"machineId\": \"XRAY-01\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
         },
         "url": {
-          "raw": "{{gateway_url}}/api/diagnostics/import-all?patient=1",
+          "raw": "{{gateway_url}}/api/diagnostics/import/{{diag_machine_type}}",
           "host": [
             "{{gateway_url}}"
           ],
           "path": [
             "api",
             "diagnostics",
-            "import-all"
-          ],
-          "query": [
-            {
-              "key": "patient",
-              "value": "1",
-              "uuid": "dd8c313d-aa8e-4cdc-9453-4898f84eb4f3"
-            }
+            "import",
+            "{{diag_machine_type}}"
           ]
         }
       },
@@ -1121,26 +1265,295 @@
         },
         "method": "GET",
         "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"r_goswami@hospital.com\",\n  \"password\": \"SecurePass123!\"\n}"
-        },
         "url": {
-          "raw": "{{gateway_url}}/api/diagnostics/import?machineType=XRAY",
+          "raw": "{{gateway_url}}/api/diagnostics/critical?patientId={{diag_patient_id}}",
           "host": [
             "{{gateway_url}}"
           ],
           "path": [
             "api",
             "diagnostics",
-            "import"
+            "critical"
           ],
           "query": [
             {
-              "key": "machineType",
-              "value": "XRAY",
-              "uuid": "b148bf22-02d8-4fff-8b98-0f3ce4a80b9f"
+              "key": "patientId",
+              "value": "{{diag_patient_id}}",
+              "uuid": "0729189a-47f5-4371-a6fb-92ca9b6582d2"
             }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Diagnostics Stats For Patient",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "diag-stats-test",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "diag-stats-request",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{doctor_register_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gateway_url}}/api/diagnostics/stats?patientId={{diag_patient_id}}",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "diagnostics",
+            "stats"
+          ],
+          "query": [
+            {
+              "key": "patientId",
+              "value": "{{diag_patient_id}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Diagnostics By Machine",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "diag-machine-test",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "58eff697-8abc-4926-979f-334154a2b2ee",
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "diag-machine-request",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{doctor_register_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gateway_url}}/api/diagnostics/machine/{{diag_machine_type}}?patientId={{diag_patient_id}}",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "diagnostics",
+            "machine",
+            "{{diag_machine_type}}"
+          ],
+          "query": [
+            {
+              "key": "patientId",
+              "value": "{{diag_patient_id}}",
+              "uuid": "6abe7e4b-b4a0-415f-a015-0f40f79bca79"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Diagnostics By Patient",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "diag-by-patient-test",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "diag-by-patient-request",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{doctor_register_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gateway_url}}/api/diagnostics/patient/{{diag_patient_id}}",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "diagnostics",
+            "patient",
+            "{{diag_patient_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Diagnostic By ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "diag-by-id-test",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "diag-by-id-request",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{doctor_register_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gateway_url}}/api/diagnostics/{{diag_result_id}}",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "diagnostics",
+            "{{diag_result_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Verify Diagnostic Result",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "diag-verify-test",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "id": "diag-verify-request",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{doctor_register_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{gateway_url}}/api/diagnostics/{{diag_result_id}}/verify",
+          "host": [
+            "{{gateway_url}}"
+          ],
+          "path": [
+            "api",
+            "diagnostics",
+            "{{diag_result_id}}",
+            "verify"
           ]
         }
       },
@@ -1149,53 +1562,68 @@
   ],
   "variable": [
     {
-      "id": "6b8877cb-b8bc-4834-b017-ab1ae6652491",
+      "id": "43121f22-a9af-49e3-b7b3-021492b83017",
       "key": "gateway_url",
       "value": ""
     },
     {
-      "id": "912fc6e6-1154-4c7a-8de9-4efa07481a40",
+      "id": "f1e635af-da48-4935-99b5-bbdac6ddb966",
       "key": "auth_url",
       "value": ""
     },
     {
-      "id": "e7a60f6d-c880-42f1-8efe-d61d5aa7ea4f",
+      "id": "6644fe53-27ba-450c-877f-69dd3a58ed72",
       "key": "patient_reg_url",
       "value": ""
     },
     {
-      "id": "d2852abd-8c86-4155-80da-636bb77ecfc6",
+      "id": "d0c0b387-f0ef-4522-b89f-bc269b63f9b2",
       "key": "diagnostics_vitals_url",
       "value": ""
     },
     {
-      "id": "9720897a-7caa-49b2-a792-6387e98ae4cd",
+      "id": "2286321e-5bdc-4f09-8e73-af101695cce1",
       "key": "doctor_register_email",
       "value": ""
     },
     {
-      "id": "79ed3c2e-abc2-464b-9f73-1937d1159f7f",
+      "id": "a88571d7-ac15-4b32-894f-97355a3b2f5d",
       "key": "nurse_register_email",
       "value": ""
     },
     {
-      "id": "cfb91abc-c864-43a0-92e1-d8f72df47dfc",
+      "id": "17281a05-fbe5-4a60-8cfe-11a70be6cedf",
       "key": "clerk_register_email",
       "value": ""
     },
     {
-      "id": "d3d7d6fa-44ea-4a41-8148-9a82fcf11d9a",
+      "id": "ee589c06-9227-491e-baa1-cfdd40a9e5b0",
       "key": "doctor_register_token",
       "value": ""
     },
     {
-      "id": "302646b7-18c0-445a-8e13-192ae0ddc440",
+      "id": "5da0bd79-5b2f-408c-a58a-b2d32c86d2d8",
       "key": "nurse_register_token",
       "value": ""
     },
     {
-      "id": "aa2eca13-4a1d-40d7-8979-d12aca520c88",
+      "id": "5b8ffffd-a3f3-4cb7-a128-21c42fc2dfe8",
       "key": "clerk_register_token",
+      "value": ""
+    },
+    {
+      "id": "34e3b394-8977-4538-a938-912c7f6ab126",
+      "key": "diag_patient_id",
+      "value": ""
+    },
+    {
+      "id": "00d4468e-7c16-401f-82d4-8ec7cec7b91b",
+      "key": "diag_machine_type",
+      "value": "XRAY"
+    },
+    {
+      "id": "2b10fb75-cc5f-4bd1-a518-6d0a284e3be4",
+      "key": "diag_result_id",
       "value": ""
     }
   ]
