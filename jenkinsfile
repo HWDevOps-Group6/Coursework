@@ -1,0 +1,92 @@
+pipeline {
+    agent any
+
+    environment {
+        REGISTRY = "yourregistry.azurecr.io"
+        // Replace with your actual Jenkins Credential ID
+        ACR_CREDS = credentials('azure-acr-creds')
+    }
+
+    stages {
+        stage('Login & Cleanup') {
+            steps {
+                sh "echo ${ACR_CREDS_PSW} | docker login ${REGISTRY} -u ${ACR_CREDS_USR} --password-stdin"
+            }
+        }
+
+        // --- STAGE: API GATEWAY ---
+        // Builds if the root gateway files OR shared folder changes
+        stage('Build API Gateway') {
+            when {
+                anyOf {
+                    changeset "Dockerfile.gateway"
+                    changeset "src/**"
+                    changeset "shared/**"
+                }
+            }
+            steps {
+                sh "docker build -f Dockerfile.gateway -t ${REGISTRY}/gateway:${env.BUILD_NUMBER} ."
+                sh "docker push ${REGISTRY}/gateway:${env.BUILD_NUMBER}"
+                sh "docker-compose up -d --no-deps gateway"
+            }
+        }
+
+        // --- STAGE: AUTH SERVICE ---
+        stage('Build Auth Service') {
+            when {
+                anyOf {
+                    changeset "services/auth-service/**"
+                    changeset "shared/**"
+                }
+            }
+            steps {
+                dir('services/auth-service') {
+                    sh "docker build -t ${REGISTRY}/auth-service:${env.BUILD_NUMBER} ."
+                    sh "docker push ${REGISTRY}/auth-service:${env.BUILD_NUMBER}"
+                }
+                sh "docker-compose up -d --no-deps auth-service"
+            }
+        }
+
+        // --- STAGE: DIAGNOSTICS & VITALS ---
+        stage('Build Diagnostics Service') {
+            when {
+                anyOf {
+                    changeset "services/diagnostics-vitals-service/**"
+                    changeset "shared/**"
+                }
+            }
+            steps {
+                dir('services/diagnostics-vitals-service') {
+                    sh "docker build -t ${REGISTRY}/vitals-service:${env.BUILD_NUMBER} ."
+                    sh "docker push ${REGISTRY}/vitals-service:${env.BUILD_NUMBER}"
+                }
+                sh "docker-compose up -d --no-deps vitals-service"
+            }
+        }
+
+        // --- STAGE: PATIENT REGISTRATION ---
+        stage('Build Patient Service') {
+            when {
+                anyOf {
+                    changeset "services/patient-registration-service/**"
+                    changeset "shared/**"
+                }
+            }
+            steps {
+                dir('services/patient-registration-service') {
+                    sh "docker build -t ${REGISTRY}/patient-service:${env.BUILD_NUMBER} ."
+                    sh "docker push ${REGISTRY}/patient-service:${env.BUILD_NUMBER}"
+                }
+                sh "docker-compose up -d --no-deps patient-service"
+            }
+        }
+    }
+
+    post {
+        always {
+            sh "docker logout ${REGISTRY}"
+            cleanWs()
+        }
+    }
+}
