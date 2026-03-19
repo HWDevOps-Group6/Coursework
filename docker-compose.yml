@@ -1,0 +1,41 @@
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    ports:
+      - "80:3000" # Map VM port 80 to Gateway port 3000
+    depends_on:
+      - auth-service
+      - vitals-service
+      - patient-service
+    networks:
+      - coursework-net
+
+  auth-service:
+    build: ./services/auth-service
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/authdb
+    networks:
+      - coursework-net
+
+  vitals-service:
+    build: ./services/diagnostics-vitals-service
+    networks:
+      - coursework-net
+
+  patient-service:
+    build: ./services/patient-registration-service
+    networks:
+      - coursework-net
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    networks:
+      - coursework-net
+
+networks:
+  coursework-net:
+    driver: bridge

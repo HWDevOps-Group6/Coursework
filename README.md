@@ -42,15 +42,100 @@ flowchart LR
    Shared -. reused by .-> Diag
 ```
 
-High-level structure:
+## Repository Structure
 
-```
+```text
 Coursework/
-├── src/                    # Gateway
-├── services/               # Domain microservices
-├── shared/                 # Shared middleware/helpers
-├── postman/                # API collections and environment files
-└── docs/                   # Architecture/security drafts and notes
+├── Dockerfile.gateway
+├── ENV_SETUP.md
+├── jenkinsfile
+├── package.json
+├── README.md
+├── docs/
+│   ├── architecture/
+│   │   ├── api-flow.md
+│   │   └── security-design.md
+│   └── Drafts/
+│       ├── architecture-overview.md
+│       ├── justification.md
+│       ├── mongodb-schema.md
+│       ├── security.md
+│       └── workflows.md
+├── postman/
+│   ├── collections/
+│   │   └── Testing Coursework.postman_collection.json
+│   ├── environments/
+│   ├── globals/
+│   │   └── workspace.postman_globals.json
+│   └── specs/
+├── services/
+│   ├── auth-service/
+│   │   ├── Dockerfile
+│   │   ├── package.json
+│   │   ├── README.md
+│   │   └── src/
+│   │       ├── server.js
+│   │       ├── config/
+│   │       │   ├── database.js
+│   │       │   └── passport.js
+│   │       ├── middleware/
+│   │       │   ├── auth.js
+│   │       │   └── validation.js
+│   │       ├── models/
+│   │       │   ├── DoctorSchedule.js
+│   │       │   └── User.js
+│   │       ├── routes/
+│   │       │   ├── authRoutes.js
+│   │       │   └── googleAuthRoutes.js
+│   │       ├── services/
+│   │       │   └── authService.js
+│   │       └── utils/
+│   │           └── jwt.js
+│   ├── diagnostics-vitals-service/
+│   │   ├── Dockerfile
+│   │   ├── README.md
+│   │   ├── server.js
+│   │   ├── config/
+│   │   │   └── database.js
+│   │   ├── middleware/
+│   │   │   ├── authorizeRole.js
+│   │   │   └── verifyToken.js
+│   │   ├── models/
+│   │   │   ├── DiagnosticLogic.js
+│   │   │   ├── DiagnosticSchema.js
+│   │   │   └── VitalsSchema.js
+│   │   └── services/
+│   │       └── vitalsService.js
+│   └── patient-registration-service/
+│       ├── Dockerfile
+│       ├── package.json
+│       ├── README.md
+│       └── src/
+│           ├── server.js
+│           ├── config/
+│           │   └── database.js
+│           ├── middleware/
+│           │   ├── authorizeRole.js
+│           │   └── verifyToken.js
+│           └── models/
+│               ├── Appointment.js
+│               ├── audit.js
+│               ├── Counter.js
+│               ├── DoctorSchedule.js
+│               └── Patient.js
+├── shared/
+│   └── http/
+│       ├── cors.js
+│       ├── handlers.js
+│       └── responses.js
+├── src/
+│   ├── gateway.js
+│   ├── config/
+│   │   └── database.js
+│   └── middleware/
+│       ├── authorizeRole.js
+│       └── verifyToken.js
+└── secrets/
 ```
 
 ## Getting Started
@@ -96,6 +181,10 @@ npm run dev:all
 - API requests are routed through the gateway.
 - Postman collections for integration testing are available in the `postman/` directory.
 - Health check requests are included to validate service availability.
+
+## Jenkins Pipeline
+Azure VM setup with Jenkins installed
+http://52.140.125.222:8080/
 
 ## Documentation
 

@@ -1,7 +1,8 @@
 # Dependencies
 node_modules/
 
-# Environment variables
+# Environment variables + Secrets
+secrets
 .env
 
 # Logs
