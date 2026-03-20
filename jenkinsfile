@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         REGISTRY = "hwudevopsregistry-e9a8dkdbanfebbhh.azurecr.io"
-        ACR_CREDS = credentials('azure-acr-creds')
+        ACR_CREDS = credentials('azure-reg-creds')
     }
 
     stages {
