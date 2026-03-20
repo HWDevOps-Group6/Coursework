@@ -1,16 +1,18 @@
 services:
   gateway:
+    image: ${REGISTRY}/gateway:latest
     build:
       context: .
       dockerfile: Dockerfile.gateway
     ports:
-      - "80:3000" # Map VM port 80 to Gateway port 3000
+      - "80:3000"
     depends_on:
       - auth-service
       - vitals-service
       - patient-service
     networks:
       - coursework-net
+    restart: unless-stopped
 
   auth-service:
     build: ./services/auth-service
@@ -18,16 +20,19 @@ services:
       - MONGO_URI=mongodb://mongodb:27017/authdb
     networks:
       - coursework-net
+    restart: unless-stopped
 
   vitals-service:
     build: ./services/diagnostics-vitals-service
     networks:
       - coursework-net
+    restart: unless-stopped
 
   patient-service:
     build: ./services/patient-registration-service
     networks:
       - coursework-net
+    restart: unless-stopped
 
   mongodb:
     image: mongo:latest
