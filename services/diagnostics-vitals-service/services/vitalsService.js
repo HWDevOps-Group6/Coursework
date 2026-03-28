@@ -1,6 +1,4 @@
-const { verifyToken } = require('./middleware/verifyToken');
-const { authorizeRole } = require('./middleware/authorizeRole');
-const Vitals = require('../models/vitals');
+const Vitals = require('../models/VitalsSchema');
 const { auditFieldDefinitions } = require('../../patient-registration-service/src/models/audit');
 
 exports.addVitals = async (req, res) => {

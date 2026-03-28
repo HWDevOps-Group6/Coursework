@@ -15,7 +15,7 @@
     "dev:patient-reg": "PORT=3003 nodemon services/patient-registration-service/src/server.js",
     "dev:diagnostics-vitals": "PORT=3004 nodemon services/diagnostics-vitals-service/server.js",
     "dev:all": "concurrently \"npm run dev:auth\" \"npm run dev:patient-reg\" \"npm run dev:diagnostics-vitals\" \"npm run dev:gateway\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run test -ws --if-present"
   },
   "keywords": [
     "healthcare",

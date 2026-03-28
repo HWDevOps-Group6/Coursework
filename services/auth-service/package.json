@@ -5,9 +5,15 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "test": "mocha --reporter mochawesome test/*.test.js"
   },
-  "keywords": ["auth", "jwt", "oauth", "microservice"],
+  "keywords": [
+    "auth",
+    "jwt",
+    "oauth",
+    "microservice"
+  ],
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -23,6 +29,11 @@
     "passport-google-oauth20": "^2.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "chai": "^4.3.0",
+    "mocha": "^10.0.0",
+    "mochawesome": "^7.1.4",
+    "nodemon": "^3.0.2",
+    "proxyquire": "^2.1.3",
+    "sinon": "^21.0.3"
   }
 }

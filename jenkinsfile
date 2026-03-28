@@ -13,7 +13,38 @@ pipeline {
             }
         }
 
+        // --- TEST: AUTH SERVICE ---
+        stage('Test Auth Service') {
+            when {
+                anyOf {
+                    changeset "services/auth-service/**"
+                    changeset "shared/**"
+                }
+            }
+            steps {
+                dir('services/auth-service') {
+                    sh 'npm install'
+                    sh 'npm test'
+                }
+            }
+        }
         // --- STAGE: API GATEWAY ---
+
+        // --- TEST: DIAGNOSTICS & VITALS ---
+        stage('Test Diagnostics Service') {
+            when {
+                anyOf {
+                    changeset "services/diagnostics-vitals-service/**"
+                    changeset "shared/**"
+                }
+            }
+            steps {
+                dir('services/diagnostics-vitals-service') {
+                    sh 'npm install'
+                    sh 'npm test'
+                }
+            }
+        }
         // Builds if the root gateway files OR shared folder changes
         stage('Build API Gateway') {
             when {
@@ -80,11 +111,30 @@ pipeline {
                 sh "docker-compose up -d --no-deps patient-service"
             }
         }
+
+        // --- TEST: PATIENT REGISTRATION ---
+        stage('Test Patient Service') {
+            when {
+                anyOf {
+                    changeset "services/patient-registration-service/**"
+                    changeset "shared/**"
+                }
+            }
+            steps {
+                dir('services/patient-registration-service') {
+                    sh 'npm install'
+                    sh 'npm test'
+                }
+            }
+        }
     }
 
     post {
         always {
             sh "docker logout ${REGISTRY}"
+            archiveArtifacts artifacts: 'services/auth-service/mochawesome-report/*', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'services/diagnostics-vitals-service/mochawesome-report/*', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'services/patient-registration-service/mochawesome-report/*', allowEmptyArchive: true
             cleanWs()
         }
     }
