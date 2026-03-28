@@ -1,4 +1,3 @@
-const { authorizeRole } = require('../middleware/authorizeRole');
 const Vitals = require('../models/VitalsSchema');
 const { auditFieldDefinitions } = require('../../patient-registration-service/src/models/audit');
 
