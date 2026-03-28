@@ -25,9 +25,16 @@ pipeline {
                 }
             }
             steps {
-                dir('services/auth-service') {
-                    sh 'npm install'
-                    sh 'npm test'
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    dir('services/auth-service') {
+                        sh 'npm install'
+                        sh 'npm test'
+                    }
+                }
+            }
+            post {
+                failure {
+                    echo 'Auth Service tests failed! Check the logs above for details.'
                 }
             }
         }
@@ -42,9 +49,16 @@ pipeline {
                 }
             }
             steps {
-                dir('services/diagnostics-vitals-service') {
-                    sh 'npm install'
-                    sh 'npm test'
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    dir('services/diagnostics-vitals-service') {
+                        sh 'npm install'
+                        sh 'npm test'
+                    }
+                }
+            }
+            post {
+                failure {
+                    echo 'Diagnostics Service tests failed! Check the logs above for details.'
                 }
             }
         }
@@ -124,9 +138,16 @@ pipeline {
                 }
             }
             steps {
-                dir('services/patient-registration-service') {
-                    sh 'npm install'
-                    sh 'npm test'
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    dir('services/patient-registration-service') {
+                        sh 'npm install'
+                        sh 'npm test'
+                    }
+                }
+            }
+            post {
+                failure {
+                    echo 'Patient Service tests failed! Check the logs above for details.'
                 }
             }
         }
