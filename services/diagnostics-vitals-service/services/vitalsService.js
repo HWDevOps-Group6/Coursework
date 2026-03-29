@@ -1,7 +1,4 @@
 const Vitals = require("../models/VitalsSchema");
-const {
-	auditFieldDefinitions,
-} = require("../../patient-registration-service/src/models/audit");
 
 exports.addVitals = async (req, res) => {
 	try {
