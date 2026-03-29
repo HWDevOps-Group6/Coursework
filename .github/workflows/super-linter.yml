@@ -1,9 +1,9 @@
 ---
 name: Lint
 
-on: # yamllint disable-line rule:truthy
-  push: null
-  pull_request: null
+on:
+  push:
+  pull_request:
 
 permissions: {}
 
@@ -13,28 +13,35 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      # contents permission to clone the repository
       contents: read
       packages: read
-      # issues and pull-requests permissions to write results as pull
-      # request comments. Omit them if you don't need summary comments
       issues: write
       pull-requests: write
-      # To report GitHub Actions status checks. Omit if you don't need
-      # to update commit status
       statuses: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          # super-linter needs the full git history to get the
-          # list of files that changed across commits
           fetch-depth: 0
           persist-credentials: false
 
       - name: Super-linter
-        uses: super-linter/super-linter@v8.5.0 # x-release-please-version
+        uses: super-linter/super-linter@v8.5.0
         env:
-          # To report GitHub Actions status checks
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+          # 1. Resolve Python Conflicts (Keep Ruff, it's the 2026 standard)
+          VALIDATE_PYTHON_BLACK: false
+          VALIDATE_PYTHON_RUFF: true
+
+          # 2. Resolve JavaScript/TypeScript/HTML Conflicts
+          # We keep Biome enabled and disable the legacy tools it replaces
+          VALIDATE_BIOME: true
+          VALIDATE_JAVASCRIPT_ESLINT: false
+          VALIDATE_JAVASCRIPT_PRETTIER: false
+          VALIDATE_TYPESCRIPT_ESLINT: false
+          VALIDATE_TYPESCRIPT_PRETTIER: false
+          VALIDATE_HTML: false
+          VALIDATE_JSON: false
+          VALIDATE_CSS: false
