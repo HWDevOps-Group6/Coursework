@@ -183,8 +183,9 @@ npm run dev:all
 - Health check requests are included to validate service availability.
 
 ## Jenkins Pipeline
+
 Azure VM setup with Jenkins installed
-http://52.140.125.222:8080/
+<http://52.140.125.222:8080/>
 
 ## Documentation
 

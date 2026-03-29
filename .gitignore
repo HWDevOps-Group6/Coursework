@@ -27,3 +27,7 @@ Coursework/docs/Drafts
 
 # Drafts
 docs/Drafts
+
+# Generated test reports
+services/patient-registration-service/mochawesome-report/
+**/mochawesome-report/
