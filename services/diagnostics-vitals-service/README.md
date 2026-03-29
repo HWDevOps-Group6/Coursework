@@ -6,31 +6,31 @@ Diagnostics and vitals microservice for importing diagnostic results, querying r
 
 ### Vitals
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | /api/vitals/:patientId | Record patient vitals |
-| GET | /api/vitals/:patientId | Retrieve recent patient vitals |
+| Method | Path                   | Description                    |
+| ------ | ---------------------- | ------------------------------ |
+| POST   | /api/vitals/:patientId | Record patient vitals          |
+| GET    | /api/vitals/:patientId | Retrieve recent patient vitals |
 
 ### Diagnostics
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | /import/:machineType | Import diagnostic results from a machine type |
-| POST | /import-all | Import from all configured machine sources |
-| GET | /stats | Get diagnostic statistics |
-| GET | /critical | Get critical diagnostic results |
-| GET | / | List diagnostics with query filters |
-| GET | /machine/:machineType | Get diagnostics by machine type |
-| GET | /patient/:patientId | Get diagnostics by patient |
-| GET | /:id | Get diagnostic result by id |
-| PATCH | /:id/verify | Verify a diagnostic result |
-| DELETE | /:id | Archive/delete a diagnostic result |
+| Method | Path                  | Description                                   |
+| ------ | --------------------- | --------------------------------------------- |
+| POST   | /import/:machineType  | Import diagnostic results from a machine type |
+| POST   | /import-all           | Import from all configured machine sources    |
+| GET    | /stats                | Get diagnostic statistics                     |
+| GET    | /critical             | Get critical diagnostic results               |
+| GET    | /                     | List diagnostics with query filters           |
+| GET    | /machine/:machineType | Get diagnostics by machine type               |
+| GET    | /patient/:patientId   | Get diagnostics by patient                    |
+| GET    | /:id                  | Get diagnostic result by ID                   |
+| PATCH  | /:id/verify           | Verify a diagnostic result                    |
+| DELETE | /:id                  | Archive/delete a diagnostic result            |
 
 ### Health
 
-| Method | Path |
-|--------|------|
-| GET | /health |
+| Method | Path    |
+| ------ | ------- |
+| GET    | /health |
 
 ## Run locally
 

@@ -6,30 +6,30 @@ Patient domain microservice for registration, records, visit updates, prescripti
 
 ### Patient Records
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | /api/patients/register | Register a new patient |
-| GET | /api/patients/records | List all patient records |
-| GET | /api/patients/records/:id | Get a single patient record |
-| PATCH | /api/patients/records/:id/visits | Append visit history |
-| PATCH | /api/patients/records/:id/prescriptions | Append prescription details |
-| PATCH | /api/patients/records/:id/nursing-notes | Append nursing notes |
+| Method | Path                                    | Description                       |
+| ------ | --------------------------------------- | --------------------------------- |
+| POST   | /api/patients/register                  | Register a new patient            |
+| GET    | /api/patients/records                   | List all patient records          |
+| GET    | /api/patients/records/:id               | Get a single patient record by ID |
+| PATCH  | /api/patients/records/:id/visits        | Append visit history              |
+| PATCH  | /api/patients/records/:id/prescriptions | Append prescription details       |
+| PATCH  | /api/patients/records/:id/nursing-notes | Append nursing notes              |
 
 ### Scheduling & Appointments
 
-| Method | Path | Description |
-|--------|------|-------------|
-| PUT | /api/patients/doctors/:doctorId/schedule | Create/update doctor schedule |
-| GET | /api/patients/doctors/:doctorId/schedule | Get doctor schedule |
-| GET | /api/patients/doctors/:doctorId/availability | Get doctor availability for a date |
-| POST | /api/patients/records/:id/appointments | Book an appointment for a patient |
-| GET | /api/patients/records/:id/appointments | List patient appointments |
+| Method | Path                                         | Description                             |
+| ------ | -------------------------------------------- | --------------------------------------- |
+| PUT    | /api/patients/doctors/:doctorId/schedule     | Create/update doctor schedule           |
+| GET    | /api/patients/doctors/:doctorId/schedule     | Get doctor schedule                     |
+| GET    | /api/patients/doctors/:doctorId/availability | Get doctor availability for a date      |
+| POST   | /api/patients/records/:id/appointments       | Book an appointment for a patient by ID |
+| GET    | /api/patients/records/:id/appointments       | List patient appointments               |
 
 ### Health
 
-| Method | Path |
-|--------|------|
-| GET | /health |
+| Method | Path    |
+| ------ | ------- |
+| GET    | /health |
 
 ## Run locally
 
@@ -57,9 +57,9 @@ Run container:
 
 ```bash
 docker run --name patient-registration-service \
-	--env-file .env \
-	-p 3003:3003 \
-	patient-registration-service:latest
+  --env-file .env \
+  -p 3003:3003 \
+  patient-registration-service:latest
 ```
 
 ## Other services

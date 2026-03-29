@@ -1,3 +1,4 @@
+---
 services:
   gateway:
     image: ${REGISTRY}/gateway:latest
