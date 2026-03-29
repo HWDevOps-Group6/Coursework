@@ -13,6 +13,71 @@ const ALLOWED_DEPARTMENTS = [
 	"Oncology",
 ];
 
+const isAlphaNumeric = (character) => {
+	const code = character.charCodeAt(0);
+	return (
+		(code >= 48 && code <= 57) ||
+		(code >= 65 && code <= 90) ||
+		(code >= 97 && code <= 122)
+	);
+};
+
+const isWhitespace = (character) => {
+	const code = character.charCodeAt(0);
+	return (
+		code === 9 ||
+		code === 10 ||
+		code === 11 ||
+		code === 12 ||
+		code === 13 ||
+		code === 32
+	);
+};
+
+const isValidDomainLabel = (label) => {
+	if (!label || label.startsWith("-") || label.endsWith("-")) {
+		return false;
+	}
+
+	for (const character of label) {
+		if (!isAlphaNumeric(character) && character !== "-") {
+			return false;
+		}
+	}
+
+	return true;
+};
+
+const isValidEmail = (email) => {
+	if (typeof email !== "string" || email.length === 0 || email.length > 254) {
+		return false;
+	}
+
+	for (const character of email) {
+		if (isWhitespace(character)) {
+			return false;
+		}
+	}
+
+	const atIndex = email.indexOf("@");
+	if (atIndex <= 0 || atIndex !== email.lastIndexOf("@")) {
+		return false;
+	}
+
+	const localPart = email.slice(0, atIndex);
+	const domainPart = email.slice(atIndex + 1);
+	if (!localPart || !domainPart || domainPart.startsWith(".") || domainPart.endsWith(".")) {
+		return false;
+	}
+
+	const domainLabels = domainPart.split(".");
+	if (domainLabels.length < 2) {
+		return false;
+	}
+
+	return domainLabels.every(isValidDomainLabel);
+};
+
 const userSchema = new mongoose.Schema(
 	{
 		email: {
@@ -21,7 +86,10 @@ const userSchema = new mongoose.Schema(
 			unique: true,
 			lowercase: true,
 			trim: true,
-			match: [/^\S+@\S+\.\S+$/, "Please provide a valid email address"],
+			validate: {
+				validator: isValidEmail,
+				message: "Please provide a valid email address",
+			},
 		},
 		passwordHash: {
 			type: String,
