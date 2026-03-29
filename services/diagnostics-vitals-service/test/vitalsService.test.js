@@ -1,30 +1,31 @@
 const chai = require("chai");
 const expect = chai.expect;
-const dotenv = require("dotenv");
-const path = require("path");
+const { MongoMemoryServer } = require("mongodb-memory-server");
 const mongoose = require("mongoose");
 const Vitals = require("../models/VitalsSchema");
 const vitalsService = require("../services/vitalsService");
 
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
-
-let MONGO_URI = process.env.MONGODB_URI;
-if (MONGO_URI && MONGO_URI.includes("/?")) {
-	MONGO_URI = MONGO_URI.replace(/\/(\?|$)/, "/mocha_Test$1");
-} else if (MONGO_URI && !MONGO_URI.match(/\/(\w+)\?/)) {
-	MONGO_URI = MONGO_URI.replace(/\/?$/, "/mocha_Test");
-}
+let mongoServer;
 
 describe("vitalsService (integration)", function () {
 	this.timeout(20000);
 
 	before(async () => {
-		await mongoose.connect(MONGO_URI);
+		mongoServer = await MongoMemoryServer.create();
+		await mongoose.connect(mongoServer.getUri(), {
+			dbName: "mocha_Test",
+		});
 	});
 
 	after(async () => {
-		await mongoose.connection.dropDatabase();
-		await mongoose.disconnect();
+		if (mongoose.connection.readyState !== 0) {
+			await mongoose.connection.dropDatabase();
+			await mongoose.disconnect();
+		}
+
+		if (mongoServer) {
+			await mongoServer.stop();
+		}
 	});
 
 	beforeEach(async () => {
