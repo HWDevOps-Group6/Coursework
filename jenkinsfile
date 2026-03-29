@@ -1,3 +1,13 @@
+def composeUp(serviceName) {
+    sh """#!/bin/sh
+    if command -v docker-compose >/dev/null 2>&1; then
+        docker-compose up -d --no-deps ${serviceName}
+    else
+        docker compose up -d --no-deps ${serviceName}
+    fi
+    """
+}
+
 pipeline {
         tools {
             nodejs 'NodeJS' 
@@ -76,7 +86,7 @@ pipeline {
             steps {
                 sh "docker build -f Dockerfile.gateway -t ${REGISTRY}/gateway:${env.BUILD_NUMBER} ."
                 sh "docker push ${REGISTRY}/gateway:${env.BUILD_NUMBER}"
-                sh "docker-compose up -d --no-deps gateway"
+                composeUp('gateway')
             }
         }
 
@@ -91,7 +101,7 @@ pipeline {
             steps {
                 sh "docker build -f services/auth-service/Dockerfile -t ${REGISTRY}/auth-service:${env.BUILD_NUMBER} ."
                 sh "docker push ${REGISTRY}/auth-service:${env.BUILD_NUMBER}"
-                sh "docker-compose up -d --no-deps auth-service"
+                composeUp('auth-service')
             }
         }
 
@@ -106,7 +116,7 @@ pipeline {
             steps {
                 sh "docker build -f services/diagnostics-vitals-service/Dockerfile -t ${REGISTRY}/vitals-service:${env.BUILD_NUMBER} ."
                 sh "docker push ${REGISTRY}/vitals-service:${env.BUILD_NUMBER}"
-                sh "docker-compose up -d --no-deps vitals-service"
+                composeUp('vitals-service')
             }
         }
 
@@ -121,7 +131,7 @@ pipeline {
             steps {
                 sh "docker build -f services/patient-registration-service/Dockerfile -t ${REGISTRY}/patient-service:${env.BUILD_NUMBER} ."
                 sh "docker push ${REGISTRY}/patient-service:${env.BUILD_NUMBER}"
-                sh "docker-compose up -d --no-deps patient-service"
+                composeUp('patient-service')
             }
         }
 
