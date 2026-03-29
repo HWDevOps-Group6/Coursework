@@ -151,6 +151,33 @@ pipeline {
                 }
             }
         }
+
+        stage('SonarCloud Analysis') {
+            steps {
+                script {
+                    def scannerHome = tool 'sonar-scanner'
+                    withSonarQubeEnv('SonarCloud') {
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.organization=hwdevops-group6 \
+                        -Dsonar.projectKey=HWDevOps-Group6_Coursework \
+                        -Dsonar.projectName=healthcare-management-system \
+                        -Dsonar.sources=src,services,shared \
+                        -Dsonar.tests=services \
+                        -Dsonar.exclusions=**/node_modules/**,**/mochawesome-report/**,**/test/** \
+                        -Dsonar.javascript.lcov.reportPaths=services/auth-service/coverage/lcov.info,services/diagnostics-vitals-service/coverage/lcov.info,services/patient-registration-service/coverage/lcov.info
+                        """
+                    }
+                }
+            }
+        }
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
     }
 
     post {
