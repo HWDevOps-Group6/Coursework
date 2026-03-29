@@ -12,7 +12,9 @@ pipeline {
     stages {
         stage('Login & Cleanup') {
             steps {
-                sh "echo ${ACR_CREDS_PSW} | docker login ${REGISTRY} -u ${ACR_CREDS_USR} --password-stdin"
+                sh '''#!/bin/sh
+                printf '%s' "$ACR_CREDS_PSW" | docker login "$REGISTRY" -u "$ACR_CREDS_USR" --password-stdin
+                '''
             }
         }
 
@@ -87,10 +89,8 @@ pipeline {
                 }
             }
             steps {
-                dir('services/auth-service') {
-                    sh "docker build -t ${REGISTRY}/auth-service:${env.BUILD_NUMBER} ."
-                    sh "docker push ${REGISTRY}/auth-service:${env.BUILD_NUMBER}"
-                }
+                sh "docker build -f services/auth-service/Dockerfile -t ${REGISTRY}/auth-service:${env.BUILD_NUMBER} ."
+                sh "docker push ${REGISTRY}/auth-service:${env.BUILD_NUMBER}"
                 sh "docker-compose up -d --no-deps auth-service"
             }
         }
@@ -104,10 +104,8 @@ pipeline {
                 }
             }
             steps {
-                dir('services/diagnostics-vitals-service') {
-                    sh "docker build -t ${REGISTRY}/vitals-service:${env.BUILD_NUMBER} ."
-                    sh "docker push ${REGISTRY}/vitals-service:${env.BUILD_NUMBER}"
-                }
+                sh "docker build -f services/diagnostics-vitals-service/Dockerfile -t ${REGISTRY}/vitals-service:${env.BUILD_NUMBER} ."
+                sh "docker push ${REGISTRY}/vitals-service:${env.BUILD_NUMBER}"
                 sh "docker-compose up -d --no-deps vitals-service"
             }
         }
@@ -121,10 +119,8 @@ pipeline {
                 }
             }
             steps {
-                dir('services/patient-registration-service') {
-                    sh "docker build -t ${REGISTRY}/patient-service:${env.BUILD_NUMBER} ."
-                    sh "docker push ${REGISTRY}/patient-service:${env.BUILD_NUMBER}"
-                }
+                sh "docker build -f services/patient-registration-service/Dockerfile -t ${REGISTRY}/patient-service:${env.BUILD_NUMBER} ."
+                sh "docker push ${REGISTRY}/patient-service:${env.BUILD_NUMBER}"
                 sh "docker-compose up -d --no-deps patient-service"
             }
         }
@@ -163,8 +159,8 @@ pipeline {
                         -Dsonar.projectKey=HWDevOps-Group6_Coursework \
                         -Dsonar.projectName=healthcare-management-system \
                         -Dsonar.sources=src,services,shared \
-                        -Dsonar.tests=services \
-                        -Dsonar.exclusions=**/node_modules/**,**/mochawesome-report/**,**/.dockerignore,**/test/** \
+                        -Dsonar.tests=services/auth-service/test,services/diagnostics-vitals-service/test,services/patient-registration-service/test \
+                        -Dsonar.exclusions=**/node_modules/**,**/mochawesome-report/**,**/.dockerignore,**/build-wrapper-dump.json \
                         -Dsonar.javascript.lcov.reportPaths=services/auth-service/coverage/lcov.info,services/diagnostics-vitals-service/coverage/lcov.info,services/patient-registration-service/coverage/lcov.info
                         """
                     }

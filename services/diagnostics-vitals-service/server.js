@@ -20,7 +20,7 @@ const {
 	verifyResult,
 	deleteResult,
 	getImportStats,
-} = require("./models/diagnosticLogic");
+} = require("./models/DiagnosticLogic");
 
 const app = express();
 

@@ -1,34 +1,33 @@
 const chai = require("chai");
 const expect = chai.expect;
+const { MongoMemoryServer } = require("mongodb-memory-server");
 const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-const path = require("path");
 const User = require("../src/models/User");
 const DoctorSchedule = require("../src/models/DoctorSchedule");
 const authService = require("../src/services/authService");
 
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
-
-let MONGO_URI = process.env.MONGODB_URI;
-if (MONGO_URI && MONGO_URI.includes("/?")) {
-	MONGO_URI = MONGO_URI.replace(/\/(\?|$)/, "/mocha_Test$1");
-} else if (MONGO_URI && !MONGO_URI.match(/\/(\w+)\?/)) {
-	MONGO_URI = MONGO_URI.replace(/\/?$/, "/mocha_Test");
-}
+let mongoServer;
 
 describe("authService (integration)", function () {
 	this.timeout(20000);
 
 	before(async () => {
-		await mongoose.connect(MONGO_URI, {
-			useNewUrlParser: true,
-			useUnifiedTopology: true,
+		process.env.JWT_SECRET = process.env.JWT_SECRET || "test-jwt-secret";
+		mongoServer = await MongoMemoryServer.create();
+		await mongoose.connect(mongoServer.getUri(), {
+			dbName: "mocha_Test",
 		});
 	});
 
 	after(async () => {
-		await mongoose.connection.dropDatabase();
-		await mongoose.disconnect();
+		if (mongoose.connection.readyState !== 0) {
+			await mongoose.connection.dropDatabase();
+			await mongoose.disconnect();
+		}
+
+		if (mongoServer) {
+			await mongoServer.stop();
+		}
 	});
 
 	beforeEach(async () => {
