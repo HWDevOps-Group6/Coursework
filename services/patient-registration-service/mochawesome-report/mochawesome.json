@@ -1,175 +1,175 @@
 {
-	"stats": {
-		"suites": 1,
-		"tests": 2,
-		"passes": 2,
-		"pending": 0,
-		"failures": 0,
-		"start": "2026-03-28T18:13:30.012Z",
-		"end": "2026-03-28T18:13:30.906Z",
-		"duration": 894,
-		"testsRegistered": 2,
-		"passPercent": 100,
-		"pendingPercent": 0,
-		"other": 0,
-		"hasOther": false,
-		"skipped": 0,
-		"hasSkipped": false
-	},
-	"results": [
-		{
-			"uuid": "b552f47a-280d-4617-9a69-549f9cbec708",
-			"title": "",
-			"fullFile": "/Users/bristi/Desktop/Projects/HWU/HWU - DevOPs/Coursework/Coursework/services/patient-registration-service/test/patientService.test.js",
-			"file": "/test/patientService.test.js",
-			"beforeHooks": [],
-			"afterHooks": [],
-			"tests": [],
-			"suites": [
-				{
-					"uuid": "1eea0cba-5c35-404c-b362-06b37e1b6378",
-					"title": "Patient Model (integration)",
-					"fullFile": "/Users/bristi/Desktop/Projects/HWU/HWU - DevOPs/Coursework/Coursework/services/patient-registration-service/test/patientService.test.js",
-					"file": "/test/patientService.test.js",
-					"beforeHooks": [
-						{
-							"title": "\"before all\" hook in \"Patient Model (integration)\"",
-							"fullTitle": "Patient Model (integration) \"before all\" hook in \"Patient Model (integration)\"",
-							"timedOut": false,
-							"duration": 450,
-							"state": null,
-							"speed": null,
-							"pass": false,
-							"fail": false,
-							"pending": false,
-							"context": null,
-							"code": "await mongoose.connect(MONGO_URI);",
-							"err": {},
-							"uuid": "a8e642b0-c812-4114-87c2-16a8462eb48c",
-							"parentUUID": "1eea0cba-5c35-404c-b362-06b37e1b6378",
-							"isHook": true,
-							"skipped": false
-						},
-						{
-							"title": "\"before each\" hook in \"Patient Model (integration)\"",
-							"fullTitle": "Patient Model (integration) \"before each\" hook in \"Patient Model (integration)\"",
-							"timedOut": false,
-							"duration": 33,
-							"state": null,
-							"speed": null,
-							"pass": false,
-							"fail": false,
-							"pending": false,
-							"context": null,
-							"code": "await Patient.deleteMany({});",
-							"err": {},
-							"uuid": "46284986-b761-48e5-8557-cf572d557915",
-							"parentUUID": "1eea0cba-5c35-404c-b362-06b37e1b6378",
-							"isHook": true,
-							"skipped": false
-						}
-					],
-					"afterHooks": [
-						{
-							"title": "\"after all\" hook in \"Patient Model (integration)\"",
-							"fullTitle": "Patient Model (integration) \"after all\" hook in \"Patient Model (integration)\"",
-							"timedOut": false,
-							"duration": 51,
-							"state": null,
-							"speed": null,
-							"pass": false,
-							"fail": false,
-							"pending": false,
-							"context": null,
-							"code": "await mongoose.connection.dropDatabase();\nawait mongoose.disconnect();",
-							"err": {},
-							"uuid": "44bd1d7e-5b3b-4128-beca-89cf932f8256",
-							"parentUUID": "1eea0cba-5c35-404c-b362-06b37e1b6378",
-							"isHook": true,
-							"skipped": false
-						}
-					],
-					"tests": [
-						{
-							"title": "should be invalid if required fields are missing",
-							"fullTitle": "Patient Model (integration) should be invalid if required fields are missing",
-							"timedOut": false,
-							"duration": 7,
-							"state": "passed",
-							"speed": "fast",
-							"pass": true,
-							"fail": false,
-							"pending": false,
-							"context": null,
-							"code": "const patient = new Patient();\ntry {\n  await patient.validate();\n  throw new Error('Should have failed validation');\n} catch (err) {\n  expect(err.errors).to.have.property('id');\n  expect(err.errors).to.have.property('emiratesIdHash');\n  expect(err.errors).to.have.property('firstName');\n  expect(err.errors).to.have.property('lastName');\n  expect(err.errors).to.have.property('dateOfBirth');\n  expect(err.errors).to.have.property('gender');\n  expect(err.errors).to.have.property('entryRoute');\n  expect(err.errors).to.have.property('servicePoint');\n  expect(err.errors).to.have.property('registeredBy');\n  expect(err.errors).to.have.property('registeredByRole');\n}",
-							"err": {},
-							"uuid": "d73eadc8-29f7-41ee-8e8b-6867eebf2cee",
-							"parentUUID": "1eea0cba-5c35-404c-b362-06b37e1b6378",
-							"isHook": false,
-							"skipped": false
-						},
-						{
-							"title": "should save with all required fields",
-							"fullTitle": "Patient Model (integration) should save with all required fields",
-							"timedOut": false,
-							"duration": 82,
-							"state": "passed",
-							"speed": "slow",
-							"pass": true,
-							"fail": false,
-							"pending": false,
-							"context": null,
-							"code": "const patient = new Patient({\n  id: 'P001',\n  emiratesIdHash: 'test_hash',\n  firstName: 'John',\n  lastName: 'Doe',\n  dateOfBirth: '1990-01-01',\n  gender: 'male',\n  entryRoute: 'OPD',\n  servicePoint: 'General',\n  registeredBy: 'admin',\n  registeredByRole: 'admin',\n  updatedBy:'Clerk_test',\n  createdBy:'Clerk_test',\n  source: 'manual'\n});\nawait patient.validate();\nawait patient.save();\nconst found = await Patient.findOne({ id: 'P001' });\nexpect(found).to.exist;\nexpect(found.firstName).to.equal('John');",
-							"err": {},
-							"uuid": "e5f92bba-6ebe-475f-8763-4f20a96b3383",
-							"parentUUID": "1eea0cba-5c35-404c-b362-06b37e1b6378",
-							"isHook": false,
-							"skipped": false
-						}
-					],
-					"suites": [],
-					"passes": [
-						"d73eadc8-29f7-41ee-8e8b-6867eebf2cee",
-						"e5f92bba-6ebe-475f-8763-4f20a96b3383"
-					],
-					"failures": [],
-					"pending": [],
-					"skipped": [],
-					"duration": 89,
-					"root": false,
-					"rootEmpty": false,
-					"_timeout": 20000
-				}
-			],
-			"passes": [],
-			"failures": [],
-			"pending": [],
-			"skipped": [],
-			"duration": 0,
-			"root": true,
-			"rootEmpty": true,
-			"_timeout": 2000
-		}
-	],
-	"meta": {
-		"mocha": {
-			"version": "10.8.2"
-		},
-		"mochawesome": {
-			"options": {
-				"quiet": false,
-				"reportFilename": "mochawesome",
-				"saveHtml": true,
-				"saveJson": true,
-				"consoleReporter": "spec",
-				"useInlineDiffs": false,
-				"code": true
-			},
-			"version": "7.1.4"
-		},
-		"marge": {
-			"options": null,
-			"version": "6.3.2"
-		}
-	}
+  "stats": {
+    "suites": 1,
+    "tests": 2,
+    "passes": 2,
+    "pending": 0,
+    "failures": 0,
+    "start": "2026-03-29T09:18:23.976Z",
+    "end": "2026-03-29T09:18:25.187Z",
+    "duration": 1211,
+    "testsRegistered": 2,
+    "passPercent": 100,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "e1bf5ff6-c6a7-4226-aea5-e89d394b1ddc",
+      "title": "",
+      "fullFile": "/Users/bristi/Desktop/Projects/HWU/HWU - DevOPs/Coursework/Coursework/services/patient-registration-service/test/patientService.test.js",
+      "file": "/test/patientService.test.js",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "aa3dffff-e7c0-401f-b2ec-b8da864e8080",
+          "title": "Patient Model (integration)",
+          "fullFile": "/Users/bristi/Desktop/Projects/HWU/HWU - DevOPs/Coursework/Coursework/services/patient-registration-service/test/patientService.test.js",
+          "file": "/test/patientService.test.js",
+          "beforeHooks": [
+            {
+              "title": "\"before all\" hook in \"Patient Model (integration)\"",
+              "fullTitle": "Patient Model (integration) \"before all\" hook in \"Patient Model (integration)\"",
+              "timedOut": false,
+              "duration": 687,
+              "state": null,
+              "speed": null,
+              "pass": false,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "await mongoose.connect(MONGO_URI);",
+              "err": {},
+              "uuid": "4deb8226-5497-4bb9-b9fc-05c00ccde982",
+              "parentUUID": "aa3dffff-e7c0-401f-b2ec-b8da864e8080",
+              "isHook": true,
+              "skipped": false
+            },
+            {
+              "title": "\"before each\" hook in \"Patient Model (integration)\"",
+              "fullTitle": "Patient Model (integration) \"before each\" hook in \"Patient Model (integration)\"",
+              "timedOut": false,
+              "duration": 36,
+              "state": null,
+              "speed": null,
+              "pass": false,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "await Patient.deleteMany({});",
+              "err": {},
+              "uuid": "2481ddbf-107b-4ee4-a7f1-f5fecc8d34da",
+              "parentUUID": "aa3dffff-e7c0-401f-b2ec-b8da864e8080",
+              "isHook": true,
+              "skipped": false
+            }
+          ],
+          "afterHooks": [
+            {
+              "title": "\"after all\" hook in \"Patient Model (integration)\"",
+              "fullTitle": "Patient Model (integration) \"after all\" hook in \"Patient Model (integration)\"",
+              "timedOut": false,
+              "duration": 48,
+              "state": null,
+              "speed": null,
+              "pass": false,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "await mongoose.connection.dropDatabase();\nawait mongoose.disconnect();",
+              "err": {},
+              "uuid": "57907d85-30dc-47b6-9db4-a455c1ddbb49",
+              "parentUUID": "aa3dffff-e7c0-401f-b2ec-b8da864e8080",
+              "isHook": true,
+              "skipped": false
+            }
+          ],
+          "tests": [
+            {
+              "title": "should be invalid if required fields are missing",
+              "fullTitle": "Patient Model (integration) should be invalid if required fields are missing",
+              "timedOut": false,
+              "duration": 10,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "const patient = new Patient();\ntry {\n\tawait patient.validate();\n\tthrow new Error(\"Should have failed validation\");\n} catch (err) {\n\texpect(err.errors).to.have.property(\"id\");\n\texpect(err.errors).to.have.property(\"emiratesIdHash\");\n\texpect(err.errors).to.have.property(\"firstName\");\n\texpect(err.errors).to.have.property(\"lastName\");\n\texpect(err.errors).to.have.property(\"dateOfBirth\");\n\texpect(err.errors).to.have.property(\"gender\");\n\texpect(err.errors).to.have.property(\"entryRoute\");\n\texpect(err.errors).to.have.property(\"servicePoint\");\n\texpect(err.errors).to.have.property(\"registeredBy\");\n\texpect(err.errors).to.have.property(\"registeredByRole\");\n}",
+              "err": {},
+              "uuid": "06332734-c3f6-4fea-8c32-46d5272a0dbd",
+              "parentUUID": "aa3dffff-e7c0-401f-b2ec-b8da864e8080",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "should save with all required fields",
+              "fullTitle": "Patient Model (integration) should save with all required fields",
+              "timedOut": false,
+              "duration": 82,
+              "state": "passed",
+              "speed": "slow",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "const patient = new Patient({\n\tid: \"P001\",\n\temiratesIdHash: \"test_hash\",\n\tfirstName: \"John\",\n\tlastName: \"Doe\",\n\tdateOfBirth: \"1990-01-01\",\n\tgender: \"male\",\n\tentryRoute: \"OPD\",\n\tservicePoint: \"General\",\n\tregisteredBy: \"admin\",\n\tregisteredByRole: \"admin\",\n\tupdatedBy: \"Clerk_test\",\n\tcreatedBy: \"Clerk_test\",\n\tsource: \"manual\",\n});\nawait patient.validate();\nawait patient.save();\nconst found = await Patient.findOne({ id: \"P001\" });\nexpect(found).to.exist;\nexpect(found.firstName).to.equal(\"John\");",
+              "err": {},
+              "uuid": "b6e78a61-f1e5-4cef-a0f4-3e9e3c9ea057",
+              "parentUUID": "aa3dffff-e7c0-401f-b2ec-b8da864e8080",
+              "isHook": false,
+              "skipped": false
+            }
+          ],
+          "suites": [],
+          "passes": [
+            "06332734-c3f6-4fea-8c32-46d5272a0dbd",
+            "b6e78a61-f1e5-4cef-a0f4-3e9e3c9ea057"
+          ],
+          "failures": [],
+          "pending": [],
+          "skipped": [],
+          "duration": 92,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 20000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 2000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "10.8.2"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": false,
+        "reportFilename": "mochawesome",
+        "saveHtml": true,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.4"
+    },
+    "marge": {
+      "options": null,
+      "version": "6.3.2"
+    }
+  }
 }
