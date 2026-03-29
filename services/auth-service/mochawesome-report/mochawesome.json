@@ -1,233 +1,231 @@
 {
-  "stats": {
-    "suites": 3,
-    "tests": 3,
-    "passes": 3,
-    "pending": 0,
-    "failures": 0,
-    "start": "2026-03-28T18:01:37.275Z",
-    "end": "2026-03-28T18:01:39.133Z",
-    "duration": 1858,
-    "testsRegistered": 3,
-    "passPercent": 100,
-    "pendingPercent": 0,
-    "other": 0,
-    "hasOther": false,
-    "skipped": 0,
-    "hasSkipped": false
-  },
-  "results": [
-    {
-      "uuid": "69b8d607-463a-4b09-a96e-e0232ecca122",
-      "title": "",
-      "fullFile": "/Users/bristi/Desktop/Projects/HWU/HWU - DevOPs/Coursework/Coursework/services/auth-service/test/authService.test.js",
-      "file": "/test/authService.test.js",
-      "beforeHooks": [],
-      "afterHooks": [],
-      "tests": [],
-      "suites": [
-        {
-          "uuid": "fdc1e8fa-c002-463e-9bc7-e120ebda24fd",
-          "title": "authService (integration)",
-          "fullFile": "/Users/bristi/Desktop/Projects/HWU/HWU - DevOPs/Coursework/Coursework/services/auth-service/test/authService.test.js",
-          "file": "/test/authService.test.js",
-          "beforeHooks": [
-            {
-              "title": "\"before all\" hook in \"authService (integration)\"",
-              "fullTitle": "authService (integration) \"before all\" hook in \"authService (integration)\"",
-              "timedOut": false,
-              "duration": 431,
-              "state": null,
-              "speed": null,
-              "pass": false,
-              "fail": false,
-              "pending": false,
-              "context": null,
-              "code": "await mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });",
-              "err": {},
-              "uuid": "f440eccc-ba8c-4009-992e-ae93317ba43d",
-              "parentUUID": "fdc1e8fa-c002-463e-9bc7-e120ebda24fd",
-              "isHook": true,
-              "skipped": false
-            },
-            {
-              "title": "\"before each\" hook in \"authService (integration)\"",
-              "fullTitle": "authService (integration) \"before each\" hook in \"authService (integration)\"",
-              "timedOut": false,
-              "duration": 67,
-              "state": null,
-              "speed": null,
-              "pass": false,
-              "fail": false,
-              "pending": false,
-              "context": null,
-              "code": "await User.deleteMany({});\nawait DoctorSchedule.deleteMany({});",
-              "err": {},
-              "uuid": "b266ab5d-687f-4381-a9ff-2609a6f88c66",
-              "parentUUID": "fdc1e8fa-c002-463e-9bc7-e120ebda24fd",
-              "isHook": true,
-              "skipped": false
-            }
-          ],
-          "afterHooks": [
-            {
-              "title": "\"after all\" hook in \"authService (integration)\"",
-              "fullTitle": "authService (integration) \"after all\" hook in \"authService (integration)\"",
-              "timedOut": false,
-              "duration": 46,
-              "state": null,
-              "speed": null,
-              "pass": false,
-              "fail": false,
-              "pending": false,
-              "context": null,
-              "code": "await mongoose.connection.dropDatabase();\nawait mongoose.disconnect();",
-              "err": {},
-              "uuid": "3c5719e6-1758-41d4-8252-545598cc3dd5",
-              "parentUUID": "fdc1e8fa-c002-463e-9bc7-e120ebda24fd",
-              "isHook": true,
-              "skipped": false
-            }
-          ],
-          "tests": [],
-          "suites": [
-            {
-              "uuid": "72582bbd-05fb-4002-9480-a3fbd6553eca",
-              "title": "register",
-              "fullFile": "/Users/bristi/Desktop/Projects/HWU/HWU - DevOPs/Coursework/Coursework/services/auth-service/test/authService.test.js",
-              "file": "/test/authService.test.js",
-              "beforeHooks": [],
-              "afterHooks": [],
-              "tests": [
-                {
-                  "title": "should create user and return token",
-                  "fullTitle": "authService (integration) register should create user and return token",
-                  "timedOut": false,
-                  "duration": 432,
-                  "state": "passed",
-                  "speed": "slow",
-                  "pass": true,
-                  "fail": false,
-                  "pending": false,
-                  "context": null,
-                  "code": "const result = await authService.register({ email: 'new@example.com', password: 'pw123456', firstName: 'A', lastName: 'B' });\nexpect(result).to.have.property('token');\nconst user = await User.findOne({ email: 'new@example.com' });\nexpect(user).to.exist;",
-                  "err": {},
-                  "uuid": "bfaa462b-f053-4a9a-9118-064164b0fb4f",
-                  "parentUUID": "72582bbd-05fb-4002-9480-a3fbd6553eca",
-                  "isHook": false,
-                  "skipped": false
-                },
-                {
-                  "title": "should throw if user exists",
-                  "fullTitle": "authService (integration) register should throw if user exists",
-                  "timedOut": false,
-                  "duration": 373,
-                  "state": "passed",
-                  "speed": "slow",
-                  "pass": true,
-                  "fail": false,
-                  "pending": false,
-                  "context": null,
-                  "code": "await authService.register({ email: 'new@example.com', password: 'pw123456', firstName: 'A', lastName: 'B' });\ntry {\n  await authService.register({ email: 'new@example.com', password: 'pw123456', firstName: 'A', lastName: 'B' });\n  throw new Error('Should have thrown');\n} catch (err) {\n  expect(err.message).to.match(/already exists/);\n}",
-                  "err": {},
-                  "uuid": "5e29602d-cc0d-4fb2-a7f2-e8080c86d484",
-                  "parentUUID": "72582bbd-05fb-4002-9480-a3fbd6553eca",
-                  "isHook": false,
-                  "skipped": false
-                }
-              ],
-              "suites": [],
-              "passes": [
-                "bfaa462b-f053-4a9a-9118-064164b0fb4f",
-                "5e29602d-cc0d-4fb2-a7f2-e8080c86d484"
-              ],
-              "failures": [],
-              "pending": [],
-              "skipped": [],
-              "duration": 805,
-              "root": false,
-              "rootEmpty": false,
-              "_timeout": 20000
-            },
-            {
-              "uuid": "975340af-4dcc-4ecc-9024-eb7faa597665",
-              "title": "login",
-              "fullFile": "/Users/bristi/Desktop/Projects/HWU/HWU - DevOPs/Coursework/Coursework/services/auth-service/test/authService.test.js",
-              "file": "/test/authService.test.js",
-              "beforeHooks": [],
-              "afterHooks": [],
-              "tests": [
-                {
-                  "title": "should throw if user not found",
-                  "fullTitle": "authService (integration) login should throw if user not found",
-                  "timedOut": false,
-                  "duration": 32,
-                  "state": "passed",
-                  "speed": "fast",
-                  "pass": true,
-                  "fail": false,
-                  "pending": false,
-                  "context": null,
-                  "code": "try {\n  await authService.login('notfound@example.com', 'pw');\n  throw new Error('Should have thrown');\n} catch (err) {\n  expect(err.message).to.match(/Invalid email or password/);\n}",
-                  "err": {},
-                  "uuid": "9087fd23-286b-422b-a9d5-ec66c033fa1a",
-                  "parentUUID": "975340af-4dcc-4ecc-9024-eb7faa597665",
-                  "isHook": false,
-                  "skipped": false
-                }
-              ],
-              "suites": [],
-              "passes": [
-                "9087fd23-286b-422b-a9d5-ec66c033fa1a"
-              ],
-              "failures": [],
-              "pending": [],
-              "skipped": [],
-              "duration": 32,
-              "root": false,
-              "rootEmpty": false,
-              "_timeout": 20000
-            }
-          ],
-          "passes": [],
-          "failures": [],
-          "pending": [],
-          "skipped": [],
-          "duration": 0,
-          "root": false,
-          "rootEmpty": false,
-          "_timeout": 20000
-        }
-      ],
-      "passes": [],
-      "failures": [],
-      "pending": [],
-      "skipped": [],
-      "duration": 0,
-      "root": true,
-      "rootEmpty": true,
-      "_timeout": 2000
-    }
-  ],
-  "meta": {
-    "mocha": {
-      "version": "10.8.2"
-    },
-    "mochawesome": {
-      "options": {
-        "quiet": false,
-        "reportFilename": "mochawesome",
-        "saveHtml": true,
-        "saveJson": true,
-        "consoleReporter": "spec",
-        "useInlineDiffs": false,
-        "code": true
-      },
-      "version": "7.1.4"
-    },
-    "marge": {
-      "options": null,
-      "version": "6.3.2"
-    }
-  }
+	"stats": {
+		"suites": 3,
+		"tests": 3,
+		"passes": 3,
+		"pending": 0,
+		"failures": 0,
+		"start": "2026-03-28T18:01:37.275Z",
+		"end": "2026-03-28T18:01:39.133Z",
+		"duration": 1858,
+		"testsRegistered": 3,
+		"passPercent": 100,
+		"pendingPercent": 0,
+		"other": 0,
+		"hasOther": false,
+		"skipped": 0,
+		"hasSkipped": false
+	},
+	"results": [
+		{
+			"uuid": "69b8d607-463a-4b09-a96e-e0232ecca122",
+			"title": "",
+			"fullFile": "/Users/bristi/Desktop/Projects/HWU/HWU - DevOPs/Coursework/Coursework/services/auth-service/test/authService.test.js",
+			"file": "/test/authService.test.js",
+			"beforeHooks": [],
+			"afterHooks": [],
+			"tests": [],
+			"suites": [
+				{
+					"uuid": "fdc1e8fa-c002-463e-9bc7-e120ebda24fd",
+					"title": "authService (integration)",
+					"fullFile": "/Users/bristi/Desktop/Projects/HWU/HWU - DevOPs/Coursework/Coursework/services/auth-service/test/authService.test.js",
+					"file": "/test/authService.test.js",
+					"beforeHooks": [
+						{
+							"title": "\"before all\" hook in \"authService (integration)\"",
+							"fullTitle": "authService (integration) \"before all\" hook in \"authService (integration)\"",
+							"timedOut": false,
+							"duration": 431,
+							"state": null,
+							"speed": null,
+							"pass": false,
+							"fail": false,
+							"pending": false,
+							"context": null,
+							"code": "await mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });",
+							"err": {},
+							"uuid": "f440eccc-ba8c-4009-992e-ae93317ba43d",
+							"parentUUID": "fdc1e8fa-c002-463e-9bc7-e120ebda24fd",
+							"isHook": true,
+							"skipped": false
+						},
+						{
+							"title": "\"before each\" hook in \"authService (integration)\"",
+							"fullTitle": "authService (integration) \"before each\" hook in \"authService (integration)\"",
+							"timedOut": false,
+							"duration": 67,
+							"state": null,
+							"speed": null,
+							"pass": false,
+							"fail": false,
+							"pending": false,
+							"context": null,
+							"code": "await User.deleteMany({});\nawait DoctorSchedule.deleteMany({});",
+							"err": {},
+							"uuid": "b266ab5d-687f-4381-a9ff-2609a6f88c66",
+							"parentUUID": "fdc1e8fa-c002-463e-9bc7-e120ebda24fd",
+							"isHook": true,
+							"skipped": false
+						}
+					],
+					"afterHooks": [
+						{
+							"title": "\"after all\" hook in \"authService (integration)\"",
+							"fullTitle": "authService (integration) \"after all\" hook in \"authService (integration)\"",
+							"timedOut": false,
+							"duration": 46,
+							"state": null,
+							"speed": null,
+							"pass": false,
+							"fail": false,
+							"pending": false,
+							"context": null,
+							"code": "await mongoose.connection.dropDatabase();\nawait mongoose.disconnect();",
+							"err": {},
+							"uuid": "3c5719e6-1758-41d4-8252-545598cc3dd5",
+							"parentUUID": "fdc1e8fa-c002-463e-9bc7-e120ebda24fd",
+							"isHook": true,
+							"skipped": false
+						}
+					],
+					"tests": [],
+					"suites": [
+						{
+							"uuid": "72582bbd-05fb-4002-9480-a3fbd6553eca",
+							"title": "register",
+							"fullFile": "/Users/bristi/Desktop/Projects/HWU/HWU - DevOPs/Coursework/Coursework/services/auth-service/test/authService.test.js",
+							"file": "/test/authService.test.js",
+							"beforeHooks": [],
+							"afterHooks": [],
+							"tests": [
+								{
+									"title": "should create user and return token",
+									"fullTitle": "authService (integration) register should create user and return token",
+									"timedOut": false,
+									"duration": 432,
+									"state": "passed",
+									"speed": "slow",
+									"pass": true,
+									"fail": false,
+									"pending": false,
+									"context": null,
+									"code": "const result = await authService.register({ email: 'new@example.com', password: 'pw123456', firstName: 'A', lastName: 'B' });\nexpect(result).to.have.property('token');\nconst user = await User.findOne({ email: 'new@example.com' });\nexpect(user).to.exist;",
+									"err": {},
+									"uuid": "bfaa462b-f053-4a9a-9118-064164b0fb4f",
+									"parentUUID": "72582bbd-05fb-4002-9480-a3fbd6553eca",
+									"isHook": false,
+									"skipped": false
+								},
+								{
+									"title": "should throw if user exists",
+									"fullTitle": "authService (integration) register should throw if user exists",
+									"timedOut": false,
+									"duration": 373,
+									"state": "passed",
+									"speed": "slow",
+									"pass": true,
+									"fail": false,
+									"pending": false,
+									"context": null,
+									"code": "await authService.register({ email: 'new@example.com', password: 'pw123456', firstName: 'A', lastName: 'B' });\ntry {\n  await authService.register({ email: 'new@example.com', password: 'pw123456', firstName: 'A', lastName: 'B' });\n  throw new Error('Should have thrown');\n} catch (err) {\n  expect(err.message).to.match(/already exists/);\n}",
+									"err": {},
+									"uuid": "5e29602d-cc0d-4fb2-a7f2-e8080c86d484",
+									"parentUUID": "72582bbd-05fb-4002-9480-a3fbd6553eca",
+									"isHook": false,
+									"skipped": false
+								}
+							],
+							"suites": [],
+							"passes": [
+								"bfaa462b-f053-4a9a-9118-064164b0fb4f",
+								"5e29602d-cc0d-4fb2-a7f2-e8080c86d484"
+							],
+							"failures": [],
+							"pending": [],
+							"skipped": [],
+							"duration": 805,
+							"root": false,
+							"rootEmpty": false,
+							"_timeout": 20000
+						},
+						{
+							"uuid": "975340af-4dcc-4ecc-9024-eb7faa597665",
+							"title": "login",
+							"fullFile": "/Users/bristi/Desktop/Projects/HWU/HWU - DevOPs/Coursework/Coursework/services/auth-service/test/authService.test.js",
+							"file": "/test/authService.test.js",
+							"beforeHooks": [],
+							"afterHooks": [],
+							"tests": [
+								{
+									"title": "should throw if user not found",
+									"fullTitle": "authService (integration) login should throw if user not found",
+									"timedOut": false,
+									"duration": 32,
+									"state": "passed",
+									"speed": "fast",
+									"pass": true,
+									"fail": false,
+									"pending": false,
+									"context": null,
+									"code": "try {\n  await authService.login('notfound@example.com', 'pw');\n  throw new Error('Should have thrown');\n} catch (err) {\n  expect(err.message).to.match(/Invalid email or password/);\n}",
+									"err": {},
+									"uuid": "9087fd23-286b-422b-a9d5-ec66c033fa1a",
+									"parentUUID": "975340af-4dcc-4ecc-9024-eb7faa597665",
+									"isHook": false,
+									"skipped": false
+								}
+							],
+							"suites": [],
+							"passes": ["9087fd23-286b-422b-a9d5-ec66c033fa1a"],
+							"failures": [],
+							"pending": [],
+							"skipped": [],
+							"duration": 32,
+							"root": false,
+							"rootEmpty": false,
+							"_timeout": 20000
+						}
+					],
+					"passes": [],
+					"failures": [],
+					"pending": [],
+					"skipped": [],
+					"duration": 0,
+					"root": false,
+					"rootEmpty": false,
+					"_timeout": 20000
+				}
+			],
+			"passes": [],
+			"failures": [],
+			"pending": [],
+			"skipped": [],
+			"duration": 0,
+			"root": true,
+			"rootEmpty": true,
+			"_timeout": 2000
+		}
+	],
+	"meta": {
+		"mocha": {
+			"version": "10.8.2"
+		},
+		"mochawesome": {
+			"options": {
+				"quiet": false,
+				"reportFilename": "mochawesome",
+				"saveHtml": true,
+				"saveJson": true,
+				"consoleReporter": "spec",
+				"useInlineDiffs": false,
+				"code": true
+			},
+			"version": "7.1.4"
+		},
+		"marge": {
+			"options": null,
+			"version": "6.3.2"
+		}
+	}
 }

@@ -13,6 +13,25 @@ jobs:
         uses: jordansilva/github-action-issue-to-jira@v1.1.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+          # 1. Fix the Python conflict (Keep Ruff, it's faster)
+          VALIDATE_PYTHON_BLACK: false
+          VALIDATE_PYTHON_RUFF: true
+
+          # 2. Fix the Biome vs Prettier/ESLint conflict
+          # This tells Super-Linter: "Use Biome for everything it supports"
+          VALIDATE_BIOME: true
+          
+          # Disable the tools Biome is replacing for JS/TS/JSON/HTML
+          VALIDATE_JAVASCRIPT_ESLINT: false
+          VALIDATE_JAVASCRIPT_PRETTIER: false
+          VALIDATE_TYPESCRIPT_ESLINT: false
+          VALIDATE_TYPESCRIPT_PRETTIER: false
+          VALIDATE_JSON: false # Biome handles JSON
+          VALIDATE_HTML: false # Biome handles HTML
+          
+          # 3. Fix CSS/SCSS conflicts
+          VALIDATE_CSS: false  # Disable Stylelint/Prettier for CSS if using Biome
         with:
           jiraHost: ${{ secrets.JIRA_HOST }}
           jiraUsername: ${{ secrets.JIRA_USERNAME }}
