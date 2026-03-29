@@ -170,7 +170,7 @@ pipeline {
                         -Dsonar.projectName=healthcare-management-system \
                         -Dsonar.sources=src,services,shared \
                         -Dsonar.tests=services/auth-service/test,services/diagnostics-vitals-service/test,services/patient-registration-service/test \
-                        -Dsonar.exclusions=**/node_modules/**,**/mochawesome-report/**,**/.dockerignore,**/build-wrapper-dump.json \
+                        -Dsonar.exclusions=**/node_modules/**,**/mochawesome-report/**,**/coverage/**,**/test/**,**/.dockerignore,**/build-wrapper-dump.json \
                         -Dsonar.javascript.lcov.reportPaths=services/auth-service/coverage/lcov.info,services/diagnostics-vitals-service/coverage/lcov.info,services/patient-registration-service/coverage/lcov.info
                         """
                     }
