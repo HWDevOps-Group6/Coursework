@@ -3,7 +3,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY services/diagnostics-vitals-service/package*.json ./services/diagnostics-vitals-service/
-RUN npm ci --omit=dev --prefix ./services/diagnostics-vitals-service
+RUN cd ./services/diagnostics-vitals-service && npm ci --workspaces=false --omit=dev --ignore-scripts
 
 COPY shared ./shared
 COPY services/diagnostics-vitals-service ./services/diagnostics-vitals-service

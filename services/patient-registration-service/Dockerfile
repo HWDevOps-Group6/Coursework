@@ -3,7 +3,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY services/patient-registration-service/package*.json ./services/patient-registration-service/
-RUN npm ci --omit=dev --prefix ./services/patient-registration-service
+RUN cd ./services/patient-registration-service && npm ci --workspaces=false --omit=dev --ignore-scripts
 
 COPY shared ./shared
 COPY services/patient-registration-service ./services/patient-registration-service
