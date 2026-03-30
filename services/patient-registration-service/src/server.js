@@ -74,6 +74,31 @@ const allowedPatientRegistrationFields = new Set([
 	"source",
 ]);
 
+const IDENTIFIER_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
+
+const requireSafeIdentifier = (value, fieldName) => {
+	const validationError = (message) => {
+		const error = new Error(message);
+		error.status = 400;
+		return error;
+	};
+
+	if (typeof value !== "string") {
+		throw validationError(`${fieldName} must be a string`);
+	}
+
+	const normalized = value.trim();
+	if (!normalized) {
+		throw validationError(`${fieldName} is required`);
+	}
+
+	if (!IDENTIFIER_PATTERN.test(normalized)) {
+		throw validationError(`${fieldName} format is invalid`);
+	}
+
+	return normalized;
+};
+
 const normalizeEmiratesId = (value) => String(value || "").replace(/\D/g, "");
 const normalizeEntryRoute = (value) => {
 	const normalized = String(value || "")
@@ -394,7 +419,8 @@ app.get(
 	authorizeRole("doctor", "nurse", "paramedic"),
 	async (req, res, next) => {
 		try {
-			const patientRecord = await Patient.findOne({ id: req.params.id }).lean();
+			const patientId = requireSafeIdentifier(req.params.id, "id");
+			const patientRecord = await Patient.findOne({ id: patientId }).lean();
 
 			if (!patientRecord) {
 				return sendError(
@@ -423,6 +449,7 @@ app.patch(
 	authorizeRole("doctor", "nurse", "paramedic"),
 	async (req, res, next) => {
 		try {
+			const patientId = requireSafeIdentifier(req.params.id, "id");
 			const allowedVisitFields = new Set([
 				"servicePoint",
 				"entryRoute",
@@ -520,7 +547,7 @@ app.patch(
 			}
 
 			const updatedPatient = await Patient.findOneAndUpdate(
-				{ id: req.params.id },
+				{ id: patientId },
 				{
 					$push: { visitHistory: visitEntry },
 					$set: { updatedBy: req.user.userId, source: visitEntry.source },
@@ -555,7 +582,7 @@ app.put(
 	authorizeRole("doctor", "admin"),
 	async (req, res, next) => {
 		try {
-			const { doctorId } = req.params;
+			const doctorId = requireSafeIdentifier(req.params.doctorId, "doctorId");
 			const { doctorName, department, weeklyAvailability, source } =
 				req.body || {};
 
@@ -566,10 +593,6 @@ app.put(
 					"INSUFFICIENT_ROLE",
 					"Doctors can only manage their own schedule",
 				);
-			}
-
-			if (!doctorId || typeof doctorId !== "string") {
-				return sendError(res, 400, "VALIDATION_ERROR", "doctorId is required");
 			}
 
 			if (!isValidAvailabilityPayload(weeklyAvailability)) {
@@ -629,7 +652,7 @@ app.get(
 	authorizeRole("clerk", "doctor", "nurse", "paramedic", "admin", "clinician"),
 	async (req, res, next) => {
 		try {
-			const { doctorId } = req.params;
+			const doctorId = requireSafeIdentifier(req.params.doctorId, "doctorId");
 			const schedule = await DoctorSchedule.findOne({ doctorId }).lean();
 
 			if (!schedule) {
@@ -659,7 +682,7 @@ app.get(
 	authorizeRole("clerk", "doctor", "nurse", "paramedic", "admin", "clinician"),
 	async (req, res, next) => {
 		try {
-			const { doctorId } = req.params;
+			const doctorId = requireSafeIdentifier(req.params.doctorId, "doctorId");
 			const { date } = req.query;
 
 			if (typeof date !== "string" || !date.trim()) {
@@ -756,7 +779,7 @@ app.post(
 	authorizeRole("clerk"),
 	async (req, res, next) => {
 		try {
-			const { id: patientId } = req.params;
+			const patientId = requireSafeIdentifier(req.params.id, "id");
 			const {
 				doctorId,
 				doctorName,
@@ -766,9 +789,7 @@ app.post(
 				source,
 			} = req.body || {};
 
-			if (!doctorId || typeof doctorId !== "string") {
-				return sendError(res, 400, "VALIDATION_ERROR", "doctorId is required");
-			}
+			const normalizedDoctorId = requireSafeIdentifier(doctorId, "doctorId");
 
 			if (!appointmentDateTime || typeof appointmentDateTime !== "string") {
 				return sendError(
@@ -845,7 +866,7 @@ app.post(
 				);
 			}
 
-			const doctorSchedule = await DoctorSchedule.findOne({ doctorId }).lean();
+			const doctorSchedule = await DoctorSchedule.findOne({ doctorId: normalizedDoctorId }).lean();
 			if (!doctorSchedule) {
 				return sendError(
 					res,
@@ -890,7 +911,7 @@ app.post(
 			}
 
 			const overlappingAppointment = await Appointment.findOne({
-				doctorId,
+				doctorId: normalizedDoctorId,
 				status: "booked",
 				appointmentDate: { $lt: appointmentEndDate },
 				appointmentEndDate: { $gt: appointmentDate },
@@ -907,7 +928,7 @@ app.post(
 
 			const appointment = await Appointment.create({
 				patientId,
-				doctorId,
+				doctorId: normalizedDoctorId,
 				doctorName:
 					typeof doctorName === "string"
 						? doctorName.trim()
@@ -940,7 +961,7 @@ app.get(
 	authorizeRole("clerk", "doctor", "nurse", "paramedic", "admin", "clinician"),
 	async (req, res, next) => {
 		try {
-			const { id: patientId } = req.params;
+			const patientId = requireSafeIdentifier(req.params.id, "id");
 			const patient = await Patient.findOne({ id: patientId }).lean();
 
 			if (!patient) {
@@ -974,6 +995,7 @@ app.patch(
 	authorizeRole("doctor"),
 	async (req, res, next) => {
 		try {
+			const patientId = requireSafeIdentifier(req.params.id, "id");
 			const allowedPrescriptionFields = new Set([
 				"medicines",
 				"prescribedAt",
@@ -1057,7 +1079,7 @@ app.patch(
 			}
 
 			const updatedPatient = await Patient.findOneAndUpdate(
-				{ id: req.params.id },
+				{ id: patientId },
 				{
 					$push: { prescriptions: prescription },
 					$set: { updatedBy: req.user.userId, source: prescription.source },
@@ -1092,6 +1114,7 @@ app.patch(
 	authorizeRole("nurse"),
 	async (req, res, next) => {
 		try {
+			const patientId = requireSafeIdentifier(req.params.id, "id");
 			const allowedNursingFields = new Set([
 				"treatmentDetails",
 				"intakeOutput",
@@ -1173,7 +1196,7 @@ app.patch(
 			}
 
 			const updatedPatient = await Patient.findOneAndUpdate(
-				{ id: req.params.id },
+				{ id: patientId },
 				{
 					$push: { nursingNotes: nursingNote },
 					$set: { updatedBy: req.user.userId, source: nursingNote.source },
