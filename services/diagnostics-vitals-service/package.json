@@ -22,6 +22,6 @@
 	},
 	"scripts": {
 		"test": "mocha --reporter mochawesome test/*.test.js",
-		"test:coverage": "nyc --reporter=lcov --reporter=text mocha --reporter mochawesome test/*.test.js"
+		"test:coverage": "nyc --cwd ../../ --temp-dir services/diagnostics-vitals-service/.nyc_output --report-dir services/diagnostics-vitals-service/coverage --reporter=lcov --reporter=text mocha --reporter mochawesome test/*.test.js"
 	}
 }
