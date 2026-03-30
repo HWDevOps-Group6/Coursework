@@ -14,7 +14,8 @@ const ALLOWED_DEPARTMENTS = [
 ];
 
 const isAlphaNumeric = (character) => {
-	const code = character.charCodeAt(0);
+	const code = character.codePointAt(0);
+	if (code === undefined) return false;
 	return (
 		(code >= 48 && code <= 57) ||
 		(code >= 65 && code <= 90) ||
@@ -23,7 +24,8 @@ const isAlphaNumeric = (character) => {
 };
 
 const isWhitespace = (character) => {
-	const code = character.charCodeAt(0);
+	const code = character.codePointAt(0);
+	if (code === undefined) return false;
 	return (
 		code === 9 ||
 		code === 10 ||
