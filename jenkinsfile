@@ -193,9 +193,9 @@ pipeline {
                         -Dsonar.projectKey=HWDevOps-Group6_Coursework \
                         -Dsonar.projectName=healthcare-management-system \
                         -Dsonar.verbose=true \
-                        -Dsonar.sources=src,shared,services/auth-service/src,services/diagnostics-vitals-service,services/patient-registration-service/src \
+                        -Dsonar.sources=src,shared,services/auth-service/src,services/diagnostics-vitals-service/server.js,services/diagnostics-vitals-service/config,services/diagnostics-vitals-service/middleware,services/diagnostics-vitals-service/models,services/diagnostics-vitals-service/services,services/patient-registration-service/src \
                         -Dsonar.tests=services/auth-service/test,services/diagnostics-vitals-service/test,services/patient-registration-service/test \
-                        -Dsonar.exclusions=**/node_modules/**,**/mochawesome-report/**,**/coverage/**,**/.dockerignore,**/build-wrapper-dump.json \
+                        -Dsonar.exclusions=**/node_modules/**,**/mochawesome-report/**,**/coverage/**,**/.nyc_output/**,**/.dockerignore,**/build-wrapper-dump.json \
                         -Dsonar.javascript.lcov.reportPaths=${WORKSPACE}/services/auth-service/coverage/lcov.info,${WORKSPACE}/services/diagnostics-vitals-service/coverage/lcov.info,${WORKSPACE}/services/patient-registration-service/coverage/lcov.info
                         """
                     }
