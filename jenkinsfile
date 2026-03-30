@@ -174,17 +174,29 @@ pipeline {
                         sh 'npm run test:coverage'
                     }
 
+                    sh '''#!/bin/sh
+                    set -e
+                    test -f services/auth-service/coverage/lcov.info
+                    test -f services/diagnostics-vitals-service/coverage/lcov.info
+                    test -f services/patient-registration-service/coverage/lcov.info
+                    ls -l services/auth-service/coverage/lcov.info
+                    ls -l services/diagnostics-vitals-service/coverage/lcov.info
+                    ls -l services/patient-registration-service/coverage/lcov.info
+                    '''
+
                     def scannerHome = tool 'sonar-scanner'
                     withSonarQubeEnv('SonarCloud') {
                         sh """
                         ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectBaseDir=${WORKSPACE} \
                         -Dsonar.organization=hwdevops-group6 \
                         -Dsonar.projectKey=HWDevOps-Group6_Coursework \
                         -Dsonar.projectName=healthcare-management-system \
-                        -Dsonar.sources=src,shared,services/auth-service/src,services/diagnostics-vitals-service/server.js,services/diagnostics-vitals-service/config,services/diagnostics-vitals-service/middleware,services/diagnostics-vitals-service/models,services/diagnostics-vitals-service/services,services/patient-registration-service/src \
+                        -Dsonar.verbose=true \
+                        -Dsonar.sources=src,shared,services/auth-service/src,services/diagnostics-vitals-service,services/patient-registration-service/src \
                         -Dsonar.tests=services/auth-service/test,services/diagnostics-vitals-service/test,services/patient-registration-service/test \
                         -Dsonar.exclusions=**/node_modules/**,**/mochawesome-report/**,**/coverage/**,**/.dockerignore,**/build-wrapper-dump.json \
-                        -Dsonar.javascript.lcov.reportPaths=services/auth-service/coverage/lcov.info,services/diagnostics-vitals-service/coverage/lcov.info,services/patient-registration-service/coverage/lcov.info
+                        -Dsonar.javascript.lcov.reportPaths=${WORKSPACE}/services/auth-service/coverage/lcov.info,${WORKSPACE}/services/diagnostics-vitals-service/coverage/lcov.info,${WORKSPACE}/services/patient-registration-service/coverage/lcov.info
                         """
                     }
                 }
