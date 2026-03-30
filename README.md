@@ -1,4 +1,7 @@
 # Healthcare Management System
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=HWDevOps-Group6_Coursework&metric=bugs)](https://sonarcloud.io/summary/new_code?id=HWDevOps-Group6_Coursework)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=HWDevOps-Group6_Coursework&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=HWDevOps-Group6_Coursework)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=HWDevOps-Group6_Coursework&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=HWDevOps-Group6_Coursework)
 
 A backend healthcare platform built with a microservices architecture in Node.js. The system is organized around independent services behind a single API Gateway, with shared middleware/utilities and a Postman-based API test collection.
 
