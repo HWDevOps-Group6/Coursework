@@ -88,6 +88,17 @@ const maybePopulateVerifiedBy = (query) => {
 	return query;
 };
 
+const createActivePatientFilter = (patientId, additionalFilter = {}) => ({
+	isArchived: false,
+	patientId,
+	...additionalFilter,
+});
+
+const findActiveResultsForPatient = (patientId, additionalFilter = {}) =>
+	maybePopulateVerifiedBy(
+		DiagnosticResult.find(createActivePatientFilter(patientId, additionalFilter)),
+	).sort({ importedAt: -1 });
+
 const fetchFromMachineAPI = async (machineType) => {
 	const templates = {
 		XRAY: [
@@ -308,12 +319,10 @@ const getAllResults = async (query = {}) => {
 
 	const skip = (normalizedPage - 1) * normalizedLimit;
 
-	const baseFilter = { isArchived: false, patientId: normalizedPatientId };
-	const filter = {
-		...baseFilter,
+	const filter = createActivePatientFilter(normalizedPatientId, {
 		...(normalizedMachineType && { machineType: normalizedMachineType }),
 		...(normalizedStatus && { status: normalizedStatus }),
-	};
+	});
 
 	const total = await DiagnosticResult.countDocuments(filter);
 	const dataQuery = maybePopulateVerifiedBy(DiagnosticResult.find(filter));
@@ -350,9 +359,7 @@ const getResultsByPatient = async (patientId) => {
 		patientId,
 		"patientId is required to fetch diagnostic results by patient",
 	);
-	return maybePopulateVerifiedBy(
-		DiagnosticResult.find({ patientId: normalizedPatientId, isArchived: false }),
-	).sort({ importedAt: -1 });
+	return findActiveResultsForPatient(normalizedPatientId);
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -368,14 +375,10 @@ const getResultsByMachine = async (machineType, query = {}) => {
 	const normalizedMachineType = normalizeMachineType(machineType);
 	const normalizedStatus = normalizeOptional(status, normalizeStatus);
 
-	return maybePopulateVerifiedBy(
-		DiagnosticResult.find({
-			machineType: normalizedMachineType,
-			isArchived: false,
-			patientId: normalizedPatientId,
-			...(normalizedStatus && { status: normalizedStatus }),
-		}),
-	).sort({ importedAt: -1 });
+	return findActiveResultsForPatient(normalizedPatientId, {
+		machineType: normalizedMachineType,
+		...(normalizedStatus && { status: normalizedStatus }),
+	});
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -387,13 +390,9 @@ const getCriticalResults = async (patientId) => {
 		patientId,
 		"patientId is required to fetch critical diagnostic results",
 	);
-	return maybePopulateVerifiedBy(
-		DiagnosticResult.find({
-			status: "critical",
-			isArchived: false,
-			patientId: normalizedPatientId,
-		}),
-	).sort({ importedAt: -1 });
+	return findActiveResultsForPatient(normalizedPatientId, {
+		status: "critical",
+	});
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -437,28 +436,18 @@ const getImportStats = async (patientId) => {
 		patientId,
 		"patientId is required to fetch diagnostic import stats",
 	);
+	const countForStatus = (status) =>
+		DiagnosticResult.countDocuments(
+			createActivePatientFilter(normalizedPatientId, status ? { status } : {}),
+		);
+
 	const [total, critical, pending, abnormal, byMachine] = await Promise.all([
-		DiagnosticResult.countDocuments({
-			isArchived: false,
-			patientId: normalizedPatientId,
-		}),
-		DiagnosticResult.countDocuments({
-			status: "critical",
-			isArchived: false,
-			patientId: normalizedPatientId,
-		}),
-		DiagnosticResult.countDocuments({
-			status: "pending",
-			isArchived: false,
-			patientId: normalizedPatientId,
-		}),
-		DiagnosticResult.countDocuments({
-			status: "abnormal",
-			isArchived: false,
-			patientId: normalizedPatientId,
-		}),
+		countForStatus(),
+		countForStatus("critical"),
+		countForStatus("pending"),
+		countForStatus("abnormal"),
 		DiagnosticResult.aggregate([
-			{ $match: { isArchived: false, patientId: normalizedPatientId } },
+			{ $match: createActivePatientFilter(normalizedPatientId) },
 			{ $group: { _id: "$machineType", count: { $sum: 1 } } },
 			{ $sort: { count: -1 } },
 		]),
@@ -469,8 +458,7 @@ const getImportStats = async (patientId) => {
 	startOfDay.setHours(0, 0, 0, 0);
 	const today = await DiagnosticResult.countDocuments({
 		importedAt: { $gte: startOfDay },
-		isArchived: false,
-		patientId: normalizedPatientId,
+		...createActivePatientFilter(normalizedPatientId),
 	});
 
 	return {
