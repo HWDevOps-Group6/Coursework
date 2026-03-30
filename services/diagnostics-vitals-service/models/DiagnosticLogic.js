@@ -3,6 +3,71 @@
 const DiagnosticResult = require("./DiagnosticSchema");
 const mongoose = require("mongoose");
 const MACHINE_TYPES = ["XRAY", "CT", "MRI", "PCR", "ULTRASOUND", "BLOODWORK"];
+const RESULT_STATUSES = ["normal", "abnormal", "critical", "pending"];
+const PATIENT_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
+
+const requireNonEmptyString = (value, fieldName) => {
+	if (typeof value !== "string") {
+		throw new Error(`${fieldName} must be a string`);
+	}
+
+	const normalized = value.trim();
+	if (!normalized) {
+		throw new Error(`${fieldName} is required`);
+	}
+
+	return normalized;
+};
+
+const normalizePatientId = (patientId) => {
+	const normalized = requireNonEmptyString(patientId, "patientId");
+	if (!PATIENT_ID_PATTERN.test(normalized)) {
+		throw new Error("patientId format is invalid");
+	}
+	return normalized;
+};
+
+const normalizeMachineType = (machineType) => {
+	const normalized = requireNonEmptyString(machineType, "machineType").toUpperCase();
+	if (!MACHINE_TYPES.includes(normalized)) {
+		throw new Error(
+			`Unknown machine type: ${normalized}. Valid types: ${MACHINE_TYPES.join(", ")}`,
+		);
+	}
+	return normalized;
+};
+
+const normalizeStatus = (status) => {
+	const normalized = requireNonEmptyString(status, "status").toLowerCase();
+	if (!RESULT_STATUSES.includes(normalized)) {
+		throw new Error(
+			`Unknown status: ${normalized}. Valid statuses: ${RESULT_STATUSES.join(", ")}`,
+		);
+	}
+	return normalized;
+};
+
+const parsePositiveInt = (value, fallback, fieldName, max = Number.MAX_SAFE_INTEGER) => {
+	if (value === undefined || value === null || value === "") return fallback;
+	if (typeof value !== "string" && typeof value !== "number") {
+		throw new Error(`${fieldName} must be a number`);
+	}
+
+	const parsed = Number(value);
+	if (!Number.isInteger(parsed) || parsed < 1) {
+		throw new Error(`${fieldName} must be a positive integer`);
+	}
+
+	return Math.min(parsed, max);
+};
+
+const normalizeObjectId = (id, fieldName = "id") => {
+	const normalized = requireNonEmptyString(id, fieldName);
+	if (!mongoose.isValidObjectId(normalized)) {
+		throw new Error(`${fieldName} is invalid`);
+	}
+	return normalized;
+};
 
 const maybePopulateVerifiedBy = (query) => {
 	if (mongoose.models.User) {
@@ -159,23 +224,20 @@ const fetchFromMachineAPI = async (machineType) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Always require patientId for import
 const importFromMachine = async (machineType, overrides = {}) => {
-	if (!MACHINE_TYPES.includes(machineType)) {
-		throw new Error(
-			`Unknown machine type: ${machineType}. Valid types: ${MACHINE_TYPES.join(", ")}`,
-		);
-	}
+	const normalizedMachineType = normalizeMachineType(machineType);
 	if (!overrides.patientId) {
 		throw new Error("patientId is required for importing diagnostics");
 	}
+	const normalizedPatientId = normalizePatientId(overrides.patientId);
 
-	const rawResults = await fetchFromMachineAPI(machineType);
+	const rawResults = await fetchFromMachineAPI(normalizedMachineType);
 
 	const saved = [];
 	for (const raw of rawResults) {
 		const payload = {
 			...raw,
-			machineType,
-			patientId: overrides.patientId,
+			machineType: normalizedMachineType,
+			patientId: normalizedPatientId,
 			...(overrides.machineId && { machineId: overrides.machineId }),
 		};
 
@@ -202,10 +264,13 @@ const importAllMachines = async (patientId) => {
 		throw new Error(
 			"patientId is required for importing diagnostics from all machines",
 		);
+	const normalizedPatientId = normalizePatientId(patientId);
 	const summary = {};
 	for (const machineType of MACHINE_TYPES) {
 		try {
-			const results = await importFromMachine(machineType, { patientId });
+			const results = await importFromMachine(machineType, {
+				patientId: normalizedPatientId,
+			});
 			summary[machineType] = { success: true, imported: results.length };
 		} catch (err) {
 			summary[machineType] = { success: false, error: err.message };
@@ -223,24 +288,87 @@ const getAllResults = async (query = {}) => {
 	const { machineType, status, page = 1, limit = 20, patientId } = query;
 	if (!patientId)
 		throw new Error("patientId is required to fetch diagnostic results");
+	const normalizedPatientId = normalizePatientId(patientId);
+	const normalizedMachineType =
+		machineType !== undefined && machineType !== null && machineType !== ""
+			? normalizeMachineType(machineType)
+			: null;
+	const normalizedStatus =
+		status !== undefined && status !== null && status !== ""
+			? normalizeStatus(status)
+			: null;
+	const normalizedPage = parsePositiveInt(page, 1, "page");
+	const normalizedLimit = parsePositiveInt(limit, 20, "limit", 100);
 
-	const filter = { isArchived: false, patientId };
-	if (machineType) filter.machineType = machineType.toUpperCase();
-	if (status) filter.status = status.toLowerCase();
+	const skip = (normalizedPage - 1) * normalizedLimit;
 
-	const skip = (Number(page) - 1) * Number(limit);
-	const total = await DiagnosticResult.countDocuments(filter);
+	let total = 0;
+	let dataQuery;
 
-	const data = await maybePopulateVerifiedBy(DiagnosticResult.find(filter))
+	if (normalizedMachineType && normalizedStatus) {
+		total = await DiagnosticResult.countDocuments({
+			isArchived: false,
+			patientId: normalizedPatientId,
+			machineType: normalizedMachineType,
+			status: normalizedStatus,
+		});
+		dataQuery = maybePopulateVerifiedBy(
+			DiagnosticResult.find({
+				isArchived: false,
+				patientId: normalizedPatientId,
+				machineType: normalizedMachineType,
+				status: normalizedStatus,
+			}),
+		);
+	} else if (normalizedMachineType) {
+		total = await DiagnosticResult.countDocuments({
+			isArchived: false,
+			patientId: normalizedPatientId,
+			machineType: normalizedMachineType,
+		});
+		dataQuery = maybePopulateVerifiedBy(
+			DiagnosticResult.find({
+				isArchived: false,
+				patientId: normalizedPatientId,
+				machineType: normalizedMachineType,
+			}),
+		);
+	} else if (normalizedStatus) {
+		total = await DiagnosticResult.countDocuments({
+			isArchived: false,
+			patientId: normalizedPatientId,
+			status: normalizedStatus,
+		});
+		dataQuery = maybePopulateVerifiedBy(
+			DiagnosticResult.find({
+				isArchived: false,
+				patientId: normalizedPatientId,
+				status: normalizedStatus,
+			}),
+		);
+	} else {
+		total = await DiagnosticResult.countDocuments({
+			isArchived: false,
+			patientId: normalizedPatientId,
+		});
+		dataQuery = maybePopulateVerifiedBy(
+			DiagnosticResult.find({
+				isArchived: false,
+				patientId: normalizedPatientId,
+			}),
+		);
+	}
+
+	const data = await dataQuery
 		.sort({ importedAt: -1 })
 		.skip(skip)
-		.limit(Number(limit));
+		.limit(normalizedLimit);
 
 	return {
 		count: data.length,
 		total,
-		page: Number(page),
-		totalPages: Math.ceil(total / Number(limit)),
+		page: normalizedPage,
+		totalPages: Math.ceil(total / normalizedLimit),
 		data,
 	};
 };
@@ -250,7 +378,8 @@ const getAllResults = async (query = {}) => {
 // GET /api/diagnostics/:id
 // ─────────────────────────────────────────────────────────────────────────────
 const getResultById = async (id) => {
-	return maybePopulateVerifiedBy(DiagnosticResult.findById(id));
+	const normalizedId = normalizeObjectId(id);
+	return maybePopulateVerifiedBy(DiagnosticResult.findById(normalizedId));
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -262,8 +391,9 @@ const getResultsByPatient = async (patientId) => {
 		throw new Error(
 			"patientId is required to fetch diagnostic results by patient",
 		);
+	const normalizedPatientId = normalizePatientId(patientId);
 	return maybePopulateVerifiedBy(
-		DiagnosticResult.find({ patientId, isArchived: false }),
+		DiagnosticResult.find({ patientId: normalizedPatientId, isArchived: false }),
 	).sort({ importedAt: -1 });
 };
 
@@ -277,10 +407,33 @@ const getResultsByMachine = async (machineType, query = {}) => {
 		throw new Error(
 			"patientId is required to fetch diagnostic results by machine",
 		);
-	const filter = { machineType, isArchived: false, patientId };
-	if (status) filter.status = status.toLowerCase();
+	const normalizedPatientId = normalizePatientId(patientId);
+	const normalizedMachineType = normalizeMachineType(machineType);
+	const normalizedStatus =
+		status !== undefined && status !== null && status !== ""
+			? normalizeStatus(status)
+			: null;
 
-	return maybePopulateVerifiedBy(DiagnosticResult.find(filter)).sort({
+	if (normalizedStatus) {
+		return maybePopulateVerifiedBy(
+			DiagnosticResult.find({
+				machineType: normalizedMachineType,
+				isArchived: false,
+				patientId: normalizedPatientId,
+				status: normalizedStatus,
+			}),
+		).sort({
+			importedAt: -1,
+		});
+	}
+
+	return maybePopulateVerifiedBy(
+		DiagnosticResult.find({
+			machineType: normalizedMachineType,
+			isArchived: false,
+			patientId: normalizedPatientId,
+		}),
+	).sort({
 		importedAt: -1,
 	});
 };
@@ -294,8 +447,13 @@ const getCriticalResults = async (patientId) => {
 		throw new Error(
 			"patientId is required to fetch critical diagnostic results",
 		);
+	const normalizedPatientId = normalizePatientId(patientId);
 	return maybePopulateVerifiedBy(
-		DiagnosticResult.find({ status: "critical", isArchived: false, patientId }),
+		DiagnosticResult.find({
+			status: "critical",
+			isArchived: false,
+			patientId: normalizedPatientId,
+		}),
 	).sort({ importedAt: -1 });
 };
 
@@ -304,10 +462,12 @@ const getCriticalResults = async (patientId) => {
 // PATCH /api/diagnostics/:id/verify
 // ─────────────────────────────────────────────────────────────────────────────
 const verifyResult = async (id, userId) => {
-	const result = await DiagnosticResult.findById(id);
+	const normalizedId = normalizeObjectId(id);
+	const normalizedUserId = normalizeObjectId(userId, "userId");
+	const result = await DiagnosticResult.findById(normalizedId);
 	if (!result) throw new Error("Diagnostic result not found");
 
-	result.verifiedBy = userId;
+	result.verifiedBy = normalizedUserId;
 	result.verifiedAt = new Date();
 	await result.save();
 
@@ -319,8 +479,9 @@ const verifyResult = async (id, userId) => {
 // DELETE /api/diagnostics/:id
 // ─────────────────────────────────────────────────────────────────────────────
 const deleteResult = async (id) => {
+	const normalizedId = normalizeObjectId(id);
 	const result = await DiagnosticResult.findByIdAndUpdate(
-		id,
+		normalizedId,
 		{ isArchived: true },
 		{ new: true },
 	);
@@ -335,25 +496,29 @@ const deleteResult = async (id) => {
 const getImportStats = async (patientId) => {
 	if (!patientId)
 		throw new Error("patientId is required to fetch diagnostic import stats");
+	const normalizedPatientId = normalizePatientId(patientId);
 	const [total, critical, pending, abnormal, byMachine] = await Promise.all([
-		DiagnosticResult.countDocuments({ isArchived: false, patientId }),
+		DiagnosticResult.countDocuments({
+			isArchived: false,
+			patientId: normalizedPatientId,
+		}),
 		DiagnosticResult.countDocuments({
 			status: "critical",
 			isArchived: false,
-			patientId,
+			patientId: normalizedPatientId,
 		}),
 		DiagnosticResult.countDocuments({
 			status: "pending",
 			isArchived: false,
-			patientId,
+			patientId: normalizedPatientId,
 		}),
 		DiagnosticResult.countDocuments({
 			status: "abnormal",
 			isArchived: false,
-			patientId,
+			patientId: normalizedPatientId,
 		}),
 		DiagnosticResult.aggregate([
-			{ $match: { isArchived: false, patientId } },
+			{ $match: { isArchived: false, patientId: normalizedPatientId } },
 			{ $group: { _id: "$machineType", count: { $sum: 1 } } },
 			{ $sort: { count: -1 } },
 		]),
@@ -365,7 +530,7 @@ const getImportStats = async (patientId) => {
 	const today = await DiagnosticResult.countDocuments({
 		importedAt: { $gte: startOfDay },
 		isArchived: false,
-		patientId,
+		patientId: normalizedPatientId,
 	});
 
 	return {

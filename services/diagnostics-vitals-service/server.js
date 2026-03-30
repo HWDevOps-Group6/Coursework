@@ -20,7 +20,46 @@ const {
 	verifyResult,
 	deleteResult,
 	getImportStats,
-} = require("./models/DiagnosticLogic");
+} = require("../models/DiagnosticLogic");
+
+const MACHINE_TYPES = ["XRAY", "CT", "MRI", "PCR", "ULTRASOUND", "BLOODWORK"];
+const PATIENT_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
+
+const requireNonEmptyString = (value, fieldName) => {
+	if (typeof value !== "string") {
+		throw new Error(`${fieldName} must be a string`);
+	}
+
+	const normalized = value.trim();
+	if (!normalized) {
+		throw new Error(`${fieldName} is required`);
+	}
+
+	return normalized;
+};
+
+const optionalString = (value, fieldName) => {
+	if (value === undefined || value === null || value === "") return undefined;
+	return requireNonEmptyString(value, fieldName);
+};
+
+const normalizePatientId = (patientId) => {
+	const normalized = requireNonEmptyString(patientId, "patientId");
+	if (!PATIENT_ID_PATTERN.test(normalized)) {
+		throw new Error("patientId format is invalid");
+	}
+	return normalized;
+};
+
+const normalizeMachineType = (machineType) => {
+	const normalized = requireNonEmptyString(machineType, "machineType").toUpperCase();
+	if (!MACHINE_TYPES.includes(normalized)) {
+		throw new Error(
+			`Unknown machine type: ${normalized}. Valid types: ${MACHINE_TYPES.join(", ")}`,
+		);
+	}
+	return normalized;
+};
 
 const app = express();
 
@@ -91,7 +130,8 @@ app.get(
 	authorizeRole("doctor"),
 	async (req, res) => {
 		try {
-			const vitals = await Vitals.find({ patientId: req.params.patientId })
+			const patientId = normalizePatientId(req.params.patientId);
+			const vitals = await Vitals.find({ patientId })
 				.sort({ createdAt: -1 })
 				.limit(24);
 			res.json(vitals);
@@ -112,14 +152,11 @@ app.post(
 	authorizeRole("doctor", "clinician"),
 	async (req, res) => {
 		try {
-			const { machineType } = req.params;
-			const results = await importFromMachine(
-				machineType.toUpperCase(),
-				req.body,
-			);
+			const machineType = normalizeMachineType(req.params.machineType);
+			const results = await importFromMachine(machineType, req.body);
 			res.status(201).json({
 				success: true,
-				message: `Imported ${results.length} result(s) from ${machineType.toUpperCase()}`,
+				message: `Imported ${results.length} result(s) from ${machineType}`,
 				count: results.length,
 				data: results,
 			});
@@ -158,7 +195,8 @@ app.get(
 	authorizeRole("doctor", "clinician"),
 	async (req, res) => {
 		try {
-			const stats = await getImportStats(req.query.patientId);
+			const patientId = normalizePatientId(req.query.patientId);
+			const stats = await getImportStats(patientId);
 			res.status(200).json({ success: true, data: stats });
 		} catch (err) {
 			res.status(500).json({ success: false, message: err.message });
@@ -172,7 +210,8 @@ app.get(
 	authorizeRole("doctor", "clinician"),
 	async (req, res) => {
 		try {
-			const results = await getCriticalResults(req.query.patientId);
+			const patientId = normalizePatientId(req.query.patientId);
+			const results = await getCriticalResults(patientId);
 			res
 				.status(200)
 				.json({ success: true, count: results.length, data: results });
@@ -188,7 +227,14 @@ app.get(
 	authorizeRole("doctor", "clinician"),
 	async (req, res) => {
 		try {
-			const results = await getAllResults(req.query);
+			const safeQuery = {
+				patientId: normalizePatientId(req.query.patientId),
+				machineType: optionalString(req.query.machineType, "machineType"),
+				status: optionalString(req.query.status, "status"),
+				page: optionalString(req.query.page, "page"),
+				limit: optionalString(req.query.limit, "limit"),
+			};
+			const results = await getAllResults(safeQuery);
 			res.status(200).json({ success: true, ...results });
 		} catch (err) {
 			res.status(500).json({ success: false, message: err.message });
@@ -202,10 +248,12 @@ app.get(
 	authorizeRole("doctor", "clinician"),
 	async (req, res) => {
 		try {
-			const results = await getResultsByMachine(
-				req.params.machineType.toUpperCase(),
-				req.query,
-			);
+			const machineType = normalizeMachineType(req.params.machineType);
+			const safeQuery = {
+				patientId: normalizePatientId(req.query.patientId),
+				status: optionalString(req.query.status, "status"),
+			};
+			const results = await getResultsByMachine(machineType, safeQuery);
 			res
 				.status(200)
 				.json({ success: true, count: results.length, data: results });
@@ -221,7 +269,8 @@ app.get(
 	authorizeRole("doctor", "clinician"),
 	async (req, res) => {
 		try {
-			const results = await getResultsByPatient(req.params.patientId);
+			const patientId = normalizePatientId(req.params.patientId);
+			const results = await getResultsByPatient(patientId);
 			res
 				.status(200)
 				.json({ success: true, count: results.length, data: results });
