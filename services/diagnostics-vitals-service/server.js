@@ -20,7 +20,7 @@ const {
 	verifyResult,
 	deleteResult,
 	getImportStats,
-} = require("../models/DiagnosticLogic");
+} = require("./models/DiagnosticLogic");
 
 const MACHINE_TYPES = ["XRAY", "CT", "MRI", "PCR", "ULTRASOUND", "BLOODWORK"];
 const PATIENT_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
