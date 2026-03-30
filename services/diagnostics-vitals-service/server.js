@@ -8,6 +8,9 @@ const { verifyToken } = require("./middleware/verifyToken");
 const { authorizeRole } = require("./middleware/authorizeRole");
 const Vitals = require("./models/VitalsSchema");
 const { connectDatabase } = require("./config/database");
+const {
+	AUDIT_SOURCES,
+} = require("../patient-registration-service/src/models/audit");
 
 const {
 	importFromMachine,
@@ -24,6 +27,12 @@ const {
 
 const MACHINE_TYPES = ["XRAY", "CT", "MRI", "PCR", "ULTRASOUND", "BLOODWORK"];
 const PATIENT_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
+const VITALS_CREATE_FIELDS = [
+	"temperature",
+	"bp_systolic",
+	"bp_diastolic",
+	"pulse",
+];
 
 const requireNonEmptyString = (value, fieldName) => {
 	if (typeof value !== "string") {
@@ -59,6 +68,42 @@ const normalizeMachineType = (machineType) => {
 		);
 	}
 	return normalized;
+};
+
+const normalizeAuditSource = (source) => {
+	if (source === undefined) return "device";
+
+	const normalized = requireNonEmptyString(source, "source").toLowerCase();
+	if (!AUDIT_SOURCES.includes(normalized)) {
+		throw new Error(
+			`Unknown source: ${normalized}. Valid sources: ${AUDIT_SOURCES.join(", ")}`,
+		);
+	}
+
+	return normalized;
+};
+
+const buildVitalsCreatePayload = (patientId, body = {}, user = {}) => {
+	if (!body || typeof body !== "object" || Array.isArray(body)) {
+		throw new Error("Request body must be an object");
+	}
+
+	const vitalsPayload = VITALS_CREATE_FIELDS.reduce((payload, fieldName) => {
+		if (body[fieldName] !== undefined) {
+			payload[fieldName] = body[fieldName];
+		}
+		return payload;
+	}, {});
+
+	const createdBy = user?.name ? requireNonEmptyString(user.name, "createdBy") : "IoT Device";
+
+	return {
+		patientId: normalizePatientId(patientId),
+		...vitalsPayload,
+		source: normalizeAuditSource(body.source),
+		createdBy,
+		updatedBy: createdBy,
+	};
 };
 
 const app = express();
@@ -107,15 +152,9 @@ app.post(
 	authorizeRole("doctor", "nurse"),
 	async (req, res) => {
 		try {
-			const source = req.body?.source || "device";
-			const createdBy = req.user?.name || "IoT Device";
-			const vitals = await Vitals.create({
-				patientId: req.params.patientId,
-				...req.body,
-				source,
-				createdBy,
-				updatedBy: createdBy,
-			});
+			const vitals = await Vitals.create(
+				buildVitalsCreatePayload(req.params.patientId, req.body, req.user),
+			);
 
 			res.status(201).json(vitals);
 		} catch (err) {
