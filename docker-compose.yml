@@ -16,7 +16,9 @@ services:
     restart: unless-stopped
 
   auth-service:
-    build: ./services/auth-service
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
     environment:
       - MONGO_URI=mongodb://mongodb:27017/authdb
     networks:
@@ -24,13 +26,17 @@ services:
     restart: unless-stopped
 
   vitals-service:
-    build: ./services/diagnostics-vitals-service
+    build:
+      context: .
+      dockerfile: services/diagnostics-vitals-service/Dockerfile
     networks:
       - coursework-net
     restart: unless-stopped
 
   patient-service:
-    build: ./services/patient-registration-service
+    build:
+      context: .
+      dockerfile: services/patient-registration-service/Dockerfile
     networks:
       - coursework-net
     restart: unless-stopped

@@ -5,9 +5,9 @@
     "passes": 2,
     "pending": 0,
     "failures": 0,
-    "start": "2026-03-30T07:00:17.807Z",
-    "end": "2026-03-30T07:00:19.222Z",
-    "duration": 1415,
+    "start": "2026-03-30T07:13:02.828Z",
+    "end": "2026-03-30T07:13:03.922Z",
+    "duration": 1094,
     "testsRegistered": 2,
     "passPercent": 100,
     "pendingPercent": 0,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "7702e582-1276-4535-9133-1f8e68b4d434",
+      "uuid": "5c2d61b4-93f0-4cd4-9397-e4a5ed550431",
       "title": "",
       "fullFile": "/Users/bristi/Desktop/Projects/HWU/HWU - DevOPs/Coursework/Coursework/services/diagnostics-vitals-service/test/vitalsService.test.js",
       "file": "/test/vitalsService.test.js",
@@ -27,7 +27,7 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "e6fe1eaf-4e86-49e0-a02e-aa44d301951e",
+          "uuid": "c78bd467-9c68-4112-b5cd-3f8a8e0e1332",
           "title": "vitalsService (integration)",
           "fullFile": "/Users/bristi/Desktop/Projects/HWU/HWU - DevOPs/Coursework/Coursework/services/diagnostics-vitals-service/test/vitalsService.test.js",
           "file": "/test/vitalsService.test.js",
@@ -36,7 +36,7 @@
               "title": "\"before all\" hook in \"vitalsService (integration)\"",
               "fullTitle": "vitalsService (integration) \"before all\" hook in \"vitalsService (integration)\"",
               "timedOut": false,
-              "duration": 1218,
+              "duration": 900,
               "state": null,
               "speed": null,
               "pass": false,
@@ -45,8 +45,8 @@
               "context": null,
               "code": "mongoServer = await MongoMemoryServer.create();\nawait mongoose.connect(mongoServer.getUri(), {\n\tdbName: \"mocha_Test\",\n});",
               "err": {},
-              "uuid": "22bf2eee-f3c5-4644-a9b7-b46027ffa3da",
-              "parentUUID": "e6fe1eaf-4e86-49e0-a02e-aa44d301951e",
+              "uuid": "20f8da94-1f52-42e7-9603-b7e0a84d9772",
+              "parentUUID": "c78bd467-9c68-4112-b5cd-3f8a8e0e1332",
               "isHook": true,
               "skipped": false
             },
@@ -63,8 +63,8 @@
               "context": null,
               "code": "await Vitals.deleteMany({});",
               "err": {},
-              "uuid": "06334012-2931-4cd6-94ca-bb7778ac24e2",
-              "parentUUID": "e6fe1eaf-4e86-49e0-a02e-aa44d301951e",
+              "uuid": "ae4414fe-6609-4701-842e-5010374d6432",
+              "parentUUID": "c78bd467-9c68-4112-b5cd-3f8a8e0e1332",
               "isHook": true,
               "skipped": false
             }
@@ -74,7 +74,7 @@
               "title": "\"after all\" hook in \"vitalsService (integration)\"",
               "fullTitle": "vitalsService (integration) \"after all\" hook in \"vitalsService (integration)\"",
               "timedOut": false,
-              "duration": 110,
+              "duration": 116,
               "state": null,
               "speed": null,
               "pass": false,
@@ -83,8 +83,8 @@
               "context": null,
               "code": "if (mongoose.connection.readyState !== 0) {\n\tawait mongoose.connection.dropDatabase();\n\tawait mongoose.disconnect();\n}\nif (mongoServer) {\n\tawait mongoServer.stop();\n}",
               "err": {},
-              "uuid": "04677c67-d088-4d95-b32c-2280a5fc08f7",
-              "parentUUID": "e6fe1eaf-4e86-49e0-a02e-aa44d301951e",
+              "uuid": "5f9e83b8-64de-4015-b2e8-10eb3506eccc",
+              "parentUUID": "c78bd467-9c68-4112-b5cd-3f8a8e0e1332",
               "isHook": true,
               "skipped": false
             }
@@ -94,7 +94,7 @@
               "title": "addVitals should create vitals and return 201",
               "fullTitle": "vitalsService (integration) addVitals should create vitals and return 201",
               "timedOut": false,
-              "duration": 63,
+              "duration": 64,
               "state": "passed",
               "speed": "medium",
               "pass": true,
@@ -103,8 +103,8 @@
               "context": null,
               "code": "const req = {\n\tparams: { patientId: \"p1\" },\n\tbody: {\n\t\ttemperature: 37,\n\t\tbp_systolic: 120,\n\t\tbp_diastolic: 80,\n\t\tpulse: 70,\n\t\tsource: \"device\",\n\t\tcreatedBy: \"Nurse\",\n\t\tupdatedBy: \"Nurse\",\n\t},\n\tuser: { name: \"Nurse\" },\n};\nconst res = {\n\tstatus: function (code) {\n\t\tthis.statusCode = code;\n\t\treturn this;\n\t},\n\tjson: function (data) {\n\t\tthis.data = data;\n\t\treturn this;\n\t},\n};\nawait vitalsService.addVitals(req, res);\nexpect(res.statusCode).to.equal(201);\nexpect(res.data).to.have.property(\"patientId\", \"p1\");",
               "err": {},
-              "uuid": "baca0f36-66b4-4b32-8036-66f1e0ed3b3e",
-              "parentUUID": "e6fe1eaf-4e86-49e0-a02e-aa44d301951e",
+              "uuid": "692bdc5e-f71e-4e09-95c6-1d92421b2e52",
+              "parentUUID": "c78bd467-9c68-4112-b5cd-3f8a8e0e1332",
               "isHook": false,
               "skipped": false
             },
@@ -121,21 +121,21 @@
               "context": null,
               "code": "await Vitals.create({\n\tpatientId: \"p1\",\n\ttemperature: 37,\n\tbp_systolic: 120,\n\tbp_diastolic: 80,\n\tpulse: 70,\n\tsource: \"device\",\n\tcreatedBy: \"Nurse\",\n\tupdatedBy: \"Nurse\",\n});\nconst req = { params: { patientId: \"p1\" } };\nconst res = {\n\tjson: function (data) {\n\t\tthis.data = data;\n\t\treturn this;\n\t},\n};\nawait vitalsService.getVitals(req, res);\nexpect(res.data).to.be.an(\"array\");\nexpect(res.data[0]).to.have.property(\"patientId\", \"p1\");",
               "err": {},
-              "uuid": "510598f0-8980-4236-9854-a39b711c4d09",
-              "parentUUID": "e6fe1eaf-4e86-49e0-a02e-aa44d301951e",
+              "uuid": "8c04251f-33e8-4dd5-a677-d491dca7f60e",
+              "parentUUID": "c78bd467-9c68-4112-b5cd-3f8a8e0e1332",
               "isHook": false,
               "skipped": false
             }
           ],
           "suites": [],
           "passes": [
-            "baca0f36-66b4-4b32-8036-66f1e0ed3b3e",
-            "510598f0-8980-4236-9854-a39b711c4d09"
+            "692bdc5e-f71e-4e09-95c6-1d92421b2e52",
+            "8c04251f-33e8-4dd5-a677-d491dca7f60e"
           ],
           "failures": [],
           "pending": [],
           "skipped": [],
-          "duration": 68,
+          "duration": 69,
           "root": false,
           "rootEmpty": false,
           "_timeout": 20000
