@@ -72,4 +72,79 @@ describe("Patient Model (integration)", function () {
 		expect(found).to.exist;
 		expect(found.firstName).to.equal("John");
 	});
+
+	it("should apply default arrays when optional lists are omitted", async () => {
+		const patient = new Patient({
+			id: "P002",
+			emiratesIdHash: "hash_2",
+			firstName: "Jane",
+			lastName: "Smith",
+			dateOfBirth: "1992-02-02",
+			gender: "female",
+			entryRoute: "OPD",
+			servicePoint: "General",
+			registeredBy: "admin",
+			registeredByRole: "admin",
+			updatedBy: "Clerk_test",
+			createdBy: "Clerk_test",
+			source: "manual",
+		});
+
+		await patient.save();
+
+		expect(patient.knownDiseases).to.deep.equal([]);
+		expect(patient.complaints).to.deep.equal([]);
+		expect(patient.visitHistory).to.deep.equal([]);
+		expect(patient.prescriptions).to.deep.equal([]);
+	});
+
+	it("should fail when entryRoute is invalid", async () => {
+		const patient = new Patient({
+			id: "P003",
+			emiratesIdHash: "hash_3",
+			firstName: "Invalid",
+			lastName: "Route",
+			dateOfBirth: "1993-03-03",
+			gender: "female",
+			entryRoute: "ER",
+			servicePoint: "General",
+			registeredBy: "admin",
+			registeredByRole: "admin",
+			updatedBy: "Clerk_test",
+			createdBy: "Clerk_test",
+			source: "manual",
+		});
+
+		try {
+			await patient.validate();
+			throw new Error("Should have failed validation");
+		} catch (err) {
+			expect(err.errors).to.have.property("entryRoute");
+		}
+	});
+
+	it("should fail when audit source is invalid", async () => {
+		const patient = new Patient({
+			id: "P004",
+			emiratesIdHash: "hash_4",
+			firstName: "Invalid",
+			lastName: "Source",
+			dateOfBirth: "1994-04-04",
+			gender: "female",
+			entryRoute: "OPD",
+			servicePoint: "General",
+			registeredBy: "admin",
+			registeredByRole: "admin",
+			updatedBy: "Clerk_test",
+			createdBy: "Clerk_test",
+			source: "imported",
+		});
+
+		try {
+			await patient.validate();
+			throw new Error("Should have failed validation");
+		} catch (err) {
+			expect(err.errors).to.have.property("source");
+		}
+	});
 });
