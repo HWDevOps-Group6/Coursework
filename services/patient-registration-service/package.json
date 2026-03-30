@@ -7,7 +7,7 @@
 		"start": "node src/server.js",
 		"dev": "nodemon src/server.js",
 		"test": "mocha --reporter mochawesome test/*.test.js",
-		"test:coverage": "nyc --reporter=lcov --reporter=text mocha --reporter mochawesome test/*.test.js"
+		"test:coverage": "nyc --cwd ../../ --temp-dir services/patient-registration-service/.nyc_output --report-dir services/patient-registration-service/coverage --reporter=lcov --reporter=text mocha --reporter mochawesome test/*.test.js"
 	},
 	"dependencies": {
 		"cors": "^2.8.5",

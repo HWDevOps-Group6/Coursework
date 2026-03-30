@@ -47,6 +47,18 @@ const normalizeStatus = (status) => {
 	return normalized;
 };
 
+const normalizeOptional = (value, normalizer) => {
+	if (value === undefined || value === null || value === "") return null;
+	return normalizer(value);
+};
+
+const requirePatientId = (patientId, errorMessage) => {
+	if (!patientId) {
+		throw new Error(errorMessage);
+	}
+	return normalizePatientId(patientId);
+};
+
 const parsePositiveInt = (value, fallback, fieldName, max = Number.MAX_SAFE_INTEGER) => {
 	if (value === undefined || value === null || value === "") return fallback;
 	if (typeof value !== "string" && typeof value !== "number") {
@@ -225,10 +237,10 @@ const fetchFromMachineAPI = async (machineType) => {
 // Always require patientId for import
 const importFromMachine = async (machineType, overrides = {}) => {
 	const normalizedMachineType = normalizeMachineType(machineType);
-	if (!overrides.patientId) {
-		throw new Error("patientId is required for importing diagnostics");
-	}
-	const normalizedPatientId = normalizePatientId(overrides.patientId);
+	const normalizedPatientId = requirePatientId(
+		overrides.patientId,
+		"patientId is required for importing diagnostics",
+	);
 
 	const rawResults = await fetchFromMachineAPI(normalizedMachineType);
 
@@ -260,11 +272,10 @@ const importFromMachine = async (machineType, overrides = {}) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Require patientId for importAllMachines as well
 const importAllMachines = async (patientId) => {
-	if (!patientId)
-		throw new Error(
-			"patientId is required for importing diagnostics from all machines",
-		);
-	const normalizedPatientId = normalizePatientId(patientId);
+	const normalizedPatientId = requirePatientId(
+		patientId,
+		"patientId is required for importing diagnostics from all machines",
+	);
 	const summary = {};
 	for (const machineType of MACHINE_TYPES) {
 		try {
@@ -286,78 +297,26 @@ const importAllMachines = async (patientId) => {
 // Require patientId for getAllResults
 const getAllResults = async (query = {}) => {
 	const { machineType, status, page = 1, limit = 20, patientId } = query;
-	if (!patientId)
-		throw new Error("patientId is required to fetch diagnostic results");
-	const normalizedPatientId = normalizePatientId(patientId);
-	const normalizedMachineType =
-		machineType !== undefined && machineType !== null && machineType !== ""
-			? normalizeMachineType(machineType)
-			: null;
-	const normalizedStatus =
-		status !== undefined && status !== null && status !== ""
-			? normalizeStatus(status)
-			: null;
+	const normalizedPatientId = requirePatientId(
+		patientId,
+		"patientId is required to fetch diagnostic results",
+	);
+	const normalizedMachineType = normalizeOptional(machineType, normalizeMachineType);
+	const normalizedStatus = normalizeOptional(status, normalizeStatus);
 	const normalizedPage = parsePositiveInt(page, 1, "page");
 	const normalizedLimit = parsePositiveInt(limit, 20, "limit", 100);
 
 	const skip = (normalizedPage - 1) * normalizedLimit;
 
-	let total = 0;
-	let dataQuery;
+	const baseFilter = { isArchived: false, patientId: normalizedPatientId };
+	const filter = {
+		...baseFilter,
+		...(normalizedMachineType && { machineType: normalizedMachineType }),
+		...(normalizedStatus && { status: normalizedStatus }),
+	};
 
-	if (normalizedMachineType && normalizedStatus) {
-		total = await DiagnosticResult.countDocuments({
-			isArchived: false,
-			patientId: normalizedPatientId,
-			machineType: normalizedMachineType,
-			status: normalizedStatus,
-		});
-		dataQuery = maybePopulateVerifiedBy(
-			DiagnosticResult.find({
-				isArchived: false,
-				patientId: normalizedPatientId,
-				machineType: normalizedMachineType,
-				status: normalizedStatus,
-			}),
-		);
-	} else if (normalizedMachineType) {
-		total = await DiagnosticResult.countDocuments({
-			isArchived: false,
-			patientId: normalizedPatientId,
-			machineType: normalizedMachineType,
-		});
-		dataQuery = maybePopulateVerifiedBy(
-			DiagnosticResult.find({
-				isArchived: false,
-				patientId: normalizedPatientId,
-				machineType: normalizedMachineType,
-			}),
-		);
-	} else if (normalizedStatus) {
-		total = await DiagnosticResult.countDocuments({
-			isArchived: false,
-			patientId: normalizedPatientId,
-			status: normalizedStatus,
-		});
-		dataQuery = maybePopulateVerifiedBy(
-			DiagnosticResult.find({
-				isArchived: false,
-				patientId: normalizedPatientId,
-				status: normalizedStatus,
-			}),
-		);
-	} else {
-		total = await DiagnosticResult.countDocuments({
-			isArchived: false,
-			patientId: normalizedPatientId,
-		});
-		dataQuery = maybePopulateVerifiedBy(
-			DiagnosticResult.find({
-				isArchived: false,
-				patientId: normalizedPatientId,
-			}),
-		);
-	}
+	const total = await DiagnosticResult.countDocuments(filter);
+	const dataQuery = maybePopulateVerifiedBy(DiagnosticResult.find(filter));
 
 	const data = await dataQuery
 		.sort({ importedAt: -1 })
@@ -387,11 +346,10 @@ const getResultById = async (id) => {
 // GET /api/diagnostics/patient/:patientId
 // ─────────────────────────────────────────────────────────────────────────────
 const getResultsByPatient = async (patientId) => {
-	if (!patientId)
-		throw new Error(
-			"patientId is required to fetch diagnostic results by patient",
-		);
-	const normalizedPatientId = normalizePatientId(patientId);
+	const normalizedPatientId = requirePatientId(
+		patientId,
+		"patientId is required to fetch diagnostic results by patient",
+	);
 	return maybePopulateVerifiedBy(
 		DiagnosticResult.find({ patientId: normalizedPatientId, isArchived: false }),
 	).sort({ importedAt: -1 });
@@ -403,39 +361,21 @@ const getResultsByPatient = async (patientId) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const getResultsByMachine = async (machineType, query = {}) => {
 	const { status, patientId } = query;
-	if (!patientId)
-		throw new Error(
-			"patientId is required to fetch diagnostic results by machine",
-		);
-	const normalizedPatientId = normalizePatientId(patientId);
+	const normalizedPatientId = requirePatientId(
+		patientId,
+		"patientId is required to fetch diagnostic results by machine",
+	);
 	const normalizedMachineType = normalizeMachineType(machineType);
-	const normalizedStatus =
-		status !== undefined && status !== null && status !== ""
-			? normalizeStatus(status)
-			: null;
-
-	if (normalizedStatus) {
-		return maybePopulateVerifiedBy(
-			DiagnosticResult.find({
-				machineType: normalizedMachineType,
-				isArchived: false,
-				patientId: normalizedPatientId,
-				status: normalizedStatus,
-			}),
-		).sort({
-			importedAt: -1,
-		});
-	}
+	const normalizedStatus = normalizeOptional(status, normalizeStatus);
 
 	return maybePopulateVerifiedBy(
 		DiagnosticResult.find({
 			machineType: normalizedMachineType,
 			isArchived: false,
 			patientId: normalizedPatientId,
+			...(normalizedStatus && { status: normalizedStatus }),
 		}),
-	).sort({
-		importedAt: -1,
-	});
+	).sort({ importedAt: -1 });
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -443,11 +383,10 @@ const getResultsByMachine = async (machineType, query = {}) => {
 // GET /api/diagnostics/critical
 // ─────────────────────────────────────────────────────────────────────────────
 const getCriticalResults = async (patientId) => {
-	if (!patientId)
-		throw new Error(
-			"patientId is required to fetch critical diagnostic results",
-		);
-	const normalizedPatientId = normalizePatientId(patientId);
+	const normalizedPatientId = requirePatientId(
+		patientId,
+		"patientId is required to fetch critical diagnostic results",
+	);
 	return maybePopulateVerifiedBy(
 		DiagnosticResult.find({
 			status: "critical",
@@ -494,9 +433,10 @@ const deleteResult = async (id) => {
 // GET /api/diagnostics/stats
 // ─────────────────────────────────────────────────────────────────────────────
 const getImportStats = async (patientId) => {
-	if (!patientId)
-		throw new Error("patientId is required to fetch diagnostic import stats");
-	const normalizedPatientId = normalizePatientId(patientId);
+	const normalizedPatientId = requirePatientId(
+		patientId,
+		"patientId is required to fetch diagnostic import stats",
+	);
 	const [total, critical, pending, abnormal, byMachine] = await Promise.all([
 		DiagnosticResult.countDocuments({
 			isArchived: false,

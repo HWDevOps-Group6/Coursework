@@ -7,7 +7,7 @@
 		"start": "node src/server.js",
 		"dev": "nodemon src/server.js",
 		"test": "mocha --reporter mochawesome test/*.test.js",
-		"test:coverage": "nyc --reporter=lcov --reporter=text mocha --reporter mochawesome test/*.test.js"
+		"test:coverage": "nyc --cwd ../../ --temp-dir services/auth-service/.nyc_output --report-dir services/auth-service/coverage --reporter=lcov --reporter=text mocha --reporter mochawesome test/*.test.js"
 	},
 	"keywords": [
 		"auth",

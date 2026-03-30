@@ -108,6 +108,24 @@ const buildVitalsCreatePayload = (patientId, body = {}, user = {}) => {
 
 const app = express();
 
+const diagnosticsAccess = [verifyToken, authorizeRole("doctor", "clinician")];
+
+const sendServerError = (res, err) => {
+	res.status(500).json({ success: false, message: err.message });
+};
+
+const sendSuccessList = (res, results) => {
+	res.status(200).json({ success: true, count: results.length, data: results });
+};
+
+const diagnosticsHandler = (handler) => async (req, res) => {
+	try {
+		await handler(req, res);
+	} catch (err) {
+		sendServerError(res, err);
+	}
+};
+
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
@@ -187,41 +205,31 @@ app.get(
 
 app.post(
 	"/import/:machineType",
-	verifyToken,
-	authorizeRole("doctor", "clinician"),
-	async (req, res) => {
-		try {
-			const machineType = normalizeMachineType(req.params.machineType);
-			const results = await importFromMachine(machineType, req.body);
-			res.status(201).json({
-				success: true,
-				message: `Imported ${results.length} result(s) from ${machineType}`,
-				count: results.length,
-				data: results,
-			});
-		} catch (err) {
-			res.status(500).json({ success: false, message: err.message });
-		}
-	},
+	...diagnosticsAccess,
+	diagnosticsHandler(async (req, res) => {
+		const machineType = normalizeMachineType(req.params.machineType);
+		const results = await importFromMachine(machineType, req.body);
+		res.status(201).json({
+			success: true,
+			message: `Imported ${results.length} result(s) from ${machineType}`,
+			count: results.length,
+			data: results,
+		});
+	}),
 );
 
 app.post(
 	"/import-all",
-	verifyToken,
-	authorizeRole("doctor", "clinician"),
-	async (req, res) => {
-		try {
-			const { patientId } = req.body || {};
-			const summary = await importAllMachines(patientId);
-			res.status(201).json({
-				success: true,
-				message: "All machines polled successfully",
-				summary,
-			});
-		} catch (err) {
-			res.status(500).json({ success: false, message: err.message });
-		}
-	},
+	...diagnosticsAccess,
+	diagnosticsHandler(async (req, res) => {
+		const { patientId } = req.body || {};
+		const summary = await importAllMachines(patientId);
+		res.status(201).json({
+			success: true,
+			message: "All machines polled successfully",
+			summary,
+		});
+	}),
 );
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -230,111 +238,75 @@ app.post(
 
 app.get(
 	"/stats",
-	verifyToken,
-	authorizeRole("doctor", "clinician"),
-	async (req, res) => {
-		try {
-			const patientId = normalizePatientId(req.query.patientId);
-			const stats = await getImportStats(patientId);
-			res.status(200).json({ success: true, data: stats });
-		} catch (err) {
-			res.status(500).json({ success: false, message: err.message });
-		}
-	},
+	...diagnosticsAccess,
+	diagnosticsHandler(async (req, res) => {
+		const patientId = normalizePatientId(req.query.patientId);
+		const stats = await getImportStats(patientId);
+		res.status(200).json({ success: true, data: stats });
+	}),
 );
 
 app.get(
 	"/critical",
-	verifyToken,
-	authorizeRole("doctor", "clinician"),
-	async (req, res) => {
-		try {
-			const patientId = normalizePatientId(req.query.patientId);
-			const results = await getCriticalResults(patientId);
-			res
-				.status(200)
-				.json({ success: true, count: results.length, data: results });
-		} catch (err) {
-			res.status(500).json({ success: false, message: err.message });
-		}
-	},
+	...diagnosticsAccess,
+	diagnosticsHandler(async (req, res) => {
+		const patientId = normalizePatientId(req.query.patientId);
+		const results = await getCriticalResults(patientId);
+		sendSuccessList(res, results);
+	}),
 );
 
 app.get(
 	"/",
-	verifyToken,
-	authorizeRole("doctor", "clinician"),
-	async (req, res) => {
-		try {
-			const safeQuery = {
-				patientId: normalizePatientId(req.query.patientId),
-				machineType: optionalString(req.query.machineType, "machineType"),
-				status: optionalString(req.query.status, "status"),
-				page: optionalString(req.query.page, "page"),
-				limit: optionalString(req.query.limit, "limit"),
-			};
-			const results = await getAllResults(safeQuery);
-			res.status(200).json({ success: true, ...results });
-		} catch (err) {
-			res.status(500).json({ success: false, message: err.message });
-		}
-	},
+	...diagnosticsAccess,
+	diagnosticsHandler(async (req, res) => {
+		const safeQuery = {
+			patientId: normalizePatientId(req.query.patientId),
+			machineType: optionalString(req.query.machineType, "machineType"),
+			status: optionalString(req.query.status, "status"),
+			page: optionalString(req.query.page, "page"),
+			limit: optionalString(req.query.limit, "limit"),
+		};
+		const results = await getAllResults(safeQuery);
+		res.status(200).json({ success: true, ...results });
+	}),
 );
 
 app.get(
 	"/machine/:machineType",
-	verifyToken,
-	authorizeRole("doctor", "clinician"),
-	async (req, res) => {
-		try {
-			const machineType = normalizeMachineType(req.params.machineType);
-			const safeQuery = {
-				patientId: normalizePatientId(req.query.patientId),
-				status: optionalString(req.query.status, "status"),
-			};
-			const results = await getResultsByMachine(machineType, safeQuery);
-			res
-				.status(200)
-				.json({ success: true, count: results.length, data: results });
-		} catch (err) {
-			res.status(500).json({ success: false, message: err.message });
-		}
-	},
+	...diagnosticsAccess,
+	diagnosticsHandler(async (req, res) => {
+		const machineType = normalizeMachineType(req.params.machineType);
+		const safeQuery = {
+			patientId: normalizePatientId(req.query.patientId),
+			status: optionalString(req.query.status, "status"),
+		};
+		const results = await getResultsByMachine(machineType, safeQuery);
+		sendSuccessList(res, results);
+	}),
 );
 
 app.get(
 	"/patient/:patientId",
-	verifyToken,
-	authorizeRole("doctor", "clinician"),
-	async (req, res) => {
-		try {
-			const patientId = normalizePatientId(req.params.patientId);
-			const results = await getResultsByPatient(patientId);
-			res
-				.status(200)
-				.json({ success: true, count: results.length, data: results });
-		} catch (err) {
-			res.status(500).json({ success: false, message: err.message });
-		}
-	},
+	...diagnosticsAccess,
+	diagnosticsHandler(async (req, res) => {
+		const patientId = normalizePatientId(req.params.patientId);
+		const results = await getResultsByPatient(patientId);
+		sendSuccessList(res, results);
+	}),
 );
 
 app.get(
 	"/:id",
-	verifyToken,
-	authorizeRole("doctor", "clinician"),
-	async (req, res) => {
-		try {
-			const result = await getResultById(req.params.id);
-			if (!result)
-				return res
-					.status(404)
-					.json({ success: false, message: "Result not found" });
-			res.status(200).json({ success: true, data: result });
-		} catch (err) {
-			res.status(500).json({ success: false, message: err.message });
-		}
-	},
+	...diagnosticsAccess,
+	diagnosticsHandler(async (req, res) => {
+		const result = await getResultById(req.params.id);
+		if (!result)
+			return res
+				.status(404)
+				.json({ success: false, message: "Result not found" });
+		res.status(200).json({ success: true, data: result });
+	}),
 );
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -343,18 +315,13 @@ app.get(
 
 app.patch(
 	"/:id/verify",
-	verifyToken,
-	authorizeRole("doctor", "clinician"),
-	async (req, res) => {
-		try {
-			const result = await verifyResult(req.params.id, req.user._id);
-			res
-				.status(200)
-				.json({ success: true, message: "Result verified", data: result });
-		} catch (err) {
-			res.status(500).json({ success: false, message: err.message });
-		}
-	},
+	...diagnosticsAccess,
+	diagnosticsHandler(async (req, res) => {
+		const result = await verifyResult(req.params.id, req.user._id);
+		res
+			.status(200)
+			.json({ success: true, message: "Result verified", data: result });
+	}),
 );
 
 app.delete("/:id", verifyToken, authorizeRole("admin"), async (req, res) => {
@@ -362,7 +329,7 @@ app.delete("/:id", verifyToken, authorizeRole("admin"), async (req, res) => {
 		await deleteResult(req.params.id);
 		res.status(200).json({ success: true, message: "Result archived" });
 	} catch (err) {
-		res.status(500).json({ success: false, message: err.message });
+		sendServerError(res, err);
 	}
 });
 
