@@ -215,7 +215,7 @@ pipeline {
                     
                     // 2. Create the Release on GitHub
                     createGitHubRelease(
-                        credentialId: 'github-token-secret',
+                        credentialId: 'git-jenkins',
                         repository: 'HWDevOps-Group6/Coursework',
                         tag: releaseTag,
                         name: "Release ${releaseTag}",
