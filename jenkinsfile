@@ -202,6 +202,42 @@ pipeline {
                 }
             }
         }
+
+        stage('GitHub Release') {
+            // Only run this if the build was successful
+            when {
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
+            steps {
+                script {
+                    // 1. Define the Version (Using Build Number for uniqueness)
+                    def releaseTag = "v1.0.${env.BUILD_NUMBER}"
+                    
+                    // 2. Create the Release on GitHub
+                    createGitHubRelease(
+                        credentialId: 'github-token-secret',
+                        repository: 'HWDevOps-Group6/Coursework',
+                        tag: releaseTag,
+                        name: "Release ${releaseTag}",
+                        commitish: 'main', 
+                        bodyText: """
+                        ## Healthcare Management System - Build ${env.BUILD_NUMBER}
+                        
+                        ### Deployment Images (Azure Container Registry)
+                        The following images have been pushed to ACR:
+                        - **Gateway:** `${env.REGISTRY}/gateway:${env.BUILD_NUMBER}`
+                        - **Auth Service:** `${env.REGISTRY}/auth-service:${env.BUILD_NUMBER}`
+                        - **Vitals Service:** `${env.REGISTRY}/vitals-service:${env.BUILD_NUMBER}`
+                        - **Patient Service:** `${env.REGISTRY}/patient-service:${env.BUILD_NUMBER}`
+                        
+                        ### Analysis & Quality
+                        - **SonarCloud:** [View Results](https://sonarcloud.io/dashboard?id=HWDevOps-Group6_Coursework)
+                        - **Status:** Verified and Pushed to Production
+                        """
+                    )
+                }
+            }
+        }
     }
 
     post {
