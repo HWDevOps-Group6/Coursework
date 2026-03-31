@@ -76,13 +76,13 @@ pipeline {
         }
         // Builds if the root gateway files OR shared folder changes
         stage('Build API Gateway') {
-            when {
-                anyOf {
-                    changeset "Dockerfile.gateway"
-                    changeset "src/**"
-                    changeset "shared/**"
-                }
-            }
+            // when {
+            //     anyOf {
+            //         changeset "Dockerfile.gateway"
+            //         changeset "src/**"
+            //         changeset "shared/**"
+            //     }
+            // }
             steps {
                 sh "docker build -f Dockerfile.gateway -t ${REGISTRY}/gateway:${env.BUILD_NUMBER} ."
                 sh "docker push ${REGISTRY}/gateway:${env.BUILD_NUMBER}"
@@ -92,12 +92,12 @@ pipeline {
 
         // --- STAGE: AUTH SERVICE ---
         stage('Build Auth Service') {
-            when {
-                anyOf {
-                    changeset "services/auth-service/**"
-                    changeset "shared/**"
-                }
-            }
+            // when {
+            //     anyOf {
+            //         changeset "services/auth-service/**"
+            //         changeset "shared/**"
+            //     }
+            // }
             steps {
                 sh "docker build -f services/auth-service/Dockerfile -t ${REGISTRY}/auth-service:${env.BUILD_NUMBER} ."
                 sh "docker push ${REGISTRY}/auth-service:${env.BUILD_NUMBER}"
@@ -107,12 +107,12 @@ pipeline {
 
         // --- STAGE: DIAGNOSTICS & VITALS ---
         stage('Build Diagnostics Service') {
-            when {
-                anyOf {
-                    changeset "services/diagnostics-vitals-service/**"
-                    changeset "shared/**"
-                }
-            }
+            // when {
+            //     anyOf {
+            //         changeset "services/diagnostics-vitals-service/**"
+            //         changeset "shared/**"
+            //     }
+            // }
             steps {
                 sh "docker build -f services/diagnostics-vitals-service/Dockerfile -t ${REGISTRY}/vitals-service:${env.BUILD_NUMBER} ."
                 sh "docker push ${REGISTRY}/vitals-service:${env.BUILD_NUMBER}"
@@ -122,12 +122,12 @@ pipeline {
 
         // --- STAGE: PATIENT REGISTRATION ---
         stage('Build Patient Service') {
-            when {
-                anyOf {
-                    changeset "services/patient-registration-service/**"
-                    changeset "shared/**"
-                }
-            }
+            // when {
+            //     anyOf {
+            //         changeset "services/patient-registration-service/**"
+            //         changeset "shared/**"
+            //     }
+            // }
             steps {
                 sh "docker build -f services/patient-registration-service/Dockerfile -t ${REGISTRY}/patient-service:${env.BUILD_NUMBER} ."
                 sh "docker push ${REGISTRY}/patient-service:${env.BUILD_NUMBER}"
