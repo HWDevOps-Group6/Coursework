@@ -25,7 +25,7 @@ services:
       context: .
       dockerfile: services/auth-service/Dockerfile
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/authdb
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017/authdb}
       - PORT=3001
       - JWT_SECRET=${JWT_SECRET:-ci-zap-jwt-secret}
     depends_on:
@@ -39,7 +39,7 @@ services:
       context: .
       dockerfile: services/diagnostics-vitals-service/Dockerfile
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/vitalsdb
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017/vitalsdb}
       - DIAGNOSTICS_VITALS_SERVICE_PORT=3004
       - JWT_SECRET=${JWT_SECRET:-ci-zap-jwt-secret}
     depends_on:
@@ -53,7 +53,7 @@ services:
       context: .
       dockerfile: services/patient-registration-service/Dockerfile
     environment:
-      - MONGODB_URI=mongodb://mongodb:27017/patientdb
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017/patientdb}
       - PATIENT_REG_SERVICE_PORT=3003
       - JWT_SECRET=${JWT_SECRET:-ci-zap-jwt-secret}
     depends_on:
