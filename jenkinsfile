@@ -213,7 +213,7 @@ pipeline {
                     string(credentialsId: 'ZAP_AUTH_PASSWORD', variable: 'ZAP_AUTH_PASSWORD')
                 ]) {
                     sh '''#!/bin/bash
-                    set -eu
+                    set -euo pipefail
 
                     mkdir -p reports/zap
 
@@ -238,16 +238,33 @@ pipeline {
                     if [ "$READY" -ne 1 ]; then
                         echo "Gateway did not become healthy in time"
                         cat /tmp/gateway-health.json 2>/dev/null || true
+                        $COMPOSE_CMD ps || true
+                        $COMPOSE_CMD logs --tail=200 gateway auth-service mongodb || true
                         exit 1
                     fi
+
+                    # Fresh CI databases may not contain the scan user yet.
+                    REGISTER_RESPONSE="$(curl -sS -X POST http://localhost/api/auth/register \
+                        -H 'Content-Type: application/json' \
+                        -d "{\"email\":\"$ZAP_AUTH_EMAIL\",\"password\":\"$ZAP_AUTH_PASSWORD\",\"firstName\":\"Zap\",\"lastName\":\"Scanner\",\"role\":\"clerk\"}" || true)"
+                    echo "Auth bootstrap response captured"
 
                     LOGIN_RESPONSE="$(curl -sS -X POST http://localhost/api/auth/login \
                         -H 'Content-Type: application/json' \
                         -d "{\"email\":\"$ZAP_AUTH_EMAIL\",\"password\":\"$ZAP_AUTH_PASSWORD\"}")"
 
+                    LOGIN_OK="$(printf '%s' "$LOGIN_RESPONSE" | node -e "let data='';process.stdin.on('data',c=>data+=c);process.stdin.on('end',()=>{try{const json=JSON.parse(data);process.stdout.write(json && json.success ? '1':'0')}catch(e){process.stdout.write('0')}})")"
+                    if [ "$LOGIN_OK" != "1" ]; then
+                        echo "Auth login failed"
+                        echo "$LOGIN_RESPONSE"
+                        $COMPOSE_CMD logs --tail=200 gateway auth-service mongodb || true
+                        exit 1
+                    fi
+
                     ZAP_JWT="$(printf '%s' "$LOGIN_RESPONSE" | node -e "let data='';process.stdin.on('data',c=>data+=c);process.stdin.on('end',()=>{try{const json=JSON.parse(data);const token=(json.data&&json.data.token)||json.token||'';if(!token){process.exit(2)}process.stdout.write(token)}catch(e){process.exit(3)}})")" || {
                         echo "Failed to extract auth token from /api/auth/login response"
                         echo "$LOGIN_RESPONSE"
+                        $COMPOSE_CMD logs --tail=200 gateway auth-service mongodb || true
                         exit 1
                     }
 

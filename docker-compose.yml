@@ -9,6 +9,7 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:3001
       - PATIENT_REG_SERVICE_URL=http://patient-service:3003
       - DIAGNOSTICS_VITALS_SERVICE_URL=http://vitals-service:3004
+      - JWT_SECRET=${JWT_SECRET:-ci-zap-jwt-secret}
     ports:
       - "80:3000"
     depends_on:
@@ -26,6 +27,7 @@ services:
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/authdb
       - PORT=3001
+      - JWT_SECRET=${JWT_SECRET:-ci-zap-jwt-secret}
     depends_on:
       - mongodb
     networks:
@@ -39,6 +41,7 @@ services:
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/vitalsdb
       - DIAGNOSTICS_VITALS_SERVICE_PORT=3004
+      - JWT_SECRET=${JWT_SECRET:-ci-zap-jwt-secret}
     depends_on:
       - mongodb
     networks:
@@ -52,6 +55,7 @@ services:
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/patientdb
       - PATIENT_REG_SERVICE_PORT=3003
+      - JWT_SECRET=${JWT_SECRET:-ci-zap-jwt-secret}
     depends_on:
       - mongodb
     networks:
