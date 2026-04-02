@@ -187,6 +187,24 @@ npm run dev:all
 Azure VM setup with Jenkins installed
 <http://52.140.125.222:8080/>
 
+### OWASP ZAP Stage
+
+The Jenkins pipeline includes an authenticated OWASP ZAP baseline scan against the gateway running on the Jenkins host (`http://localhost`).
+
+Required Jenkins credential:
+
+- **Type:** Username with password
+- **ID:** `zap-auth-credentials`
+- **Username:** Test account email for auth login
+- **Password:** Matching account password
+
+Behavior:
+
+- Brings up full stack with Docker Compose on the Jenkins VM.
+- Authenticates via `POST /api/auth/login` and injects `Authorization: Bearer <token>` into ZAP requests.
+- Generates reports under `reports/zap/` and archives them as Jenkins artifacts.
+- Fails the pipeline only when **High-risk** ZAP alerts are found.
+
 ## Documentation
 
 Additional design notes are available under `docs/`, including architecture and security write-ups.
