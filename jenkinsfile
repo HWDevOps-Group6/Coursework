@@ -162,7 +162,10 @@ pipeline {
     post {
         always {
             sh "docker logout ${REGISTRY} || true"
-            archiveArtifacts artifacts: '**/mochawesome-report/*,reports/zap/*', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'services/auth-service/mochawesome-report/*', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'services/diagnostics-vitals-service/mochawesome-report/*', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'services/patient-registration-service/mochawesome-report/*', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'reports/zap/*', allowEmptyArchive: true
             cleanWs()
         }
     }
