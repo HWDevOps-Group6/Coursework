@@ -81,18 +81,54 @@ pipeline {
         stage('Build & Push Images') {
             steps {
                 script {
-                    // Define map of [ServiceName: DockerfilePath]
-                    def builds = [
-                        'auth-service': 'services/auth-service/Dockerfile',
-                        'vitals-service': 'services/diagnostics-vitals-service/Dockerfile',
-                        'patient-service': 'services/patient-registration-service/Dockerfile',
-                        'gateway': 'Dockerfile.gateway'
+                    def changedFiles = []
+                    for (def changeLog in currentBuild.changeSets) {
+                        for (def entry in changeLog.items) {
+                            for (def file in entry.affectedFiles) {
+                                changedFiles << file.path
+                            }
+                        }
+                    }
+
+                    def hasAnyChanges = !changedFiles.isEmpty()
+                    if (hasAnyChanges) {
+                        echo "Changed files detected:\n- ${changedFiles.join('\n- ')}"
+                    } else {
+                        echo "No SCM changeSet detected (first build/manual trigger); defaulting to build all images."
+                    }
+
+                    def buildConfig = [
+                        'auth-service': [
+                            dockerfile: 'services/auth-service/Dockerfile',
+                            watchPaths: ['services/auth-service/', 'shared/', 'package.json', 'package-lock.json', 'docker-compose.yml']
+                        ],
+                        'vitals-service': [
+                            dockerfile: 'services/diagnostics-vitals-service/Dockerfile',
+                            watchPaths: ['services/diagnostics-vitals-service/', 'shared/', 'package.json', 'package-lock.json', 'docker-compose.yml']
+                        ],
+                        'patient-service': [
+                            dockerfile: 'services/patient-registration-service/Dockerfile',
+                            watchPaths: ['services/patient-registration-service/', 'shared/', 'package.json', 'package-lock.json', 'docker-compose.yml']
+                        ],
+                        'gateway': [
+                            dockerfile: 'Dockerfile.gateway',
+                            watchPaths: ['src/', 'shared/', 'Dockerfile.gateway', 'package.json', 'package-lock.json', 'docker-compose.yml']
+                        ]
                     ]
 
-                    builds.each { service, df ->
-                        sh "docker build -f ${df} -t ${REGISTRY}/${service}:${env.BUILD_NUMBER} ."
-                        sh "docker push ${REGISTRY}/${service}:${env.BUILD_NUMBER}"
-                        // Deploy locally for ZAP scanning
+                    buildConfig.each { service, cfg ->
+                        def shouldBuild = !hasAnyChanges || changedFiles.any { filePath ->
+                            cfg.watchPaths.any { watchPath -> filePath.startsWith(watchPath) || filePath == watchPath }
+                        }
+
+                        if (shouldBuild) {
+                            sh "docker build -f ${cfg.dockerfile} -t ${REGISTRY}/${service}:${env.BUILD_NUMBER} ."
+                            sh "docker push ${REGISTRY}/${service}:${env.BUILD_NUMBER}"
+                        } else {
+                            echo "Skipping ${service} image build/push (no relevant changes)."
+                        }
+
+                        // Ensure full stack is running for ZAP scan
                         composeUp(service)
                     }
                 }
