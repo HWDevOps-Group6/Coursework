@@ -243,15 +243,18 @@ pipeline {
                         exit 1
                     fi
 
+                    AUTH_PAYLOAD="$(node -e "const payload={email:process.env.ZAP_AUTH_EMAIL,password:process.env.ZAP_AUTH_PASSWORD};process.stdout.write(JSON.stringify(payload));")"
+                    REGISTER_PAYLOAD="$(node -e "const payload={email:process.env.ZAP_AUTH_EMAIL,password:process.env.ZAP_AUTH_PASSWORD,firstName:'Zap',lastName:'Scanner',role:'clerk'};process.stdout.write(JSON.stringify(payload));")"
+
                     # Fresh CI databases may not contain the scan user yet.
-                    REGISTER_RESPONSE="$(curl -sS -X POST http://localhost/api/auth/register \
+                    REGISTER_RESPONSE="$(printf '%s' "$REGISTER_PAYLOAD" | curl -sS -X POST http://localhost/api/auth/register \
                         -H 'Content-Type: application/json' \
-                        -d "{\"email\":\"$ZAP_AUTH_EMAIL\",\"password\":\"$ZAP_AUTH_PASSWORD\",\"firstName\":\"Zap\",\"lastName\":\"Scanner\",\"role\":\"clerk\"}" || true)"
+                        --data-binary @- || true)"
                     echo "Auth bootstrap response captured"
 
-                    LOGIN_RESPONSE="$(curl -sS -X POST http://localhost/api/auth/login \
+                    LOGIN_RESPONSE="$(printf '%s' "$AUTH_PAYLOAD" | curl -sS -X POST http://localhost/api/auth/login \
                         -H 'Content-Type: application/json' \
-                        -d "{\"email\":\"$ZAP_AUTH_EMAIL\",\"password\":\"$ZAP_AUTH_PASSWORD\"}")"
+                        --data-binary @-)"
 
                     LOGIN_OK="$(printf '%s' "$LOGIN_RESPONSE" | node -e "let data='';process.stdin.on('data',c=>data+=c);process.stdin.on('end',()=>{try{const json=JSON.parse(data);process.stdout.write(json && json.success ? '1':'0')}catch(e){process.stdout.write('0')}})")"
                     if [ "$LOGIN_OK" != "1" ]; then
