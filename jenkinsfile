@@ -271,14 +271,14 @@ pipeline {
                         exit 1
                     }
 
-                    cat > reports/zap/zap-options.conf <<EOF
-                    replacer.full_list(0).description=authorization-header
-                    replacer.full_list(0).enabled=true
-                    replacer.full_list(0).matchtype=REQ_HEADER
-                    replacer.full_list(0).matchstr=Authorization
-                    replacer.full_list(0).regex=false
-                    replacer.full_list(0).replacement=Bearer ${ZAP_JWT}
-                    EOF
+                    {
+                        echo "replacer.full_list(0).description=authorization-header"
+                        echo "replacer.full_list(0).enabled=true"
+                        echo "replacer.full_list(0).matchtype=REQ_HEADER"
+                        echo "replacer.full_list(0).matchstr=Authorization"
+                        echo "replacer.full_list(0).regex=false"
+                        printf 'replacer.full_list(0).replacement=Bearer %s\n' "$ZAP_JWT"
+                    } > reports/zap/zap-options.conf
 
                     docker run --rm \
                         --network host \
@@ -291,7 +291,18 @@ pipeline {
                         -r zap-report.html \
                         -w zap-report.md \
                         -I \
-                        -z "-configfile /zap/wrk/zap-options.conf"
+                        -z "-configfile /zap/wrk/zap-options.conf" || {
+                        echo "ZAP baseline command failed"
+                        $COMPOSE_CMD logs --tail=200 gateway auth-service mongodb || true
+                        exit 1
+                    }
+
+                    if [ ! -s reports/zap/zap-report.json ]; then
+                        echo "ZAP report not generated: reports/zap/zap-report.json"
+                        ls -la reports/zap || true
+                        $COMPOSE_CMD logs --tail=200 gateway auth-service mongodb || true
+                        exit 1
+                    fi
 
                     HIGH_ALERTS="$(node -e "const fs=require('fs');const report=JSON.parse(fs.readFileSync('reports/zap/zap-report.json','utf8'));const sites=report.site||[];let high=0;for(const site of sites){for(const alert of (site.alerts||[])){if(String(alert.riskcode)==='3') high++;}}process.stdout.write(String(high));")"
 
