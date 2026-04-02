@@ -10,8 +10,11 @@ def composeUp(serviceName) {
 
 pipeline {
         tools {
+
+                    chmod -R a+rwX reports/zap
             nodejs 'NodeJS' 
         }
+                        --user root \
     agent any
 
     environment {
