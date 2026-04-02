@@ -203,6 +203,99 @@ pipeline {
             }
         }
 
+        stage('OWASP ZAP Baseline Scan') {
+            when {
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
+            steps {
+                withCredentials([
+                    string(credentialsId: 'ZAP_AUTH_EMAIL', variable: 'ZAP_AUTH_EMAIL'),
+                    string(credentialsId: 'ZAP_AUTH_PASSWORD', variable: 'ZAP_AUTH_PASSWORD')
+                ]) {
+                    sh '''#!/bin/bash
+                    set -eu
+
+                    mkdir -p reports/zap
+
+                    if command -v docker-compose >/dev/null 2>&1; then
+                        COMPOSE_CMD="docker-compose"
+                    else
+                        COMPOSE_CMD="docker compose"
+                    fi
+
+                    $COMPOSE_CMD up -d --build mongodb auth-service vitals-service patient-service gateway
+
+                    echo "Waiting for gateway health endpoint..."
+                    READY=0
+                    for i in $(seq 1 30); do
+                        if curl -fsS http://localhost/health >/tmp/gateway-health.json; then
+                            READY=1
+                            break
+                        fi
+                        sleep 5
+                    done
+
+                    if [ "$READY" -ne 1 ]; then
+                        echo "Gateway did not become healthy in time"
+                        cat /tmp/gateway-health.json 2>/dev/null || true
+                        exit 1
+                    fi
+
+                    LOGIN_RESPONSE="$(curl -sS -X POST http://localhost/api/auth/login \
+                        -H 'Content-Type: application/json' \
+                        -d "{\"email\":\"$ZAP_AUTH_EMAIL\",\"password\":\"$ZAP_AUTH_PASSWORD\"}")"
+
+                    ZAP_JWT="$(printf '%s' "$LOGIN_RESPONSE" | node -e "let data='';process.stdin.on('data',c=>data+=c);process.stdin.on('end',()=>{try{const json=JSON.parse(data);const token=(json.data&&json.data.token)||json.token||'';if(!token){process.exit(2)}process.stdout.write(token)}catch(e){process.exit(3)}})")" || {
+                        echo "Failed to extract auth token from /api/auth/login response"
+                        echo "$LOGIN_RESPONSE"
+                        exit 1
+                    }
+
+                    cat > reports/zap/zap-options.conf <<EOF
+                    replacer.full_list(0).description=authorization-header
+                    replacer.full_list(0).enabled=true
+                    replacer.full_list(0).matchtype=REQ_HEADER
+                    replacer.full_list(0).matchstr=Authorization
+                    replacer.full_list(0).regex=false
+                    replacer.full_list(0).replacement=Bearer ${ZAP_JWT}
+                    EOF
+
+                    docker run --rm \
+                        --network host \
+                        -v "$PWD/reports/zap:/zap/wrk:rw" \
+                        ghcr.io/zaproxy/zaproxy:stable \
+                        zap-baseline.py \
+                        -t http://localhost \
+                        -m 5 \
+                        -J zap-report.json \
+                        -r zap-report.html \
+                        -w zap-report.md \
+                        -I \
+                        -z "-configfile /zap/wrk/zap-options.conf"
+
+                    HIGH_ALERTS="$(node -e "const fs=require('fs');const report=JSON.parse(fs.readFileSync('reports/zap/zap-report.json','utf8'));const sites=report.site||[];let high=0;for(const site of sites){for(const alert of (site.alerts||[])){if(String(alert.riskcode)==='3') high++;}}process.stdout.write(String(high));")"
+
+                    echo "ZAP high-risk alerts: $HIGH_ALERTS"
+                    if [ "$HIGH_ALERTS" -gt 0 ]; then
+                        echo "Failing build: high-risk ZAP alerts detected"
+                        exit 1
+                    fi
+                    '''
+                }
+            }
+            post {
+                always {
+                    sh '''#!/bin/sh
+                    if command -v docker-compose >/dev/null 2>&1; then
+                        docker-compose down --remove-orphans || true
+                    else
+                        docker compose down --remove-orphans || true
+                    fi
+                    '''
+                }
+            }
+        }
+
         stage('GitHub Release') {
             // Only run this if the build was successful
             when {
@@ -246,6 +339,7 @@ pipeline {
             archiveArtifacts artifacts: 'services/auth-service/mochawesome-report/*', allowEmptyArchive: true
             archiveArtifacts artifacts: 'services/diagnostics-vitals-service/mochawesome-report/*', allowEmptyArchive: true
             archiveArtifacts artifacts: 'services/patient-registration-service/mochawesome-report/*', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'reports/zap/*', allowEmptyArchive: true
             cleanWs()
         }
     }

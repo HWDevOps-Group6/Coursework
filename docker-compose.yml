@@ -5,6 +5,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.gateway
+    environment:
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - PATIENT_REG_SERVICE_URL=http://patient-service:3003
+      - DIAGNOSTICS_VITALS_SERVICE_URL=http://vitals-service:3004
     ports:
       - "80:3000"
     depends_on:
@@ -20,7 +24,10 @@ services:
       context: .
       dockerfile: services/auth-service/Dockerfile
     environment:
-      - MONGO_URI=mongodb://mongodb:27017/authdb
+      - MONGODB_URI=mongodb://mongodb:27017/authdb
+      - PORT=3001
+    depends_on:
+      - mongodb
     networks:
       - coursework-net
     restart: unless-stopped
@@ -29,6 +36,11 @@ services:
     build:
       context: .
       dockerfile: services/diagnostics-vitals-service/Dockerfile
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/vitalsdb
+      - DIAGNOSTICS_VITALS_SERVICE_PORT=3004
+    depends_on:
+      - mongodb
     networks:
       - coursework-net
     restart: unless-stopped
@@ -37,6 +49,11 @@ services:
     build:
       context: .
       dockerfile: services/patient-registration-service/Dockerfile
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/patientdb
+      - PATIENT_REG_SERVICE_PORT=3003
+    depends_on:
+      - mongodb
     networks:
       - coursework-net
     restart: unless-stopped
