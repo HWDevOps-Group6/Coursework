@@ -224,7 +224,8 @@ pipeline {
                         composeUpForZap()
 
                         withCredentials([
-                            usernamePassword(credentialsId: 'zap-auth-credentials', usernameVariable: 'ZAP_MAIL', passwordVariable: 'ZAP_PWD')
+                            string(credentialsId: 'ZAP_AUTH_EMAIL', variable: 'ZAP_MAIL'),
+                            string(credentialsId: 'ZAP_AUTH_PASSWORD', variable: 'ZAP_PWD')
                         ]) {
                         echo '[ZAP] Credentials bound successfully'
                         sh 'mkdir -p reports/zap && chmod 777 reports/zap'
