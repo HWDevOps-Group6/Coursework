@@ -212,11 +212,15 @@ pipeline {
                 ]) {
                     sh '''#!/bin/bash
                     set -euo pipefail
+                    trap 'rc=$?; echo "[ZAP] Failed at line ${LINENO} with exit code ${rc}"; exit ${rc}' ERR
 
                     echo "[ZAP] Stage started"
                     command -v curl >/dev/null 2>&1 || { echo "[ZAP] curl is required but not installed"; exit 1; }
                     command -v node >/dev/null 2>&1 || { echo "[ZAP] node is required but not installed"; exit 1; }
                     command -v docker >/dev/null 2>&1 || { echo "[ZAP] docker is required but not installed"; exit 1; }
+
+                    mkdir -p reports/zap
+                    rm -f reports/zap/zap-options.conf reports/zap/zap-report.json reports/zap/zap-report.html
                     
                     echo "[ZAP] Waiting for gateway..."
                     GATEWAY_READY=0
@@ -301,11 +305,32 @@ pipeline {
                     # Configure ZAP with the JWT
                     printf "replacer.full_list(0).description=auth\\nreplacer.full_list(0).enabled=true\\nreplacer.full_list(0).matchtype=REQ_HEADER\\nreplacer.full_list(0).matchstr=Authorization\\nreplacer.full_list(0).regex=false\\nreplacer.full_list(0).replacement=Bearer %s" "$ZAP_JWT" > reports/zap/zap-options.conf
 
-                    docker run --rm --network host \
-                        -v "$PWD/reports/zap:/zap/wrk:rw" \
-                        ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-                        -t http://localhost -J zap-report.json -r zap-report.html \
-                        -z "-configfile /zap/wrk/zap-options.conf" || true
+                    ZAP_TARGET_URL="http://localhost"
+                    ZAP_NETWORK_MODE="--network host"
+
+                    if [ "$(uname -s)" = "Darwin" ]; then
+                        ZAP_TARGET_URL="http://host.docker.internal"
+                        ZAP_NETWORK_MODE=""
+                    fi
+
+                    echo "[ZAP] Running scan against ${ZAP_TARGET_URL}"
+
+                    if [ -n "$ZAP_NETWORK_MODE" ]; then
+                        docker run --rm $ZAP_NETWORK_MODE \
+                            -v "$PWD/reports/zap:/zap/wrk:rw" \
+                            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+                            -t "$ZAP_TARGET_URL" -J zap-report.json -r zap-report.html \
+                            -z "-configfile /zap/wrk/zap-options.conf" || true
+                    else
+                        docker run --rm \
+                            -v "$PWD/reports/zap:/zap/wrk:rw" \
+                            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+                            -t "$ZAP_TARGET_URL" -J zap-report.json -r zap-report.html \
+                            -z "-configfile /zap/wrk/zap-options.conf" || true
+                    fi
+
+                    echo "[ZAP] Scan finished. Generated artifacts:"
+                    ls -l reports/zap || true
                     '''
                 }
             }
