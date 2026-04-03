@@ -207,10 +207,13 @@ pipeline {
         // --- STAGE: OWASP ZAP ---
         stage('OWASP ZAP Scan') {
             steps {
-                withCredentials([
-                    usernamePassword(credentialsId: 'zap-auth-credentials', usernameVariable: 'ZAP_MAIL', passwordVariable: 'ZAP_PWD')
-                ]) {
-                    sh '''#!/bin/bash
+                script {
+                    echo '[ZAP] Entered OWASP ZAP stage'
+                    withCredentials([
+                        usernamePassword(credentialsId: 'zap-auth-credentials', usernameVariable: 'ZAP_MAIL', passwordVariable: 'ZAP_PWD')
+                    ]) {
+                    echo '[ZAP] Credentials bound successfully'
+                    def zapExitCode = sh(script: '''#!/bin/bash
                     set -euo pipefail
                     trap 'rc=$?; echo "[ZAP] Failed at line ${LINENO} with exit code ${rc}"; exit ${rc}' ERR
 
@@ -331,7 +334,21 @@ pipeline {
 
                     echo "[ZAP] Scan finished. Generated artifacts:"
                     ls -l reports/zap || true
-                    '''
+                    ''', returnStatus: true)
+
+                    echo "[ZAP] Shell execution completed with exit code: ${zapExitCode}"
+                    sh 'ls -la reports || true'
+                    sh 'ls -la reports/zap || true'
+
+                    if (zapExitCode != 0) {
+                        error("[ZAP] Stage failed before/during scan bootstrap. Check [ZAP] logs above for the exact command and line.")
+                    }
+                    }
+                }
+            }
+            post {
+                failure {
+                    echo '[ZAP] OWASP stage failed. Open this stage log and search for [ZAP] entries.'
                 }
             }
         }
