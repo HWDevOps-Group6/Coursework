@@ -8,6 +8,16 @@ def composeUp(serviceName) {
     """
 }
 
+def composeUpForZap() {
+    sh '''#!/bin/sh
+    if command -v docker-compose >/dev/null 2>&1; then
+        docker-compose up -d --build mongodb auth-service vitals-service patient-service gateway
+    else
+        docker compose up -d --build mongodb auth-service vitals-service patient-service gateway
+    fi
+    '''
+}
+
 pipeline {
     tools {
         nodejs 'NodeJS' 
@@ -209,12 +219,16 @@ pipeline {
             steps {
                 script {
                     echo '[ZAP] Entered OWASP ZAP stage'
-                    withCredentials([
-                        usernamePassword(credentialsId: 'zap-auth-credentials', usernameVariable: 'ZAP_MAIL', passwordVariable: 'ZAP_PWD')
-                    ]) {
-                    echo '[ZAP] Credentials bound successfully'
-                    sh 'mkdir -p reports/zap && chmod 777 reports/zap'
-                    def zapExitCode = sh(script: '''#!/bin/bash
+                    try {
+                        echo '[ZAP] Starting application stack for scan'
+                        composeUpForZap()
+
+                        withCredentials([
+                            usernamePassword(credentialsId: 'zap-auth-credentials', usernameVariable: 'ZAP_MAIL', passwordVariable: 'ZAP_PWD')
+                        ]) {
+                        echo '[ZAP] Credentials bound successfully'
+                        sh 'mkdir -p reports/zap && chmod 777 reports/zap'
+                        def zapExitCode = sh(script: '''#!/bin/bash
                     set -euo pipefail
                     trap 'rc=$?; echo "[ZAP] Failed at line ${LINENO} with exit code ${rc}"; exit ${rc}' ERR
 
@@ -228,10 +242,18 @@ pipeline {
                     
                     echo "[ZAP] Waiting for gateway..."
                     GATEWAY_READY=0
-                    for _ in {1..12}; do
+                    for _ in {1..24}; do
                         if curl -fsS http://localhost/health >/tmp/gateway-health.json; then
-                            GATEWAY_READY=1
-                            break
+                            if node -e "
+                                const fs = require('fs');
+                                const data = JSON.parse(fs.readFileSync('/tmp/gateway-health.json', 'utf8'));
+                                const backends = data.backends || {};
+                                const ready = backends.auth === 'up' && backends.patientRegistration === 'up' && backends.diagnosticsVitals === 'up';
+                                process.exit(ready ? 0 : 1);
+                            "; then
+                                GATEWAY_READY=1
+                                break
+                            fi
                         fi
                         sleep 5
                     done
@@ -324,13 +346,13 @@ pipeline {
                             -v "$PWD/reports/zap:/zap/wrk:rw" \
                             ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
                             -t "$ZAP_TARGET_URL" -J zap-report.json -r zap-report.html \
-                            -z "-configfile /zap/wrk/zap-options.conf" || true
+                            -z "-configfile /zap/wrk/zap-options.conf"
                     else
                         docker run --rm \
                             -v "$PWD/reports/zap:/zap/wrk:rw" \
                             ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
                             -t "$ZAP_TARGET_URL" -J zap-report.json -r zap-report.html \
-                            -z "-configfile /zap/wrk/zap-options.conf" || true
+                            -z "-configfile /zap/wrk/zap-options.conf"
                     fi
 
                     echo "[ZAP] Scan finished. Generated artifacts:"
@@ -341,15 +363,31 @@ pipeline {
                     sh 'ls -la reports || true'
                     sh 'ls -la reports/zap || true'
 
-                    if (zapExitCode != 0) {
-                        unstable("[ZAP] Scan completed with warnings or setup failed. Check Console Output.")
+                    if (zapExitCode == 1) {
+                        error('[ZAP] High-risk alerts detected. Failing the pipeline.')
                     }
+
+                    if (zapExitCode == 2) {
+                        unstable('[ZAP] Medium or lower-risk alerts detected. Review the archived ZAP report.')
+                    }
+
+                    if (zapExitCode != 0 && zapExitCode != 1 && zapExitCode != 2) {
+                        error("[ZAP] Scan failed to complete correctly. Exit code: ${zapExitCode}")
+                    }
+                        }
+                    } catch (Exception err) {
+                        if (err.getMessage()?.contains('High-risk alerts detected') || err.getMessage()?.contains('Scan failed to complete correctly')) {
+                            throw err
+                        }
+                        echo "[ZAP] Jenkins-level failure before/during shell execution: ${err.getClass().getName()}"
+                        echo "[ZAP] Message: ${err.getMessage()}"
+                        unstable("[ZAP] Stage could not complete due to Jenkins configuration/runtime issue. Check [ZAP] Message above.")
                     }
                 }
             }
             post {
-                failure {
-                    echo '[ZAP] OWASP stage failed. Open this stage log and search for [ZAP] entries.'
+                unsuccessful {
+                    echo '[ZAP] OWASP stage unsuccessful. Open this stage log and search for [ZAP] entries.'
                 }
             }
         }
