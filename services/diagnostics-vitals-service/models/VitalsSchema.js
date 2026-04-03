@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const {
 	auditFieldDefinitions,
-} = require("../../patient-registration-service/src/models/audit");
+} = require("../../../shared/models/audit");
 
 const vitalsSchema = new mongoose.Schema(
 	{

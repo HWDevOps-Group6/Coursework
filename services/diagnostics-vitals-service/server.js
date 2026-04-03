@@ -10,7 +10,7 @@ const Vitals = require("./models/VitalsSchema");
 const { connectDatabase } = require("./config/database");
 const {
 	AUDIT_SOURCES,
-} = require("../patient-registration-service/src/models/audit");
+} = require("../../shared/models/audit");
 
 const {
 	importFromMachine,
@@ -317,7 +317,7 @@ app.patch(
 	"/:id/verify",
 	...diagnosticsAccess,
 	diagnosticsHandler(async (req, res) => {
-		const result = await verifyResult(req.params.id, req.user._id);
+		const result = await verifyResult(req.params.id, req.user.userId);
 		res
 			.status(200)
 			.json({ success: true, message: "Result verified", data: result });

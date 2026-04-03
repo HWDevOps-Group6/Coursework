@@ -233,6 +233,16 @@ pipeline {
                     set -euo pipefail
                     trap 'rc=$?; echo "[ZAP] Failed at line ${LINENO} with exit code ${rc}"; exit ${rc}' ERR
 
+                    if command -v docker-compose >/dev/null 2>&1; then
+                        compose() {
+                            docker-compose "$@"
+                        }
+                    else
+                        compose() {
+                            docker compose "$@"
+                        }
+                    fi
+
                     echo "[ZAP] Stage started"
                     command -v curl >/dev/null 2>&1 || { echo "[ZAP] curl is required but not installed"; exit 1; }
                     command -v node >/dev/null 2>&1 || { echo "[ZAP] node is required but not installed"; exit 1; }
@@ -261,7 +271,13 @@ pipeline {
 
                     if [ "$GATEWAY_READY" -ne 1 ]; then
                         echo "[ZAP] Gateway health check failed after retries"
-                        exit 1
+                        compose ps || true
+                        GATEWAY_CONTAINER_ID="$(compose ps -q gateway || true)"
+                        if [ -n "$GATEWAY_CONTAINER_ID" ]; then
+                            echo "[ZAP] Gateway container logs:"
+                            docker logs --tail 200 "$GATEWAY_CONTAINER_ID" || true
+                        fi
+                        exit 10
                     fi
 
                     echo "[ZAP] Gateway health response:"
@@ -324,7 +340,12 @@ pipeline {
                     if [ -z "$ZAP_JWT" ]; then
                         echo "[ZAP] Failed to get JWT"
                         echo "[ZAP] Login response: $LOGIN_RESPONSE"
-                        exit 1
+                        AUTH_CONTAINER_ID="$(compose ps -q auth-service || true)"
+                        if [ -n "$AUTH_CONTAINER_ID" ]; then
+                            echo "[ZAP] Auth service logs:"
+                            docker logs --tail 200 "$AUTH_CONTAINER_ID" || true
+                        fi
+                        exit 11
                     fi
 
                     echo "[ZAP] JWT acquired; running baseline scan"
@@ -342,6 +363,7 @@ pipeline {
 
                     echo "[ZAP] Running scan against ${ZAP_TARGET_URL}"
 
+                    set +e
                     if [ -n "$ZAP_NETWORK_MODE" ]; then
                         docker run --rm $ZAP_NETWORK_MODE \
                             -v "$PWD/reports/zap:/zap/wrk:rw" \
@@ -355,9 +377,18 @@ pipeline {
                             -t "$ZAP_TARGET_URL" -J zap-report.json -r zap-report.html \
                             -z "-configfile /zap/wrk/zap-options.conf"
                     fi
+                    ZAP_RESULT=$?
+                    set -e
 
                     echo "[ZAP] Scan finished. Generated artifacts:"
                     ls -l reports/zap || true
+
+                    if [ ! -f reports/zap/zap-report.json ] || [ ! -f reports/zap/zap-report.html ]; then
+                        echo "[ZAP] Expected report files were not generated"
+                        exit 12
+                    fi
+
+                    exit "$ZAP_RESULT"
                     ''', returnStatus: true)
 
                     echo "[ZAP] Shell execution completed with exit code: ${zapExitCode}"
@@ -372,12 +403,24 @@ pipeline {
                         unstable('[ZAP] Medium or lower-risk alerts detected. Review the archived ZAP report.')
                     }
 
-                    if (zapExitCode != 0 && zapExitCode != 1 && zapExitCode != 2) {
+                    if (zapExitCode == 10) {
+                        error('[ZAP] Gateway did not become ready before the scan started.')
+                    }
+
+                    if (zapExitCode == 11) {
+                        error('[ZAP] Auth bootstrap failed. JWT could not be acquired for ZAP.')
+                    }
+
+                    if (zapExitCode == 12) {
+                        error('[ZAP] ZAP did not generate the expected HTML and JSON reports.')
+                    }
+
+                    if (zapExitCode != 0 && zapExitCode != 1 && zapExitCode != 2 && zapExitCode != 10 && zapExitCode != 11 && zapExitCode != 12) {
                         error("[ZAP] Scan failed to complete correctly. Exit code: ${zapExitCode}")
                     }
                         }
                     } catch (Exception err) {
-                        if (err.getMessage()?.contains('High-risk alerts detected') || err.getMessage()?.contains('Scan failed to complete correctly')) {
+                        if (err.getMessage()?.contains('High-risk alerts detected') || err.getMessage()?.contains('Gateway did not become ready') || err.getMessage()?.contains('Auth bootstrap failed') || err.getMessage()?.contains('did not generate the expected HTML and JSON reports') || err.getMessage()?.contains('Scan failed to complete correctly')) {
                             throw err
                         }
                         echo "[ZAP] Jenkins-level failure before/during shell execution: ${err.getClass().getName()}"
