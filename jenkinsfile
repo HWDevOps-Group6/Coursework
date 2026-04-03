@@ -20,44 +20,170 @@ pipeline {
     }
 
     stages {
-        stage('Login & Setup') {
+        stage('Login & Cleanup') {
             steps {
                 sh '''#!/bin/sh
                 printf '%s' "$ACR_CREDS_PSW" | docker login "$REGISTRY" -u "$ACR_CREDS_USR" --password-stdin
-                mkdir -p reports/zap
                 '''
             }
         }
 
-        // --- 1. TEST STAGE (FAIL FAST) ---
-        stage('Unit Tests') {
+        // --- TEST: AUTH SERVICE ---
+        stage('Test Auth Service') {
+            when {
+                anyOf {
+                    changeset "services/auth-service/**"
+                    changeset "shared/**"
+                }
+            }
             steps {
-                script {
-                    def services = [
-                        'auth': 'services/auth-service',
-                        'vitals': 'services/diagnostics-vitals-service',
-                        'patient': 'services/patient-registration-service'
-                    ]
-
-                    services.each { name, dirPath ->
-                        echo "Testing ${name}..."
-                        dir(dirPath) {
-                            sh 'npm install'
-                            sh 'npm test'
-                        }
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    dir('services/auth-service') {
+                        sh 'npm install'
+                        sh 'npm test'
                     }
+                }
+            }
+            post {
+                failure {
+                    echo 'Auth Service tests failed! Check the logs above for details.'
                 }
             }
         }
 
-        // --- 2. QUALITY GATE ---
+        // --- TEST: DIAGNOSTICS & VITALS ---
+        stage('Test Diagnostics Service') {
+            when {
+                anyOf {
+                    changeset "services/diagnostics-vitals-service/**"
+                    changeset "shared/**"
+                }
+            }
+            steps {
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    dir('services/diagnostics-vitals-service') {
+                        sh 'npm install'
+                        sh 'npm test'
+                    }
+                }
+            }
+            post {
+                failure {
+                    echo 'Diagnostics Service tests failed! Check the logs above for details.'
+                }
+            }
+        }
+
+        // --- TEST: PATIENT REGISTRATION ---
+        stage('Test Patient Service') {
+            when {
+                anyOf {
+                    changeset "services/patient-registration-service/**"
+                    changeset "shared/**"
+                }
+            }
+            steps {
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    dir('services/patient-registration-service') {
+                        sh 'npm install'
+                        sh 'npm test'
+                    }
+                }
+            }
+            post {
+                failure {
+                    echo 'Patient Service tests failed! Check the logs above for details.'
+                }
+            }
+        }
+
+        // --- STAGE: API GATEWAY ---
+        stage('Build API Gateway') {
+            when {
+                anyOf {
+                    changeset "Dockerfile.gateway"
+                    changeset "src/**"
+                    changeset "shared/**"
+                }
+            }
+            steps {
+                sh "docker build -f Dockerfile.gateway -t ${REGISTRY}/gateway:${env.BUILD_NUMBER} ."
+                sh "docker push ${REGISTRY}/gateway:${env.BUILD_NUMBER}"
+                composeUp('gateway')
+            }
+        }
+
+        // --- STAGE: AUTH SERVICE ---
+        stage('Build Auth Service') {
+            when {
+                anyOf {
+                    changeset "services/auth-service/**"
+                    changeset "shared/**"
+                }
+            }
+            steps {
+                sh "docker build -f services/auth-service/Dockerfile -t ${REGISTRY}/auth-service:${env.BUILD_NUMBER} ."
+                sh "docker push ${REGISTRY}/auth-service:${env.BUILD_NUMBER}"
+                composeUp('auth-service')
+            }
+        }
+
+        // --- STAGE: DIAGNOSTICS & VITALS ---
+        stage('Build Diagnostics Service') {
+            when {
+                anyOf {
+                    changeset "services/diagnostics-vitals-service/**"
+                    changeset "shared/**"
+                }
+            }
+            steps {
+                sh "docker build -f services/diagnostics-vitals-service/Dockerfile -t ${REGISTRY}/vitals-service:${env.BUILD_NUMBER} ."
+                sh "docker push ${REGISTRY}/vitals-service:${env.BUILD_NUMBER}"
+                composeUp('vitals-service')
+            }
+        }
+
+        // --- STAGE: PATIENT REGISTRATION ---
+        stage('Build Patient Service') {
+            when {
+                anyOf {
+                    changeset "services/patient-registration-service/**"
+                    changeset "shared/**"
+                }
+            }
+            steps {
+                sh "docker build -f services/patient-registration-service/Dockerfile -t ${REGISTRY}/patient-service:${env.BUILD_NUMBER} ."
+                sh "docker push ${REGISTRY}/patient-service:${env.BUILD_NUMBER}"
+                composeUp('patient-service')
+            }
+        }
+
+        // --- STAGE: SONARCLOUD ---
         stage('SonarCloud Analysis') {
             steps {
                 script {
-                    // Generate coverage for all services
-                    dir('services/auth-service') { sh 'npm run test:coverage || true' }
-                    dir('services/diagnostics-vitals-service') { sh 'npm run test:coverage || true' }
-                    dir('services/patient-registration-service') { sh 'npm run test:coverage || true' }
+                    dir('services/auth-service') {
+                        sh 'npm install'
+                        sh 'npm run test:coverage'
+                    }
+                    dir('services/diagnostics-vitals-service') {
+                        sh 'npm install'
+                        sh 'npm run test:coverage'
+                    }
+                    dir('services/patient-registration-service') {
+                        sh 'npm install'
+                        sh 'npm run test:coverage'
+                    }
+
+                    sh '''#!/bin/sh
+                    set -e
+                    test -f services/auth-service/coverage/lcov.info
+                    test -f services/diagnostics-vitals-service/coverage/lcov.info
+                    test -f services/patient-registration-service/coverage/lcov.info
+                    ls -l services/auth-service/coverage/lcov.info
+                    ls -l services/diagnostics-vitals-service/coverage/lcov.info
+                    ls -l services/patient-registration-service/coverage/lcov.info
+                    '''
 
                     def scannerHome = tool 'sonar-scanner'
                     withSonarQubeEnv('SonarCloud') {
@@ -67,171 +193,177 @@ pipeline {
                         -Dsonar.organization=hwdevops-group6 \
                         -Dsonar.projectKey=HWDevOps-Group6_Coursework \
                         -Dsonar.projectName=healthcare-management-system \
-                        -Dsonar.sources=src,shared,services/auth-service/src,services/diagnostics-vitals-service/server.js,services/patient-registration-service/src \
+                        -Dsonar.verbose=true \
+                        -Dsonar.sources=src,shared,services/auth-service/src,services/diagnostics-vitals-service/server.js,services/diagnostics-vitals-service/config,services/diagnostics-vitals-service/middleware,services/diagnostics-vitals-service/models,services/diagnostics-vitals-service/services,services/patient-registration-service/src \
                         -Dsonar.tests=services/auth-service/test,services/diagnostics-vitals-service/test,services/patient-registration-service/test \
-                        -Dsonar.exclusions=**/node_modules/**,**/coverage/** \
-                        -Dsonar.javascript.lcov.reportPaths=services/auth-service/coverage/lcov.info,services/diagnostics-vitals-service/coverage/lcov.info,services/patient-registration-service/coverage/lcov.info
+                        -Dsonar.exclusions=**/node_modules/**,**/mochawesome-report/**,**/coverage/**,**/.nyc_output/**,**/.dockerignore,**/build-wrapper-dump.json \
+                        -Dsonar.javascript.lcov.reportPaths=${WORKSPACE}/services/auth-service/coverage/lcov.info,${WORKSPACE}/services/diagnostics-vitals-service/coverage/lcov.info,${WORKSPACE}/services/patient-registration-service/coverage/lcov.info
                         """
                     }
                 }
             }
         }
 
-        // --- 3. BUILD & DEPLOY TO STAGING ---
-        stage('Build & Push Images') {
-            steps {
-                script {
-                    def changedFiles = []
-                    for (def changeLog in currentBuild.changeSets) {
-                        for (def entry in changeLog.items) {
-                            for (def file in entry.affectedFiles) {
-                                changedFiles << file.path
-                            }
-                        }
-                    }
-
-                    def hasAnyChanges = !changedFiles.isEmpty()
-                    if (hasAnyChanges) {
-                        echo "Changed files detected:\n- ${changedFiles.join('\n- ')}"
-                    } else {
-                        echo "No SCM changeSet detected (first build/manual trigger); defaulting to build all images."
-                    }
-
-                    def buildConfig = [
-                        'auth-service': [
-                            dockerfile: 'services/auth-service/Dockerfile',
-                            watchPaths: ['services/auth-service/', 'shared/', 'package.json', 'package-lock.json', 'docker-compose.yml']
-                        ],
-                        'vitals-service': [
-                            dockerfile: 'services/diagnostics-vitals-service/Dockerfile',
-                            watchPaths: ['services/diagnostics-vitals-service/', 'shared/', 'package.json', 'package-lock.json', 'docker-compose.yml']
-                        ],
-                        'patient-service': [
-                            dockerfile: 'services/patient-registration-service/Dockerfile',
-                            watchPaths: ['services/patient-registration-service/', 'shared/', 'package.json', 'package-lock.json', 'docker-compose.yml']
-                        ],
-                        'gateway': [
-                            dockerfile: 'Dockerfile.gateway',
-                            watchPaths: ['src/', 'shared/', 'Dockerfile.gateway', 'package.json', 'package-lock.json', 'docker-compose.yml']
-                        ]
-                    ]
-
-                    buildConfig.each { service, cfg ->
-                        def shouldBuild = !hasAnyChanges || changedFiles.any { filePath ->
-                            cfg.watchPaths.any { watchPath -> filePath.startsWith(watchPath) || filePath == watchPath }
-                        }
-
-                        if (shouldBuild) {
-                            sh "docker build -f ${cfg.dockerfile} -t ${REGISTRY}/${service}:${env.BUILD_NUMBER} ."
-                            sh "docker push ${REGISTRY}/${service}:${env.BUILD_NUMBER}"
-                        } else {
-                            echo "Skipping ${service} image build/push (no relevant changes)."
-                        }
-
-                        // Ensure full stack is running for ZAP scan
-                        composeUp(service)
-                    }
-                }
+        // --- STAGE: OWASP ZAP ---
+        stage('OWASP ZAP Baseline Scan') {
+            when {
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
             }
-        }
-
-        // --- 4. DYNAMIC SECURITY SCAN (DAST) ---
-        stage('OWASP ZAP Scan') {
             steps {
                 withCredentials([
-                    usernamePassword(credentialsId: 'zap-auth-credentials', usernameVariable: 'ZAP_MAIL', passwordVariable: 'ZAP_PWD')
+                    string(credentialsId: 'ZAP_AUTH_EMAIL', variable: 'ZAP_AUTH_EMAIL'),
+                    string(credentialsId: 'ZAP_AUTH_PASSWORD', variable: 'ZAP_AUTH_PASSWORD')
                 ]) {
                     sh '''#!/bin/bash
                     set -euo pipefail
-                    
-                    echo "Waiting for gateway..."
-                    timeout 60s bash -c 'until curl -fs http://localhost/health; do sleep 5; done'
 
-                    echo "Waiting for auth login readiness..."
-                    ZAP_JWT=""
-                    LOGIN_RESPONSE=""
-                    ZAP_AUTH_PASSWORD="$ZAP_PWD"
+                    mkdir -p reports/zap
 
-                    login_and_extract_token() {
-                        LOGIN_RESPONSE=$(curl -sS -X POST http://localhost/api/auth/login \
-                            -H "Content-Type: application/json" \
-                            -d "{\\"email\\":\\"$ZAP_MAIL\\",\\"password\\":\\"$ZAP_AUTH_PASSWORD\\"}")
+                    if command -v docker-compose >/dev/null 2>&1; then
+                        COMPOSE_CMD="docker-compose"
+                    else
+                        COMPOSE_CMD="docker compose"
+                    fi
 
-                        ZAP_JWT=$(printf '%s' "$LOGIN_RESPONSE" | node -e "
-                            try {
-                                const data = JSON.parse(require('fs').readFileSync(0, 'utf8'));
-                                process.stdout.write(data.token || data.data?.token || '');
-                            } catch (_) {
-                                process.stdout.write('');
-                            }
-                        ")
-                    }
+                    $COMPOSE_CMD up -d --build mongodb auth-service vitals-service patient-service gateway
 
-                    for _ in {1..18}; do
-                        login_and_extract_token
-
-                        if [ -n "$ZAP_JWT" ]; then
+                    echo "Waiting for gateway health endpoint..."
+                    READY=0
+                    for i in $(seq 1 30); do
+                        if curl -fsS http://localhost/health >/tmp/gateway-health.json; then
+                            READY=1
                             break
                         fi
-
-                        if echo "$LOGIN_RESPONSE" | grep -qi "Invalid email or password"; then
-                            echo "Auth user missing; registering scan user..."
-
-                            REGISTER_RESPONSE=$(curl -sS -X POST http://localhost/api/auth/register \
-                                -H "Content-Type: application/json" \
-                                -d "{\\"email\\":\\"$ZAP_MAIL\\",\\"password\\":\\"$ZAP_AUTH_PASSWORD\\",\\"firstName\\":\\"Zap\\",\\"lastName\\":\\"Scanner\\",\\"role\\":\\"clerk\\"}")
-
-                            if echo "$REGISTER_RESPONSE" | grep -qi "Password must contain at least one uppercase"; then
-                                ZAP_AUTH_PASSWORD='ZapScan@1234'
-                                REGISTER_RESPONSE=$(curl -sS -X POST http://localhost/api/auth/register \
-                                    -H "Content-Type: application/json" \
-                                    -d "{\\"email\\":\\"$ZAP_MAIL\\",\\"password\\":\\"$ZAP_AUTH_PASSWORD\\",\\"firstName\\":\\"Zap\\",\\"lastName\\":\\"Scanner\\",\\"role\\":\\"clerk\\"}")
-                            fi
-
-                            if echo "$REGISTER_RESPONSE" | grep -qi "already exists"; then
-                                :
-                            fi
-
-                            login_and_extract_token
-                            if [ -n "$ZAP_JWT" ]; then
-                                break
-                            fi
-                        fi
-
                         sleep 5
                     done
 
-                    if [ -z "$ZAP_JWT" ]; then
-                        echo "Failed to get JWT"
-                        echo "Login response: $LOGIN_RESPONSE"
+                    if [ "$READY" -ne 1 ]; then
+                        echo "Gateway did not become healthy in time"
+                        cat /tmp/gateway-health.json 2>/dev/null || true
+                        $COMPOSE_CMD ps || true
+                        $COMPOSE_CMD logs --tail=200 gateway auth-service mongodb || true
                         exit 1
                     fi
 
-                    # Configure ZAP with the JWT
-                    printf "replacer.full_list(0).description=auth\\nreplacer.full_list(0).enabled=true\\nreplacer.full_list(0).matchtype=REQ_HEADER\\nreplacer.full_list(0).matchstr=Authorization\\nreplacer.full_list(0).regex=false\\nreplacer.full_list(0).replacement=Bearer %s" "$ZAP_JWT" > reports/zap/zap-options.conf
+                    AUTH_PAYLOAD="$(node -e "const payload={email:process.env.ZAP_AUTH_EMAIL,password:process.env.ZAP_AUTH_PASSWORD};process.stdout.write(JSON.stringify(payload));")"
+                    REGISTER_PAYLOAD="$(node -e "const payload={email:process.env.ZAP_AUTH_EMAIL,password:process.env.ZAP_AUTH_PASSWORD,firstName:'Zap',lastName:'Scanner',role:'clerk'};process.stdout.write(JSON.stringify(payload));")"
 
-                    docker run --rm --network host \
+                    # Fresh CI databases may not contain the scan user yet.
+                    REGISTER_RESPONSE="$(printf '%s' "$REGISTER_PAYLOAD" | curl -sS -X POST http://localhost/api/auth/register \
+                        -H 'Content-Type: application/json' \
+                        --data-binary @- || true)"
+                    echo "Auth bootstrap response captured"
+
+                    LOGIN_RESPONSE="$(printf '%s' "$AUTH_PAYLOAD" | curl -sS -X POST http://localhost/api/auth/login \
+                        -H 'Content-Type: application/json' \
+                        --data-binary @-)"
+
+                    LOGIN_OK="$(printf '%s' "$LOGIN_RESPONSE" | node -e "let data='';process.stdin.on('data',c=>data+=c);process.stdin.on('end',()=>{try{const json=JSON.parse(data);process.stdout.write(json && json.success ? '1':'0')}catch(e){process.stdout.write('0')}})")"
+                    if [ "$LOGIN_OK" != "1" ]; then
+                        echo "Auth login failed"
+                        echo "$LOGIN_RESPONSE"
+                        $COMPOSE_CMD logs --tail=200 gateway auth-service mongodb || true
+                        exit 1
+                    fi
+
+                    ZAP_JWT="$(printf '%s' "$LOGIN_RESPONSE" | node -e "let data='';process.stdin.on('data',c=>data+=c);process.stdin.on('end',()=>{try{const json=JSON.parse(data);const token=(json.data&&json.data.token)||json.token||'';if(!token){process.exit(2)}process.stdout.write(token)}catch(e){process.exit(3)}})")" || {
+                        echo "Failed to extract auth token from /api/auth/login response"
+                        echo "$LOGIN_RESPONSE"
+                        $COMPOSE_CMD logs --tail=200 gateway auth-service mongodb || true
+                        exit 1
+                    }
+
+                    {
+                        echo "replacer.full_list(0).description=authorization-header"
+                        echo "replacer.full_list(0).enabled=true"
+                        echo "replacer.full_list(0).matchtype=REQ_HEADER"
+                        echo "replacer.full_list(0).matchstr=Authorization"
+                        echo "replacer.full_list(0).regex=false"
+                        printf 'replacer.full_list(0).replacement=Bearer %s\n' "$ZAP_JWT"
+                    } > reports/zap/zap-options.conf
+
+                    chmod -R a+rwX reports/zap
+
+                    docker run --rm \
+                        --user root \
+                        --network host \
                         -v "$PWD/reports/zap:/zap/wrk:rw" \
-                        ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-                        -t http://localhost -J zap-report.json -r zap-report.html \
-                        -z "-configfile /zap/wrk/zap-options.conf" || true
+                        ghcr.io/zaproxy/zaproxy:stable \
+                        zap-baseline.py \
+                        -t http://localhost \
+                        -m 5 \
+                        -J zap-report.json \
+                        -r zap-report.html \
+                        -w zap-report.md \
+                        -I \
+                        -z "-configfile /zap/wrk/zap-options.conf" || {
+                        echo "ZAP baseline command failed"
+                        $COMPOSE_CMD logs --tail=200 gateway auth-service mongodb || true
+                        exit 1
+                    }
+
+                    if [ ! -s reports/zap/zap-report.json ]; then
+                        echo "ZAP report not generated: reports/zap/zap-report.json"
+                        ls -la reports/zap || true
+                        $COMPOSE_CMD logs --tail=200 gateway auth-service mongodb || true
+                        exit 1
+                    fi
+
+                    HIGH_ALERTS="$(node -e "const fs=require('fs');const report=JSON.parse(fs.readFileSync('reports/zap/zap-report.json','utf8'));const sites=report.site||[];let high=0;for(const site of sites){for(const alert of (site.alerts||[])){if(String(alert.riskcode)==='3') high++;}}process.stdout.write(String(high));")"
+
+                    echo "ZAP high-risk alerts: $HIGH_ALERTS"
+                    if [ "$HIGH_ALERTS" -gt 0 ]; then
+                        echo "Failing build: high-risk ZAP alerts detected"
+                        exit 1
+                    fi
+                    '''
+                }
+            }
+            post {
+                always {
+                    sh '''#!/bin/sh
+                    if command -v docker-compose >/dev/null 2>&1; then
+                        docker-compose down --remove-orphans || true
+                    else
+                        docker compose down --remove-orphans || true
+                    fi
                     '''
                 }
             }
         }
 
+        // --- STAGE: GITHUB RELEASE ---
         stage('GitHub Release') {
-            when { expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' } }
+            // Only run this if the build was successful
+            when {
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
             steps {
                 script {
+                    // 1. Define the Version (Using Build Number for uniqueness)
                     def releaseTag = "v1.0.${env.BUILD_NUMBER}"
-                    // Note: Ensure createGitHubRelease is defined in your Shared Library
+                    
+                    // 2. Create the Release on GitHub
                     createGitHubRelease(
                         credentialId: 'github-token-secret',
                         repository: 'HWDevOps-Group6/Coursework',
                         tag: releaseTag,
                         name: "Release ${releaseTag}",
-                        bodyText: "Verified build ${env.BUILD_NUMBER} pushed to ACR."
+                        commitish: 'main', 
+                        bodyText: """
+                        ## Healthcare Management System - Build ${env.BUILD_NUMBER}
+                        
+                        ### Deployment Images (Azure Container Registry)
+                        The following images have been pushed to ACR:
+                        - **Gateway:** `${env.REGISTRY}/gateway:${env.BUILD_NUMBER}`
+                        - **Auth Service:** `${env.REGISTRY}/auth-service:${env.BUILD_NUMBER}`
+                        - **Vitals Service:** `${env.REGISTRY}/vitals-service:${env.BUILD_NUMBER}`
+                        - **Patient Service:** `${env.REGISTRY}/patient-service:${env.BUILD_NUMBER}`
+                        
+                        ### Analysis & Quality
+                        - **SonarCloud:** [View Results](https://sonarcloud.io/dashboard?id=HWDevOps-Group6_Coursework)
+                        - **Status:** Verified and Pushed to Production
+                        """
                     )
                 }
             }
@@ -240,7 +372,7 @@ pipeline {
 
     post {
         always {
-            sh "docker logout ${REGISTRY} || true"
+            sh "docker logout ${REGISTRY}"
             archiveArtifacts artifacts: 'services/auth-service/mochawesome-report/*', allowEmptyArchive: true
             archiveArtifacts artifacts: 'services/diagnostics-vitals-service/mochawesome-report/*', allowEmptyArchive: true
             archiveArtifacts artifacts: 'services/patient-registration-service/mochawesome-report/*', allowEmptyArchive: true
