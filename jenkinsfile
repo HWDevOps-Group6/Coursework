@@ -514,18 +514,21 @@ pipeline {
                                     mkdir -p reports/zap
                                     rm -f reports/zap/zap-options.conf reports/zap/zap-report.json reports/zap/zap-report.html
                                     rm -f /tmp/coursework-port-forward.log /tmp/gateway-health.json
+                                    ZAP_LOCAL_PORT=18080
 
                                     echo "[ZAP] Ensuring gateway deployment is ready"
                                     k -n coursework rollout status deployment/gateway --timeout=180s
 
-                                    echo "[ZAP] Starting gateway port-forward on 127.0.0.1:8080"
-                                    k -n coursework port-forward svc/gateway 8080:80 >/tmp/coursework-port-forward.log 2>&1 &
+                                    pkill -f "kubectl.*port-forward.*${ZAP_LOCAL_PORT}:80" >/dev/null 2>&1 || true
+
+                                    echo "[ZAP] Starting gateway port-forward on 127.0.0.1:${ZAP_LOCAL_PORT}"
+                                    k -n coursework port-forward svc/gateway ${ZAP_LOCAL_PORT}:80 >/tmp/coursework-port-forward.log 2>&1 &
                                     PF_PID=$!
                                     
                                     echo "[ZAP] Waiting for gateway..."
                                     GATEWAY_READY=0
                                     for _ in {1..24}; do
-                                        if curl -fsS http://127.0.0.1:8080/health >/tmp/gateway-health.json; then
+                                        if curl -fsS "http://127.0.0.1:${ZAP_LOCAL_PORT}/health" >/tmp/gateway-health.json; then
                                             if node -e "
                                                 const fs = require('fs');
                                                 const data = JSON.parse(fs.readFileSync('/tmp/gateway-health.json', 'utf8'));
@@ -555,7 +558,7 @@ pipeline {
                                     ZAP_AUTH_PASSWORD="$ZAP_PWD"
 
                                     login_and_extract_token() {
-                                        LOGIN_RESPONSE=$(curl -sS -X POST http://127.0.0.1:8080/api/auth/login \
+                                        LOGIN_RESPONSE=$(curl -sS -X POST "http://127.0.0.1:${ZAP_LOCAL_PORT}/api/auth/login" \
                                             -H "Content-Type: application/json" \
                                             -d "{\\"email\\":\\"$ZAP_MAIL\\",\\"password\\":\\"$ZAP_AUTH_PASSWORD\\"}")
 
@@ -579,13 +582,13 @@ pipeline {
                                         if echo "$LOGIN_RESPONSE" | grep -qi "Invalid email or password"; then
                                             echo "[ZAP] Auth user missing; registering scan user..."
 
-                                            REGISTER_RESPONSE=$(curl -sS -X POST http://127.0.0.1:8080/api/auth/register \
+                                            REGISTER_RESPONSE=$(curl -sS -X POST "http://127.0.0.1:${ZAP_LOCAL_PORT}/api/auth/register" \
                                                 -H "Content-Type: application/json" \
                                                 -d "{\\"email\\":\\"$ZAP_MAIL\\",\\"password\\":\\"$ZAP_AUTH_PASSWORD\\",\\"firstName\\":\\"Zap\\",\\"lastName\\":\\"Scanner\\",\\"role\\":\\"clerk\\"}")
 
                                             if echo "$REGISTER_RESPONSE" | grep -qi "Password must contain at least one uppercase"; then
                                                 ZAP_AUTH_PASSWORD='ZapScan@1234'
-                                                REGISTER_RESPONSE=$(curl -sS -X POST http://127.0.0.1:8080/api/auth/register \
+                                                REGISTER_RESPONSE=$(curl -sS -X POST "http://127.0.0.1:${ZAP_LOCAL_PORT}/api/auth/register" \
                                                     -H "Content-Type: application/json" \
                                                     -d "{\\"email\\":\\"$ZAP_MAIL\\",\\"password\\":\\"$ZAP_AUTH_PASSWORD\\",\\"firstName\\":\\"Zap\\",\\"lastName\\":\\"Scanner\\",\\"role\\":\\"clerk\\"}")
                                             fi
@@ -615,11 +618,11 @@ pipeline {
                                     # Configure ZAP with the JWT
                                     printf "replacer.full_list(0).description=auth\\nreplacer.full_list(0).enabled=true\\nreplacer.full_list(0).matchtype=REQ_HEADER\\nreplacer.full_list(0).matchstr=Authorization\\nreplacer.full_list(0).regex=false\\nreplacer.full_list(0).replacement=Bearer %s" "$ZAP_JWT" > reports/zap/zap-options.conf
 
-                                    ZAP_TARGET_URL="http://127.0.0.1:8080"
+                                    ZAP_TARGET_URL="http://127.0.0.1:${ZAP_LOCAL_PORT}"
                                     ZAP_NETWORK_MODE="--network host"
 
                                     if [ "$(uname -s)" = "Darwin" ]; then
-                                        ZAP_TARGET_URL="http://host.docker.internal:8080"
+                                        ZAP_TARGET_URL="http://host.docker.internal:${ZAP_LOCAL_PORT}"
                                         ZAP_NETWORK_MODE=""
                                     fi
 
