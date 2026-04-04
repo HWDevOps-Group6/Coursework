@@ -400,7 +400,9 @@ pipeline {
                     const fs = require('fs');
 
                     const report = JSON.parse(fs.readFileSync('reports/zap/zap-report.json', 'utf8'));
-                    const alerts = (report.site || []).flatMap((site) => site.alerts || []);
+                    const sites = Array.isArray(report.site)
+                        ? report.site
+                        : (report.site ? [report.site] : []);
                     const totals = {
                         informational: 0,
                         low: 0,
@@ -408,18 +410,26 @@ pipeline {
                         high: 0
                     };
 
-                    for (const alert of alerts) {
-                        const riskCode = Number(alert.riskcode ?? alert.riskCode ?? -1);
-                        const instanceCount = Number(alert.count || 0) || (Array.isArray(alert.instances) && alert.instances.length > 0 ? alert.instances.length : 1);
+                    for (const site of sites) {
+                        const alerts = Array.isArray(site.alerts) ? site.alerts : [];
 
-                        if (riskCode === 0) {
-                            totals.informational += instanceCount;
-                        } else if (riskCode === 1) {
-                            totals.low += instanceCount;
-                        } else if (riskCode === 2) {
-                            totals.medium += instanceCount;
-                        } else if (riskCode === 3) {
-                            totals.high += instanceCount;
+                        for (const alert of alerts) {
+                            const rawRiskCode = Object.prototype.hasOwnProperty.call(alert, 'riskcode')
+                                ? alert.riskcode
+                                : (Object.prototype.hasOwnProperty.call(alert, 'riskCode') ? alert.riskCode : -1);
+                            const riskCode = Number(rawRiskCode);
+                            const instanceCount = Number(alert.count || 0)
+                                || (Array.isArray(alert.instances) && alert.instances.length > 0 ? alert.instances.length : 1);
+
+                            if (riskCode === 0) {
+                                totals.informational += instanceCount;
+                            } else if (riskCode === 1) {
+                                totals.low += instanceCount;
+                            } else if (riskCode === 2) {
+                                totals.medium += instanceCount;
+                            } else if (riskCode === 3) {
+                                totals.high += instanceCount;
+                            }
                         }
                     }
 
