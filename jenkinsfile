@@ -256,6 +256,47 @@ pipeline {
             }
             steps {
                 script {
+                    def kubectlCmd = sh(
+                        script: '''#!/bin/bash
+                        set -euo pipefail
+
+                        if command -v kubectl >/dev/null 2>&1; then
+                            command -v kubectl
+                            exit 0
+                        fi
+
+                        command -v curl >/dev/null 2>&1 || {
+                            echo '[K8S] curl is required to download kubectl' >&2
+                            exit 1
+                        }
+
+                        BIN_DIR="$WORKSPACE/.jenkins/bin"
+                        mkdir -p "$BIN_DIR"
+
+                        OS="$(uname | tr '[:upper:]' '[:lower:]')"
+                        ARCH="$(uname -m)"
+
+                        case "$ARCH" in
+                            x86_64|amd64)
+                                ARCH='amd64'
+                                ;;
+                            arm64|aarch64)
+                                ARCH='arm64'
+                                ;;
+                            *)
+                                echo "[K8S] Unsupported kubectl architecture: $ARCH" >&2
+                                exit 1
+                                ;;
+                        esac
+
+                        VERSION="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
+                        curl -fsSL -o "$BIN_DIR/kubectl" "https://dl.k8s.io/release/${VERSION}/bin/${OS}/${ARCH}/kubectl"
+                        chmod +x "$BIN_DIR/kubectl"
+                        printf '%s' "$BIN_DIR/kubectl"
+                        ''',
+                        returnStdout: true
+                    ).trim()
+
                     def deployGateway = hasPathChange(['Dockerfile.gateway', 'src/', 'shared/'])
                     def deployAuth = hasPathChange(['services/auth-service/', 'shared/'])
                     def deployVitals = hasPathChange(['services/diagnostics-vitals-service/', 'shared/'])
@@ -271,20 +312,21 @@ pipeline {
                     ]) {
                         sh """#!/bin/bash
                         set -euo pipefail
+                        KUBECTL='${kubectlCmd}'
 
-                        command -v kubectl >/dev/null 2>&1 || {
-                            echo '[K8S] kubectl is required but not installed'
+                        if [ ! -x "$KUBECTL" ]; then
+                            echo '[K8S] kubectl is required but could not be prepared'
                             exit 1
-                        }
+                        fi
 
-                        kubectl cluster-info >/dev/null
-                        kubectl apply -f k8s/namespace.yaml
+                        "$KUBECTL" cluster-info >/dev/null
+                        "$KUBECTL" apply -f k8s/namespace.yaml
 
-                        kubectl -n ${env.K8S_NAMESPACE} create secret docker-registry ${env.K8S_REGISTRY_SECRET} \
+                        "$KUBECTL" -n ${env.K8S_NAMESPACE} create secret docker-registry ${env.K8S_REGISTRY_SECRET} \
                             --docker-server='${env.REGISTRY}' \
                             --docker-username="$ACR_CREDS_USR" \
                             --docker-password="$ACR_CREDS_PSW" \
-                            --dry-run=client -o yaml | kubectl apply -f -
+                            --dry-run=client -o yaml | "$KUBECTL" apply -f -
 
                         secret_args=(
                             --from-literal=JWT_SECRET="$JWT_SECRET_VALUE"
@@ -307,34 +349,35 @@ pipeline {
                             secret_args+=(--from-literal=GOOGLE_REDIRECT_AFTER_LOGIN="\${GOOGLE_REDIRECT_AFTER_LOGIN}")
                         fi
 
-                        kubectl -n ${env.K8S_NAMESPACE} create secret generic ${env.K8S_APP_SECRET_NAME} \
+                        "$KUBECTL" -n ${env.K8S_NAMESPACE} create secret generic ${env.K8S_APP_SECRET_NAME} \
                             "\${secret_args[@]}" \
-                            --dry-run=client -o yaml | kubectl apply -f -
+                            --dry-run=client -o yaml | "$KUBECTL" apply -f -
 
-                        kubectl apply -f k8s/configmap.yaml
-                        kubectl apply -f k8s/services
-                        kubectl apply -f k8s/deployments
+                        "$KUBECTL" apply -f k8s/configmap.yaml
+                        "$KUBECTL" apply -f k8s/services
+                        "$KUBECTL" apply -f k8s/deployments
                         """
 
                         if (deployGateway) {
-                            sh "kubectl -n ${env.K8S_NAMESPACE} set image deployment/gateway gateway=${env.REGISTRY}/gateway:${env.BUILD_NUMBER}"
+                            sh "'${kubectlCmd}' -n ${env.K8S_NAMESPACE} set image deployment/gateway gateway=${env.REGISTRY}/gateway:${env.BUILD_NUMBER}"
                         }
                         if (deployAuth) {
-                            sh "kubectl -n ${env.K8S_NAMESPACE} set image deployment/auth-service auth-service=${env.REGISTRY}/auth-service:${env.BUILD_NUMBER}"
+                            sh "'${kubectlCmd}' -n ${env.K8S_NAMESPACE} set image deployment/auth-service auth-service=${env.REGISTRY}/auth-service:${env.BUILD_NUMBER}"
                         }
                         if (deployVitals) {
-                            sh "kubectl -n ${env.K8S_NAMESPACE} set image deployment/vitals-service vitals-service=${env.REGISTRY}/vitals-service:${env.BUILD_NUMBER}"
+                            sh "'${kubectlCmd}' -n ${env.K8S_NAMESPACE} set image deployment/vitals-service vitals-service=${env.REGISTRY}/vitals-service:${env.BUILD_NUMBER}"
                         }
                         if (deployPatient) {
-                            sh "kubectl -n ${env.K8S_NAMESPACE} set image deployment/patient-service patient-service=${env.REGISTRY}/patient-service:${env.BUILD_NUMBER}"
+                            sh "'${kubectlCmd}' -n ${env.K8S_NAMESPACE} set image deployment/patient-service patient-service=${env.REGISTRY}/patient-service:${env.BUILD_NUMBER}"
                         }
 
                         sh """#!/bin/bash
                         set -euo pipefail
-                        kubectl -n ${env.K8S_NAMESPACE} rollout status deployment/auth-service --timeout=180s
-                        kubectl -n ${env.K8S_NAMESPACE} rollout status deployment/vitals-service --timeout=180s
-                        kubectl -n ${env.K8S_NAMESPACE} rollout status deployment/patient-service --timeout=180s
-                        kubectl -n ${env.K8S_NAMESPACE} rollout status deployment/gateway --timeout=180s
+                        KUBECTL='${kubectlCmd}'
+                        "$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/auth-service --timeout=180s
+                        "$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/vitals-service --timeout=180s
+                        "$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/patient-service --timeout=180s
+                        "$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/gateway --timeout=180s
                         """
                     }
                 }
@@ -362,6 +405,47 @@ pipeline {
                 script {
                     echo '[ZAP] Entered OWASP ZAP stage'
                     try {
+                        def kubectlCmd = sh(
+                            script: '''#!/bin/bash
+                            set -euo pipefail
+
+                            if command -v kubectl >/dev/null 2>&1; then
+                                command -v kubectl
+                                exit 0
+                            fi
+
+                            command -v curl >/dev/null 2>&1 || {
+                                echo '[ZAP] curl is required to download kubectl' >&2
+                                exit 1
+                            }
+
+                            BIN_DIR="$WORKSPACE/.jenkins/bin"
+                            mkdir -p "$BIN_DIR"
+
+                            OS="$(uname | tr '[:upper:]' '[:lower:]')"
+                            ARCH="$(uname -m)"
+
+                            case "$ARCH" in
+                                x86_64|amd64)
+                                    ARCH='amd64'
+                                    ;;
+                                arm64|aarch64)
+                                    ARCH='arm64'
+                                    ;;
+                                *)
+                                    echo "[ZAP] Unsupported kubectl architecture: $ARCH" >&2
+                                    exit 1
+                                    ;;
+                            esac
+
+                            VERSION="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
+                            curl -fsSL -o "$BIN_DIR/kubectl" "https://dl.k8s.io/release/${VERSION}/bin/${OS}/${ARCH}/kubectl"
+                            chmod +x "$BIN_DIR/kubectl"
+                            printf '%s' "$BIN_DIR/kubectl"
+                            ''',
+                            returnStdout: true
+                        ).trim()
+
                         withCredentials([
                             file(credentialsId: 'kubeconfig-coursework', variable: 'KUBECONFIG'),
                             string(credentialsId: 'ZAP_AUTH_EMAIL', variable: 'ZAP_MAIL'),
@@ -388,18 +472,19 @@ pipeline {
                     echo "[ZAP] Stage started"
                     command -v curl >/dev/null 2>&1 || { echo "[ZAP] curl is required but not installed"; exit 1; }
                     command -v node >/dev/null 2>&1 || { echo "[ZAP] node is required but not installed"; exit 1; }
-                    command -v kubectl >/dev/null 2>&1 || { echo "[ZAP] kubectl is required but not installed"; exit 1; }
                     command -v docker >/dev/null 2>&1 || { echo "[ZAP] docker is required but not installed"; exit 1; }
+                    KUBECTL='${kubectlCmd}'
+                    [ -x "$KUBECTL" ] || { echo "[ZAP] kubectl is required but could not be prepared"; exit 1; }
 
                     mkdir -p reports/zap
                     rm -f reports/zap/zap-options.conf reports/zap/zap-report.json reports/zap/zap-report.html
                     rm -f /tmp/coursework-port-forward.log /tmp/gateway-health.json
 
                     echo "[ZAP] Ensuring gateway deployment is ready"
-                    kubectl -n coursework rollout status deployment/gateway --timeout=180s
+                    "$KUBECTL" -n coursework rollout status deployment/gateway --timeout=180s
 
                     echo "[ZAP] Starting gateway port-forward on 127.0.0.1:8080"
-                    kubectl -n coursework port-forward svc/gateway 8080:80 >/tmp/coursework-port-forward.log 2>&1 &
+                    "$KUBECTL" -n coursework port-forward svc/gateway 8080:80 >/tmp/coursework-port-forward.log 2>&1 &
                     PF_PID=$!
                     
                     echo "[ZAP] Waiting for gateway..."
@@ -486,7 +571,7 @@ pipeline {
                     if [ -z "$ZAP_JWT" ]; then
                         echo "[ZAP] Failed to get JWT"
                         echo "[ZAP] Login response: $LOGIN_RESPONSE"
-                        kubectl -n coursework logs deployment/auth-service --tail=200 || true
+                        "$KUBECTL" -n coursework logs deployment/auth-service --tail=200 || true
                         exit 11
                     fi
 
