@@ -49,6 +49,9 @@ flowchart LR
 ## Jenkins Pipeline
 <img width="1597" height="136" alt="Screenshot 2026-04-03 at 7 22 41 pm" src="https://github.com/user-attachments/assets/6f684e79-8dcd-4994-8a6d-b963e76cbc8b" />
 
+## SonarQube Setup
+<img width="861" height="210" alt="Screenshot 2026-04-04 at 2 34 29 pm" src="https://github.com/user-attachments/assets/5b927f86-53e9-4828-b125-6d2506e18dac" />
+
 ## Repository Structure
 
 ```text
