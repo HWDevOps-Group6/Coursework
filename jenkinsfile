@@ -26,6 +26,26 @@ def hasPathChange(List prefixes) {
     }
 }
 
+def authServiceChanged() {
+    return hasPathChange(['services/auth-service/'])
+}
+
+def diagnosticsServiceChanged() {
+    return hasPathChange(['services/diagnostics-vitals-service/'])
+}
+
+def patientServiceChanged() {
+    return hasPathChange(['services/patient-registration-service/'])
+}
+
+def gatewayChanged() {
+    return hasPathChange(['Dockerfile.gateway', 'src/', 'shared/'])
+}
+
+def applicationChanged() {
+    return gatewayChanged() || authServiceChanged() || diagnosticsServiceChanged() || patientServiceChanged()
+}
+
 pipeline {
     tools {
         nodejs 'NodeJS' 
@@ -53,7 +73,7 @@ pipeline {
         stage('Test Auth Service') {
             when {
                 expression {
-                    hasPathChange(['services/auth-service/', 'shared/'])
+                    authServiceChanged()
                 }
             }
             steps {
@@ -75,7 +95,7 @@ pipeline {
         stage('Test Diagnostics Service') {
             when {
                 expression {
-                    hasPathChange(['services/diagnostics-vitals-service/', 'shared/'])
+                    diagnosticsServiceChanged()
                 }
             }
             steps {
@@ -97,7 +117,7 @@ pipeline {
         stage('Test Patient Service') {
             when {
                 expression {
-                    hasPathChange(['services/patient-registration-service/', 'shared/'])
+                    patientServiceChanged()
                 }
             }
             steps {
@@ -119,7 +139,7 @@ pipeline {
         stage('Build API Gateway') {
             when {
                 expression {
-                    hasPathChange(['Dockerfile.gateway', 'src/', 'shared/'])
+                    gatewayChanged()
                 }
             }
             steps {
@@ -132,7 +152,7 @@ pipeline {
         stage('Build Auth Service') {
             when {
                 expression {
-                    hasPathChange(['services/auth-service/', 'shared/'])
+                    authServiceChanged()
                 }
             }
             steps {
@@ -145,7 +165,7 @@ pipeline {
         stage('Build Diagnostics Service') {
             when {
                 expression {
-                    hasPathChange(['services/diagnostics-vitals-service/', 'shared/'])
+                    diagnosticsServiceChanged()
                 }
             }
             steps {
@@ -158,7 +178,7 @@ pipeline {
         stage('Build Patient Service') {
             when {
                 expression {
-                    hasPathChange(['services/patient-registration-service/', 'shared/'])
+                    patientServiceChanged()
                 }
             }
             steps {
@@ -169,6 +189,11 @@ pipeline {
 
         // --- STAGE: SONARCLOUD ---
         stage('SonarCloud Analysis') {
+            when {
+                expression {
+                    applicationChanged()
+                }
+            }
             steps {
                 script {
                     dir('services/auth-service') {
