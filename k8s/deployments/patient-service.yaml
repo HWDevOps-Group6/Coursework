@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: patient-service
+  namespace: coursework
+  labels:
+    app: patient-service
+    app.kubernetes.io/part-of: coursework
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: patient-service
+  template:
+    metadata:
+      labels:
+        app: patient-service
+        app.kubernetes.io/part-of: coursework
+    spec:
+      imagePullSecrets:
+        - name: acr-registry
+      containers:
+        - name: patient-service
+          image: hwudevopsregistry-e9a8dkdbanfebbhh.azurecr.io/patient-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3003
+              name: http
+          env:
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: coursework-config
+                  key: NODE_ENV
+            - name: PATIENT_REG_SERVICE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: coursework-config
+                  key: PATIENT_REG_SERVICE_PORT
+            - name: ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: coursework-config
+                  key: ALLOWED_ORIGINS
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: coursework-app-secrets
+                  key: PATIENT_MONGODB_URI
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: coursework-app-secrets
+                  key: JWT_SECRET
+            - name: PATIENT_ID_HASH_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: coursework-app-secrets
+                  key: PATIENT_ID_HASH_SALT
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi

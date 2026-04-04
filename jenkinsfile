@@ -1,21 +1,29 @@
-def composeUp(serviceName) {
-    sh """#!/bin/sh
-    if command -v docker-compose >/dev/null 2>&1; then
-        docker-compose up -d --no-deps ${serviceName}
-    else
-        docker compose up -d --no-deps ${serviceName}
-    fi
-    """
+def changedPaths() {
+    def paths = []
+
+    currentBuild.changeSets.each { changeSet ->
+        changeSet.items.each { entry ->
+            entry.affectedFiles.each { file ->
+                paths << file.path
+            }
+        }
+    }
+
+    return paths.unique()
 }
 
-def composeUpForZap() {
-    sh '''#!/bin/sh
-    if command -v docker-compose >/dev/null 2>&1; then
-        docker-compose up -d --build mongodb auth-service vitals-service patient-service gateway
-    else
-        docker compose up -d --build mongodb auth-service vitals-service patient-service gateway
-    fi
-    '''
+def hasPathChange(List prefixes) {
+    def paths = changedPaths()
+
+    if (!paths || paths.isEmpty()) {
+        return true
+    }
+
+    return paths.any { path ->
+        prefixes.any { prefix ->
+            path == prefix || path.startsWith(prefix)
+        }
+    }
 }
 
 pipeline {
@@ -27,6 +35,9 @@ pipeline {
     environment {
         REGISTRY = "hwudevopsregistry-e9a8dkdbanfebbhh.azurecr.io"
         ACR_CREDS = credentials('azure-reg-creds')
+        K8S_NAMESPACE = 'coursework'
+        K8S_APP_SECRET_NAME = 'coursework-app-secrets'
+        K8S_REGISTRY_SECRET = 'acr-registry'
     }
 
     stages {
@@ -41,9 +52,8 @@ pipeline {
         // --- TEST: AUTH SERVICE ---
         stage('Test Auth Service') {
             when {
-                anyOf {
-                    changeset "services/auth-service/**"
-                    changeset "shared/**"
+                expression {
+                    hasPathChange(['services/auth-service/', 'shared/'])
                 }
             }
             steps {
@@ -64,9 +74,8 @@ pipeline {
         // --- TEST: DIAGNOSTICS & VITALS ---
         stage('Test Diagnostics Service') {
             when {
-                anyOf {
-                    changeset "services/diagnostics-vitals-service/**"
-                    changeset "shared/**"
+                expression {
+                    hasPathChange(['services/diagnostics-vitals-service/', 'shared/'])
                 }
             }
             steps {
@@ -87,9 +96,8 @@ pipeline {
         // --- TEST: PATIENT REGISTRATION ---
         stage('Test Patient Service') {
             when {
-                anyOf {
-                    changeset "services/patient-registration-service/**"
-                    changeset "shared/**"
+                expression {
+                    hasPathChange(['services/patient-registration-service/', 'shared/'])
                 }
             }
             steps {
@@ -110,61 +118,52 @@ pipeline {
         // --- STAGE: API GATEWAY ---
         stage('Build API Gateway') {
             when {
-                anyOf {
-                    changeset "Dockerfile.gateway"
-                    changeset "src/**"
-                    changeset "shared/**"
+                expression {
+                    hasPathChange(['Dockerfile.gateway', 'src/', 'shared/'])
                 }
             }
             steps {
                 sh "docker build -f Dockerfile.gateway -t ${REGISTRY}/gateway:${env.BUILD_NUMBER} ."
                 sh "docker push ${REGISTRY}/gateway:${env.BUILD_NUMBER}"
-                composeUp('gateway')
             }
         }
 
         // --- STAGE: AUTH SERVICE ---
         stage('Build Auth Service') {
             when {
-                anyOf {
-                    changeset "services/auth-service/**"
-                    changeset "shared/**"
+                expression {
+                    hasPathChange(['services/auth-service/', 'shared/'])
                 }
             }
             steps {
                 sh "docker build -f services/auth-service/Dockerfile -t ${REGISTRY}/auth-service:${env.BUILD_NUMBER} ."
                 sh "docker push ${REGISTRY}/auth-service:${env.BUILD_NUMBER}"
-                composeUp('auth-service')
             }
         }
 
         // --- STAGE: DIAGNOSTICS & VITALS ---
         stage('Build Diagnostics Service') {
             when {
-                anyOf {
-                    changeset "services/diagnostics-vitals-service/**"
-                    changeset "shared/**"
+                expression {
+                    hasPathChange(['services/diagnostics-vitals-service/', 'shared/'])
                 }
             }
             steps {
                 sh "docker build -f services/diagnostics-vitals-service/Dockerfile -t ${REGISTRY}/vitals-service:${env.BUILD_NUMBER} ."
                 sh "docker push ${REGISTRY}/vitals-service:${env.BUILD_NUMBER}"
-                composeUp('vitals-service')
             }
         }
 
         // --- STAGE: PATIENT REGISTRATION ---
         stage('Build Patient Service') {
             when {
-                anyOf {
-                    changeset "services/patient-registration-service/**"
-                    changeset "shared/**"
+                expression {
+                    hasPathChange(['services/patient-registration-service/', 'shared/'])
                 }
             }
             steps {
                 sh "docker build -f services/patient-registration-service/Dockerfile -t ${REGISTRY}/patient-service:${env.BUILD_NUMBER} ."
                 sh "docker push ${REGISTRY}/patient-service:${env.BUILD_NUMBER}"
-                composeUp('patient-service')
             }
         }
 
@@ -214,16 +213,132 @@ pipeline {
             }
         }
 
+        stage('Deploy to Kubernetes') {
+            when {
+                expression {
+                    hasPathChange([
+                        'Dockerfile.gateway',
+                        'src/',
+                        'shared/',
+                        'services/auth-service/',
+                        'services/diagnostics-vitals-service/',
+                        'services/patient-registration-service/',
+                        'k8s/',
+                        'Jenkinsfile',
+                        'jenkinsfile',
+                    ])
+                }
+            }
+            steps {
+                script {
+                    def deployGateway = hasPathChange(['Dockerfile.gateway', 'src/', 'shared/'])
+                    def deployAuth = hasPathChange(['services/auth-service/', 'shared/'])
+                    def deployVitals = hasPathChange(['services/diagnostics-vitals-service/', 'shared/'])
+                    def deployPatient = hasPathChange(['services/patient-registration-service/', 'shared/'])
+
+                    withCredentials([
+                        file(credentialsId: 'kubeconfig-coursework', variable: 'KUBECONFIG'),
+                        string(credentialsId: 'jwt-secret', variable: 'JWT_SECRET_VALUE'),
+                        string(credentialsId: 'mongodb-auth-uri', variable: 'AUTH_MONGODB_URI_VALUE'),
+                        string(credentialsId: 'mongodb-vitals-uri', variable: 'VITALS_MONGODB_URI_VALUE'),
+                        string(credentialsId: 'mongodb-patient-uri', variable: 'PATIENT_MONGODB_URI_VALUE'),
+                        string(credentialsId: 'patient-id-hash-salt', variable: 'PATIENT_ID_HASH_SALT_VALUE'),
+                    ]) {
+                        sh """#!/bin/bash
+                        set -euo pipefail
+
+                        command -v kubectl >/dev/null 2>&1 || {
+                            echo '[K8S] kubectl is required but not installed'
+                            exit 1
+                        }
+
+                        kubectl cluster-info >/dev/null
+                        kubectl apply -f k8s/namespace.yaml
+
+                        kubectl -n ${env.K8S_NAMESPACE} create secret docker-registry ${env.K8S_REGISTRY_SECRET} \
+                            --docker-server='${env.REGISTRY}' \
+                            --docker-username="$ACR_CREDS_USR" \
+                            --docker-password="$ACR_CREDS_PSW" \
+                            --dry-run=client -o yaml | kubectl apply -f -
+
+                        secret_args=(
+                            --from-literal=JWT_SECRET="$JWT_SECRET_VALUE"
+                            --from-literal=AUTH_MONGODB_URI="$AUTH_MONGODB_URI_VALUE"
+                            --from-literal=VITALS_MONGODB_URI="$VITALS_MONGODB_URI_VALUE"
+                            --from-literal=PATIENT_MONGODB_URI="$PATIENT_MONGODB_URI_VALUE"
+                            --from-literal=PATIENT_ID_HASH_SALT="$PATIENT_ID_HASH_SALT_VALUE"
+                        )
+
+                        if [[ -n "\${GOOGLE_CLIENT_ID:-}" ]]; then
+                            secret_args+=(--from-literal=GOOGLE_CLIENT_ID="\${GOOGLE_CLIENT_ID}")
+                        fi
+                        if [[ -n "\${GOOGLE_CLIENT_SECRET:-}" ]]; then
+                            secret_args+=(--from-literal=GOOGLE_CLIENT_SECRET="\${GOOGLE_CLIENT_SECRET}")
+                        fi
+                        if [[ -n "\${GOOGLE_CALLBACK_URL:-}" ]]; then
+                            secret_args+=(--from-literal=GOOGLE_CALLBACK_URL="\${GOOGLE_CALLBACK_URL}")
+                        fi
+                        if [[ -n "\${GOOGLE_REDIRECT_AFTER_LOGIN:-}" ]]; then
+                            secret_args+=(--from-literal=GOOGLE_REDIRECT_AFTER_LOGIN="\${GOOGLE_REDIRECT_AFTER_LOGIN}")
+                        fi
+
+                        kubectl -n ${env.K8S_NAMESPACE} create secret generic ${env.K8S_APP_SECRET_NAME} \
+                            "\${secret_args[@]}" \
+                            --dry-run=client -o yaml | kubectl apply -f -
+
+                        kubectl apply -f k8s/configmap.yaml
+                        kubectl apply -f k8s/services
+                        kubectl apply -f k8s/deployments
+                        """
+
+                        if (deployGateway) {
+                            sh "kubectl -n ${env.K8S_NAMESPACE} set image deployment/gateway gateway=${env.REGISTRY}/gateway:${env.BUILD_NUMBER}"
+                        }
+                        if (deployAuth) {
+                            sh "kubectl -n ${env.K8S_NAMESPACE} set image deployment/auth-service auth-service=${env.REGISTRY}/auth-service:${env.BUILD_NUMBER}"
+                        }
+                        if (deployVitals) {
+                            sh "kubectl -n ${env.K8S_NAMESPACE} set image deployment/vitals-service vitals-service=${env.REGISTRY}/vitals-service:${env.BUILD_NUMBER}"
+                        }
+                        if (deployPatient) {
+                            sh "kubectl -n ${env.K8S_NAMESPACE} set image deployment/patient-service patient-service=${env.REGISTRY}/patient-service:${env.BUILD_NUMBER}"
+                        }
+
+                        sh """#!/bin/bash
+                        set -euo pipefail
+                        kubectl -n ${env.K8S_NAMESPACE} rollout status deployment/auth-service --timeout=180s
+                        kubectl -n ${env.K8S_NAMESPACE} rollout status deployment/vitals-service --timeout=180s
+                        kubectl -n ${env.K8S_NAMESPACE} rollout status deployment/patient-service --timeout=180s
+                        kubectl -n ${env.K8S_NAMESPACE} rollout status deployment/gateway --timeout=180s
+                        """
+                    }
+                }
+            }
+        }
+
         // --- STAGE: OWASP ZAP ---
         stage('OWASP ZAP Scan') {
+            when {
+                expression {
+                    hasPathChange([
+                        'Dockerfile.gateway',
+                        'src/',
+                        'shared/',
+                        'services/auth-service/',
+                        'services/diagnostics-vitals-service/',
+                        'services/patient-registration-service/',
+                        'k8s/',
+                        'Jenkinsfile',
+                        'jenkinsfile',
+                    ])
+                }
+            }
             steps {
                 script {
                     echo '[ZAP] Entered OWASP ZAP stage'
                     try {
-                        echo '[ZAP] Starting application stack for scan'
-                        composeUpForZap()
-
                         withCredentials([
+                            file(credentialsId: 'kubeconfig-coursework', variable: 'KUBECONFIG'),
                             string(credentialsId: 'ZAP_AUTH_EMAIL', variable: 'ZAP_MAIL'),
                             string(credentialsId: 'ZAP_AUTH_PASSWORD', variable: 'ZAP_PWD')
                         ]) {
@@ -231,30 +346,41 @@ pipeline {
                         sh 'mkdir -p reports/zap && chmod 777 reports/zap'
                         def zapExitCode = sh(script: '''#!/bin/bash
                     set -euo pipefail
-                    trap 'rc=$?; echo "[ZAP] Failed at line ${LINENO} with exit code ${rc}"; exit ${rc}' ERR
-
-                    if command -v docker-compose >/dev/null 2>&1; then
-                        compose() {
-                            docker-compose "$@"
-                        }
-                    else
-                        compose() {
-                            docker compose "$@"
-                        }
-                    fi
+                    PF_PID=''
+                    cleanup() {
+                        rc=$?
+                        if [ -n "$PF_PID" ]; then
+                            kill "$PF_PID" >/dev/null 2>&1 || true
+                            wait "$PF_PID" 2>/dev/null || true
+                        fi
+                        if [ "$rc" -ne 0 ]; then
+                            echo "[ZAP] Failed at line ${LINENO} with exit code ${rc}"
+                        fi
+                        exit "$rc"
+                    }
+                    trap cleanup EXIT
 
                     echo "[ZAP] Stage started"
                     command -v curl >/dev/null 2>&1 || { echo "[ZAP] curl is required but not installed"; exit 1; }
                     command -v node >/dev/null 2>&1 || { echo "[ZAP] node is required but not installed"; exit 1; }
+                    command -v kubectl >/dev/null 2>&1 || { echo "[ZAP] kubectl is required but not installed"; exit 1; }
                     command -v docker >/dev/null 2>&1 || { echo "[ZAP] docker is required but not installed"; exit 1; }
 
                     mkdir -p reports/zap
                     rm -f reports/zap/zap-options.conf reports/zap/zap-report.json reports/zap/zap-report.html
+                    rm -f /tmp/coursework-port-forward.log /tmp/gateway-health.json
+
+                    echo "[ZAP] Ensuring gateway deployment is ready"
+                    kubectl -n coursework rollout status deployment/gateway --timeout=180s
+
+                    echo "[ZAP] Starting gateway port-forward on 127.0.0.1:8080"
+                    kubectl -n coursework port-forward svc/gateway 8080:80 >/tmp/coursework-port-forward.log 2>&1 &
+                    PF_PID=$!
                     
                     echo "[ZAP] Waiting for gateway..."
                     GATEWAY_READY=0
                     for _ in {1..24}; do
-                        if curl -fsS http://localhost/health >/tmp/gateway-health.json; then
+                        if curl -fsS http://127.0.0.1:8080/health >/tmp/gateway-health.json; then
                             if node -e "
                                 const fs = require('fs');
                                 const data = JSON.parse(fs.readFileSync('/tmp/gateway-health.json', 'utf8'));
@@ -271,12 +397,7 @@ pipeline {
 
                     if [ "$GATEWAY_READY" -ne 1 ]; then
                         echo "[ZAP] Gateway health check failed after retries"
-                        compose ps || true
-                        GATEWAY_CONTAINER_ID="$(compose ps -q gateway || true)"
-                        if [ -n "$GATEWAY_CONTAINER_ID" ]; then
-                            echo "[ZAP] Gateway container logs:"
-                            docker logs --tail 200 "$GATEWAY_CONTAINER_ID" || true
-                        fi
+                        cat /tmp/coursework-port-forward.log || true
                         exit 10
                     fi
 
@@ -289,7 +410,7 @@ pipeline {
                     ZAP_AUTH_PASSWORD="$ZAP_PWD"
 
                     login_and_extract_token() {
-                        LOGIN_RESPONSE=$(curl -sS -X POST http://localhost/api/auth/login \
+                        LOGIN_RESPONSE=$(curl -sS -X POST http://127.0.0.1:8080/api/auth/login \
                             -H "Content-Type: application/json" \
                             -d "{\\"email\\":\\"$ZAP_MAIL\\",\\"password\\":\\"$ZAP_AUTH_PASSWORD\\"}")
 
@@ -313,13 +434,13 @@ pipeline {
                         if echo "$LOGIN_RESPONSE" | grep -qi "Invalid email or password"; then
                             echo "[ZAP] Auth user missing; registering scan user..."
 
-                            REGISTER_RESPONSE=$(curl -sS -X POST http://localhost/api/auth/register \
+                            REGISTER_RESPONSE=$(curl -sS -X POST http://127.0.0.1:8080/api/auth/register \
                                 -H "Content-Type: application/json" \
                                 -d "{\\"email\\":\\"$ZAP_MAIL\\",\\"password\\":\\"$ZAP_AUTH_PASSWORD\\",\\"firstName\\":\\"Zap\\",\\"lastName\\":\\"Scanner\\",\\"role\\":\\"clerk\\"}")
 
                             if echo "$REGISTER_RESPONSE" | grep -qi "Password must contain at least one uppercase"; then
                                 ZAP_AUTH_PASSWORD='ZapScan@1234'
-                                REGISTER_RESPONSE=$(curl -sS -X POST http://localhost/api/auth/register \
+                                REGISTER_RESPONSE=$(curl -sS -X POST http://127.0.0.1:8080/api/auth/register \
                                     -H "Content-Type: application/json" \
                                     -d "{\\"email\\":\\"$ZAP_MAIL\\",\\"password\\":\\"$ZAP_AUTH_PASSWORD\\",\\"firstName\\":\\"Zap\\",\\"lastName\\":\\"Scanner\\",\\"role\\":\\"clerk\\"}")
                             fi
@@ -340,11 +461,7 @@ pipeline {
                     if [ -z "$ZAP_JWT" ]; then
                         echo "[ZAP] Failed to get JWT"
                         echo "[ZAP] Login response: $LOGIN_RESPONSE"
-                        AUTH_CONTAINER_ID="$(compose ps -q auth-service || true)"
-                        if [ -n "$AUTH_CONTAINER_ID" ]; then
-                            echo "[ZAP] Auth service logs:"
-                            docker logs --tail 200 "$AUTH_CONTAINER_ID" || true
-                        fi
+                        kubectl -n coursework logs deployment/auth-service --tail=200 || true
                         exit 11
                     fi
 
@@ -353,11 +470,11 @@ pipeline {
                     # Configure ZAP with the JWT
                     printf "replacer.full_list(0).description=auth\\nreplacer.full_list(0).enabled=true\\nreplacer.full_list(0).matchtype=REQ_HEADER\\nreplacer.full_list(0).matchstr=Authorization\\nreplacer.full_list(0).regex=false\\nreplacer.full_list(0).replacement=Bearer %s" "$ZAP_JWT" > reports/zap/zap-options.conf
 
-                    ZAP_TARGET_URL="http://localhost"
+                    ZAP_TARGET_URL="http://127.0.0.1:8080"
                     ZAP_NETWORK_MODE="--network host"
 
                     if [ "$(uname -s)" = "Darwin" ]; then
-                        ZAP_TARGET_URL="http://host.docker.internal"
+                        ZAP_TARGET_URL="http://host.docker.internal:8080"
                         ZAP_NETWORK_MODE=""
                     fi
 
@@ -508,9 +625,13 @@ pipeline {
                         - **Vitals Service:** `${env.REGISTRY}/vitals-service:${env.BUILD_NUMBER}`
                         - **Patient Service:** `${env.REGISTRY}/patient-service:${env.BUILD_NUMBER}`
                         
+                        ### Kubernetes Deployment
+                        - **Namespace:** `${env.K8S_NAMESPACE}`
+                        - **Gateway Access:** deployed through the Kubernetes service `gateway`
+
                         ### Analysis & Quality
                         - **SonarCloud:** [View Results](https://sonarcloud.io/dashboard?id=HWDevOps-Group6_Coursework)
-                        - **Status:** Verified and Pushed to Production
+                        - **Status:** Verified, pushed to ACR, and deployed to Kubernetes
                         """
                     )
                 }

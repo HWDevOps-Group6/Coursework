@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vitals-service
+  namespace: coursework
+  labels:
+    app: vitals-service
+    app.kubernetes.io/part-of: coursework
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vitals-service
+  template:
+    metadata:
+      labels:
+        app: vitals-service
+        app.kubernetes.io/part-of: coursework
+    spec:
+      imagePullSecrets:
+        - name: acr-registry
+      containers:
+        - name: vitals-service
+          image: hwudevopsregistry-e9a8dkdbanfebbhh.azurecr.io/vitals-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3004
+              name: http
+          env:
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: coursework-config
+                  key: NODE_ENV
+            - name: DIAGNOSTICS_VITALS_SERVICE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: coursework-config
+                  key: DIAGNOSTICS_VITALS_SERVICE_PORT
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: coursework-app-secrets
+                  key: VITALS_MONGODB_URI
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: coursework-app-secrets
+                  key: JWT_SECRET
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi

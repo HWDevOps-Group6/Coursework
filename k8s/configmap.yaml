@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coursework-config
+  namespace: coursework
+  labels:
+    app.kubernetes.io/part-of: coursework
+data:
+  NODE_ENV: production
+  GATEWAY_PORT: "3000"
+  AUTH_SERVICE_URL: http://auth-service:3001
+  PATIENT_REG_SERVICE_URL: http://patient-service:3003
+  DIAGNOSTICS_VITALS_SERVICE_URL: http://vitals-service:3004
+  AUTH_SERVICE_PORT: "3001"
+  PATIENT_REG_SERVICE_PORT: "3003"
+  DIAGNOSTICS_VITALS_SERVICE_PORT: "3004"
+  JWT_EXPIRES_IN: 24h
+  ALLOWED_ORIGINS: http://localhost,http://127.0.0.1:8080

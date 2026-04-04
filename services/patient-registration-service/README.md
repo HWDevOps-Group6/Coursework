@@ -36,7 +36,7 @@ Patient domain microservice for registration, records, visit updates, prescripti
 ```bash
 cd services/patient-registration-service
 npm install
-PORT=3003 npm run dev
+PATIENT_ID_HASH_SALT=your-generated-salt PORT=3003 npm run dev
 ```
 
 From project root (recommended for full system):
@@ -67,3 +67,4 @@ docker run --name patient-registration-service \
 - Exposed through the API Gateway at `/api/patients/*`.
 - Uses JWT-based auth and role checks for protected routes.
 - Should share the same `JWT_SECRET` as auth-service.
+- Requires a stable `PATIENT_ID_HASH_SALT` so patient Emirates IDs hash consistently.

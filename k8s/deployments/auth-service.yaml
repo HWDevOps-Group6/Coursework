@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: coursework
+  labels:
+    app: auth-service
+    app.kubernetes.io/part-of: coursework
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+        app.kubernetes.io/part-of: coursework
+    spec:
+      imagePullSecrets:
+        - name: acr-registry
+      containers:
+        - name: auth-service
+          image: hwudevopsregistry-e9a8dkdbanfebbhh.azurecr.io/auth-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3001
+              name: http
+          env:
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: coursework-config
+                  key: NODE_ENV
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: coursework-config
+                  key: AUTH_SERVICE_PORT
+            - name: JWT_EXPIRES_IN
+              valueFrom:
+                configMapKeyRef:
+                  name: coursework-config
+                  key: JWT_EXPIRES_IN
+            - name: ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: coursework-config
+                  key: ALLOWED_ORIGINS
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: coursework-app-secrets
+                  key: AUTH_MONGODB_URI
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: coursework-app-secrets
+                  key: JWT_SECRET
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: coursework-app-secrets
+                  key: GOOGLE_CLIENT_ID
+                  optional: true
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: coursework-app-secrets
+                  key: GOOGLE_CLIENT_SECRET
+                  optional: true
+            - name: GOOGLE_CALLBACK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: coursework-app-secrets
+                  key: GOOGLE_CALLBACK_URL
+                  optional: true
+            - name: GOOGLE_REDIRECT_AFTER_LOGIN
+              valueFrom:
+                secretKeyRef:
+                  name: coursework-app-secrets
+                  key: GOOGLE_REDIRECT_AFTER_LOGIN
+                  optional: true
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
