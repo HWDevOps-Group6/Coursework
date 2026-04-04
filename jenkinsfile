@@ -380,6 +380,8 @@ pipeline {
                     ZAP_RESULT=$?
                     set -e
 
+                    echo "[ZAP] Baseline command exit code: $ZAP_RESULT"
+
                     echo "[ZAP] Scan finished. Generated artifacts:"
                     ls -l reports/zap || true
 
@@ -396,55 +398,37 @@ pipeline {
                     echo "[ZAP] Inspecting report severities"
 
                     set +e
-                    node <<'NODE'
-                    const fs = require('fs');
-
-                    const report = JSON.parse(fs.readFileSync('reports/zap/zap-report.json', 'utf8'));
-                    const sites = Array.isArray(report.site)
-                        ? report.site
-                        : (report.site ? [report.site] : []);
-                    const totals = {
-                        informational: 0,
-                        low: 0,
-                        medium: 0,
-                        high: 0
-                    };
-
-                    for (const site of sites) {
-                        const alerts = Array.isArray(site.alerts) ? site.alerts : [];
-
-                        for (const alert of alerts) {
-                            const rawRiskCode = Object.prototype.hasOwnProperty.call(alert, 'riskcode')
-                                ? alert.riskcode
-                                : (Object.prototype.hasOwnProperty.call(alert, 'riskCode') ? alert.riskCode : -1);
-                            const riskCode = Number(rawRiskCode);
-                            const instanceCount = Number(alert.count || 0)
-                                || (Array.isArray(alert.instances) && alert.instances.length > 0 ? alert.instances.length : 1);
-
-                            if (riskCode === 0) {
-                                totals.informational += instanceCount;
-                            } else if (riskCode === 1) {
-                                totals.low += instanceCount;
-                            } else if (riskCode === 2) {
-                                totals.medium += instanceCount;
-                            } else if (riskCode === 3) {
-                                totals.high += instanceCount;
-                            }
-                        }
-                    }
-
-                    console.log(`[ZAP] Alert summary -> High: ${totals.high}, Medium: ${totals.medium}, Low: ${totals.low}, Informational: ${totals.informational}`);
-
-                    if (totals.high > 0) {
-                        process.exit(1);
-                    }
-
-                    if (totals.medium > 0 || totals.low > 0) {
-                        process.exit(2);
-                    }
-
-                    process.exit(0);
-                    NODE
+                                        node -e 'const fs = require("fs");
+    const report = JSON.parse(fs.readFileSync("reports/zap/zap-report.json", "utf8"));
+    const sites = Array.isArray(report.site) ? report.site : (report.site ? [report.site] : []);
+    const totals = { informational: 0, low: 0, medium: 0, high: 0 };
+    for (const site of sites) {
+        const alerts = Array.isArray(site.alerts) ? site.alerts : [];
+        for (const alert of alerts) {
+            const rawRiskCode = Object.prototype.hasOwnProperty.call(alert, "riskcode")
+                ? alert.riskcode
+                : (Object.prototype.hasOwnProperty.call(alert, "riskCode") ? alert.riskCode : -1);
+            const riskCode = Number(rawRiskCode);
+            const instanceCount = Number(alert.count || 0) || (Array.isArray(alert.instances) && alert.instances.length > 0 ? alert.instances.length : 1);
+            if (riskCode === 0) {
+                totals.informational += instanceCount;
+            } else if (riskCode === 1) {
+                totals.low += instanceCount;
+            } else if (riskCode === 2) {
+                totals.medium += instanceCount;
+            } else if (riskCode === 3) {
+                totals.high += instanceCount;
+            }
+        }
+    }
+    console.log("[ZAP] Alert summary -> High: " + totals.high + ", Medium: " + totals.medium + ", Low: " + totals.low + ", Informational: " + totals.informational);
+    if (totals.high > 0) {
+        process.exit(1);
+    }
+    if (totals.medium > 0 || totals.low > 0) {
+        process.exit(2);
+    }
+    process.exit(0);'
                     ZAP_RESULT=$?
                     set -e
 
