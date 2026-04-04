@@ -143,8 +143,9 @@ pipeline {
                 }
             }
             steps {
-                sh "docker build -f Dockerfile.gateway -t ${REGISTRY}/gateway:${env.BUILD_NUMBER} ."
+                sh "docker build -f Dockerfile.gateway -t ${REGISTRY}/gateway:${env.BUILD_NUMBER} -t ${REGISTRY}/gateway:latest ."
                 sh "docker push ${REGISTRY}/gateway:${env.BUILD_NUMBER}"
+                sh "docker push ${REGISTRY}/gateway:latest"
             }
         }
 
@@ -156,8 +157,9 @@ pipeline {
                 }
             }
             steps {
-                sh "docker build -f services/auth-service/Dockerfile -t ${REGISTRY}/auth-service:${env.BUILD_NUMBER} ."
+                sh "docker build -f services/auth-service/Dockerfile -t ${REGISTRY}/auth-service:${env.BUILD_NUMBER} -t ${REGISTRY}/auth-service:latest ."
                 sh "docker push ${REGISTRY}/auth-service:${env.BUILD_NUMBER}"
+                sh "docker push ${REGISTRY}/auth-service:latest"
             }
         }
 
@@ -169,8 +171,9 @@ pipeline {
                 }
             }
             steps {
-                sh "docker build -f services/diagnostics-vitals-service/Dockerfile -t ${REGISTRY}/vitals-service:${env.BUILD_NUMBER} ."
+                sh "docker build -f services/diagnostics-vitals-service/Dockerfile -t ${REGISTRY}/vitals-service:${env.BUILD_NUMBER} -t ${REGISTRY}/vitals-service:latest ."
                 sh "docker push ${REGISTRY}/vitals-service:${env.BUILD_NUMBER}"
+                sh "docker push ${REGISTRY}/vitals-service:latest"
             }
         }
 
@@ -182,8 +185,9 @@ pipeline {
                 }
             }
             steps {
-                sh "docker build -f services/patient-registration-service/Dockerfile -t ${REGISTRY}/patient-service:${env.BUILD_NUMBER} ."
+                sh "docker build -f services/patient-registration-service/Dockerfile -t ${REGISTRY}/patient-service:${env.BUILD_NUMBER} -t ${REGISTRY}/patient-service:latest ."
                 sh "docker push ${REGISTRY}/patient-service:${env.BUILD_NUMBER}"
+                sh "docker push ${REGISTRY}/patient-service:latest"
             }
         }
 
@@ -310,75 +314,98 @@ pipeline {
                         string(credentialsId: 'mongodb-patient-uri', variable: 'PATIENT_MONGODB_URI_VALUE'),
                         string(credentialsId: 'patient-id-hash-salt', variable: 'PATIENT_ID_HASH_SALT_VALUE'),
                     ]) {
-                        sh """#!/bin/bash
-                        set -euo pipefail
-                        KUBECTL='${kubectlCmd}'
+                        withEnv([
+                            "KUBECTL_CMD=${kubectlCmd}",
+                            "DEPLOY_GATEWAY=${deployGateway.toString()}",
+                            "DEPLOY_AUTH=${deployAuth.toString()}",
+                            "DEPLOY_VITALS=${deployVitals.toString()}",
+                            "DEPLOY_PATIENT=${deployPatient.toString()}"
+                        ]) {
+                            sh '''#!/bin/bash
+                            set -euo pipefail
 
-                        if [ ! -x "\$KUBECTL" ]; then
-                            echo '[K8S] kubectl is required but could not be prepared'
-                            exit 1
-                        fi
+                            KUBECTL="$KUBECTL_CMD"
 
-                        "\$KUBECTL" cluster-info >/dev/null
-                        "\$KUBECTL" apply -f k8s/namespace.yaml
+                            if [ ! -x "$KUBECTL" ]; then
+                                echo '[K8S] kubectl is required but could not be prepared'
+                                exit 1
+                            fi
 
-                        "\$KUBECTL" -n ${env.K8S_NAMESPACE} create secret docker-registry ${env.K8S_REGISTRY_SECRET} \
-                            --docker-server='${env.REGISTRY}' \
-                            --docker-username="$ACR_CREDS_USR" \
-                            --docker-password="$ACR_CREDS_PSW" \
-                            --dry-run=client -o yaml | "\$KUBECTL" apply -f -
+                            if [ -z "${KUBECONFIG:-}" ] || [ ! -f "$KUBECONFIG" ]; then
+                                echo '[K8S] KUBECONFIG credential file is missing or unreadable'
+                                exit 1
+                            fi
 
-                        secret_args=(
-                            --from-literal=JWT_SECRET="$JWT_SECRET_VALUE"
-                            --from-literal=AUTH_MONGODB_URI="$AUTH_MONGODB_URI_VALUE"
-                            --from-literal=VITALS_MONGODB_URI="$VITALS_MONGODB_URI_VALUE"
-                            --from-literal=PATIENT_MONGODB_URI="$PATIENT_MONGODB_URI_VALUE"
-                            --from-literal=PATIENT_ID_HASH_SALT="$PATIENT_ID_HASH_SALT_VALUE"
-                        )
+                            k() {
+                                "$KUBECTL" --kubeconfig "$KUBECONFIG" "$@"
+                            }
 
-                        if [[ -n "\${GOOGLE_CLIENT_ID:-}" ]]; then
-                            secret_args+=(--from-literal=GOOGLE_CLIENT_ID="\${GOOGLE_CLIENT_ID}")
-                        fi
-                        if [[ -n "\${GOOGLE_CLIENT_SECRET:-}" ]]; then
-                            secret_args+=(--from-literal=GOOGLE_CLIENT_SECRET="\${GOOGLE_CLIENT_SECRET}")
-                        fi
-                        if [[ -n "\${GOOGLE_CALLBACK_URL:-}" ]]; then
-                            secret_args+=(--from-literal=GOOGLE_CALLBACK_URL="\${GOOGLE_CALLBACK_URL}")
-                        fi
-                        if [[ -n "\${GOOGLE_REDIRECT_AFTER_LOGIN:-}" ]]; then
-                            secret_args+=(--from-literal=GOOGLE_REDIRECT_AFTER_LOGIN="\${GOOGLE_REDIRECT_AFTER_LOGIN}")
-                        fi
+                            if ! k cluster-info >/dev/null 2>&1; then
+                                echo '[K8S] Unable to reach the Kubernetes cluster using the provided kubeconfig'
+                                echo '[K8S] Current context:'
+                                k config current-context || true
+                                echo '[K8S] Configured API server:'
+                                k config view --minify -o jsonpath='{.clusters[0].cluster.server}' || true
+                                echo
+                                exit 1
+                            fi
 
-                        "\$KUBECTL" -n ${env.K8S_NAMESPACE} create secret generic ${env.K8S_APP_SECRET_NAME} \
-                            "\${secret_args[@]}" \
-                            --dry-run=client -o yaml | "\$KUBECTL" apply -f -
+                            k apply -f k8s/namespace.yaml
 
-                        "\$KUBECTL" apply -f k8s/configmap.yaml
-                        "\$KUBECTL" apply -f k8s/services
-                        "\$KUBECTL" apply -f k8s/deployments
-                        """
+                            k -n "$K8S_NAMESPACE" create secret docker-registry "$K8S_REGISTRY_SECRET" \
+                                --docker-server="$REGISTRY" \
+                                --docker-username="$ACR_CREDS_USR" \
+                                --docker-password="$ACR_CREDS_PSW" \
+                                --dry-run=client -o yaml | k apply -f -
 
-                        if (deployGateway) {
-                            sh "'${kubectlCmd}' -n ${env.K8S_NAMESPACE} set image deployment/gateway gateway=${env.REGISTRY}/gateway:${env.BUILD_NUMBER}"
+                            secret_args=(
+                                --from-literal=JWT_SECRET="$JWT_SECRET_VALUE"
+                                --from-literal=AUTH_MONGODB_URI="$AUTH_MONGODB_URI_VALUE"
+                                --from-literal=VITALS_MONGODB_URI="$VITALS_MONGODB_URI_VALUE"
+                                --from-literal=PATIENT_MONGODB_URI="$PATIENT_MONGODB_URI_VALUE"
+                                --from-literal=PATIENT_ID_HASH_SALT="$PATIENT_ID_HASH_SALT_VALUE"
+                            )
+
+                            if [[ -n "${GOOGLE_CLIENT_ID:-}" ]]; then
+                                secret_args+=(--from-literal=GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID")
+                            fi
+                            if [[ -n "${GOOGLE_CLIENT_SECRET:-}" ]]; then
+                                secret_args+=(--from-literal=GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET")
+                            fi
+                            if [[ -n "${GOOGLE_CALLBACK_URL:-}" ]]; then
+                                secret_args+=(--from-literal=GOOGLE_CALLBACK_URL="$GOOGLE_CALLBACK_URL")
+                            fi
+                            if [[ -n "${GOOGLE_REDIRECT_AFTER_LOGIN:-}" ]]; then
+                                secret_args+=(--from-literal=GOOGLE_REDIRECT_AFTER_LOGIN="$GOOGLE_REDIRECT_AFTER_LOGIN")
+                            fi
+
+                            k -n "$K8S_NAMESPACE" create secret generic "$K8S_APP_SECRET_NAME" \
+                                "${secret_args[@]}" \
+                                --dry-run=client -o yaml | k apply -f -
+
+                            k apply -f k8s/configmap.yaml
+                            k apply -f k8s/services
+                            k apply -f k8s/deployments
+
+                            if [[ "$DEPLOY_GATEWAY" == 'true' ]]; then
+                                k -n "$K8S_NAMESPACE" set image deployment/gateway gateway="$REGISTRY/gateway:$BUILD_NUMBER"
+                            fi
+                            if [[ "$DEPLOY_AUTH" == 'true' ]]; then
+                                k -n "$K8S_NAMESPACE" set image deployment/auth-service auth-service="$REGISTRY/auth-service:$BUILD_NUMBER"
+                            fi
+                            if [[ "$DEPLOY_VITALS" == 'true' ]]; then
+                                k -n "$K8S_NAMESPACE" set image deployment/vitals-service vitals-service="$REGISTRY/vitals-service:$BUILD_NUMBER"
+                            fi
+                            if [[ "$DEPLOY_PATIENT" == 'true' ]]; then
+                                k -n "$K8S_NAMESPACE" set image deployment/patient-service patient-service="$REGISTRY/patient-service:$BUILD_NUMBER"
+                            fi
+
+                            k -n "$K8S_NAMESPACE" rollout status deployment/auth-service --timeout=180s
+                            k -n "$K8S_NAMESPACE" rollout status deployment/vitals-service --timeout=180s
+                            k -n "$K8S_NAMESPACE" rollout status deployment/patient-service --timeout=180s
+                            k -n "$K8S_NAMESPACE" rollout status deployment/gateway --timeout=180s
+                            '''
                         }
-                        if (deployAuth) {
-                            sh "'${kubectlCmd}' -n ${env.K8S_NAMESPACE} set image deployment/auth-service auth-service=${env.REGISTRY}/auth-service:${env.BUILD_NUMBER}"
-                        }
-                        if (deployVitals) {
-                            sh "'${kubectlCmd}' -n ${env.K8S_NAMESPACE} set image deployment/vitals-service vitals-service=${env.REGISTRY}/vitals-service:${env.BUILD_NUMBER}"
-                        }
-                        if (deployPatient) {
-                            sh "'${kubectlCmd}' -n ${env.K8S_NAMESPACE} set image deployment/patient-service patient-service=${env.REGISTRY}/patient-service:${env.BUILD_NUMBER}"
-                        }
-
-                        sh """#!/bin/bash
-                        set -euo pipefail
-                        KUBECTL='${kubectlCmd}'
-                        "\$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/auth-service --timeout=180s
-                        "\$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/vitals-service --timeout=180s
-                        "\$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/patient-service --timeout=180s
-                        "\$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/gateway --timeout=180s
-                        """
                     }
                 }
             }
@@ -453,6 +480,7 @@ pipeline {
                         ]) {
                         echo '[ZAP] Credentials bound successfully'
                         sh 'mkdir -p reports/zap && chmod 777 reports/zap'
+                        withEnv(["KUBECTL_CMD=${kubectlCmd}"]) {
                         def zapExitCode = sh(script: '''#!/bin/bash
                     set -euo pipefail
                     PF_PID=''
@@ -473,18 +501,23 @@ pipeline {
                     command -v curl >/dev/null 2>&1 || { echo "[ZAP] curl is required but not installed"; exit 1; }
                     command -v node >/dev/null 2>&1 || { echo "[ZAP] node is required but not installed"; exit 1; }
                     command -v docker >/dev/null 2>&1 || { echo "[ZAP] docker is required but not installed"; exit 1; }
-                    KUBECTL='${kubectlCmd}'
+                    KUBECTL="$KUBECTL_CMD"
                     [ -x "\$KUBECTL" ] || { echo "[ZAP] kubectl is required but could not be prepared"; exit 1; }
+                    [ -n "${KUBECONFIG:-}" ] && [ -f "$KUBECONFIG" ] || { echo "[ZAP] KUBECONFIG credential file is missing or unreadable"; exit 1; }
+
+                    k() {
+                        "$KUBECTL" --kubeconfig "$KUBECONFIG" "$@"
+                    }
 
                     mkdir -p reports/zap
                     rm -f reports/zap/zap-options.conf reports/zap/zap-report.json reports/zap/zap-report.html
                     rm -f /tmp/coursework-port-forward.log /tmp/gateway-health.json
 
                     echo "[ZAP] Ensuring gateway deployment is ready"
-                    "\$KUBECTL" -n coursework rollout status deployment/gateway --timeout=180s
+                    k -n coursework rollout status deployment/gateway --timeout=180s
 
                     echo "[ZAP] Starting gateway port-forward on 127.0.0.1:8080"
-                    "\$KUBECTL" -n coursework port-forward svc/gateway 8080:80 >/tmp/coursework-port-forward.log 2>&1 &
+                    k -n coursework port-forward svc/gateway 8080:80 >/tmp/coursework-port-forward.log 2>&1 &
                     PF_PID=$!
                     
                     echo "[ZAP] Waiting for gateway..."
@@ -571,7 +604,7 @@ pipeline {
                     if [ -z "$ZAP_JWT" ]; then
                         echo "[ZAP] Failed to get JWT"
                         echo "[ZAP] Login response: $LOGIN_RESPONSE"
-                        "\$KUBECTL" -n coursework logs deployment/auth-service --tail=200 || true
+                        k -n coursework logs deployment/auth-service --tail=200 || true
                         exit 11
                     fi
 
@@ -689,6 +722,7 @@ pipeline {
                     if (zapExitCode != 0 && zapExitCode != 1 && zapExitCode != 2 && zapExitCode != 10 && zapExitCode != 11 && zapExitCode != 12) {
                         error("[ZAP] Scan failed to complete correctly. Exit code: ${zapExitCode}")
                     }
+                        }
                         }
                     } catch (Exception err) {
                         if (err.getMessage()?.contains('High-risk alerts detected') || err.getMessage()?.contains('Gateway did not become ready') || err.getMessage()?.contains('Auth bootstrap failed') || err.getMessage()?.contains('did not generate the expected HTML and JSON reports') || err.getMessage()?.contains('Scan failed to complete correctly')) {
