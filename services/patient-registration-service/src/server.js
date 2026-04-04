@@ -4,7 +4,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const mongoose = require("mongoose");
-const { createHash } = require("crypto");
+const { createHash } = require("node:crypto");
 const { verifyToken } = require("./middleware/verifyToken");
 const { authorizeRole } = require("./middleware/authorizeRole");
 const { connectDatabase } = require("./config/database");
@@ -99,12 +99,12 @@ const requireSafeIdentifier = (value, fieldName) => {
 	return normalized;
 };
 
-const normalizeEmiratesId = (value) => String(value || "").replace(/\D/g, "");
+const normalizeEmiratesId = (value) => String(value || "").replaceAll(/\D/g, "");
 const normalizeEntryRoute = (value) => {
 	const normalized = String(value || "")
 		.trim()
 		.toUpperCase()
-		.replace(/\s+/g, "");
+		.replaceAll(/\s+/g, "");
 	if (normalized === "OPD") return "OPD";
 	if (normalized === "A&E" || normalized === "AE") return "A&E";
 	return "";
@@ -113,7 +113,7 @@ const normalizeVisitEntryRoute = (value) => {
 	const normalized = String(value || "").trim();
 	if (!normalized) return "";
 
-	const normalizedRoute = normalized.toUpperCase().replace(/\s+/g, "");
+	const normalizedRoute = normalized.toUpperCase().replaceAll(/\s+/g, "");
 	if (normalizedRoute === "OPD") return "OPD";
 	if (normalizedRoute === "A&E" || normalizedRoute === "AE") return "A&E";
 
@@ -200,6 +200,27 @@ const resolveAuditSource = (value, fallback = "manual") => {
 		return fallback;
 	const normalizedSource = String(value).trim().toLowerCase();
 	return AUDIT_SOURCES.includes(normalizedSource) ? normalizedSource : "";
+};
+
+const normalizeVisitReferralDetails = (value) => {
+	if (value === undefined) return "";
+	if (typeof value !== "string") return null;
+
+	const normalizedReferralDetails = value.trim();
+	if (!normalizedReferralDetails || normalizedReferralDetails.length > 1000) {
+		return null;
+	}
+
+	return normalizedReferralDetails;
+};
+
+const resolveVisitEntryRoute = (entryRoute, role) => {
+	if (entryRoute === undefined) {
+		const defaultEntryRoute = role === "paramedic" ? "A&E" : "";
+		return defaultEntryRoute;
+	}
+
+	return normalizeVisitEntryRoute(entryRoute);
 };
 
 const getNextPatientId = async () => {
@@ -473,6 +494,8 @@ app.patch(
 
 			const { servicePoint, entryRoute, diseases, referralDetails, source } =
 				req.body || {};
+			const normalizedReferralDetails =
+				normalizeVisitReferralDetails(referralDetails);
 
 			if (typeof servicePoint !== "string" || !servicePoint.trim()) {
 				return sendError(
@@ -492,12 +515,7 @@ app.patch(
 				);
 			}
 
-			if (
-				referralDetails !== undefined &&
-				(typeof referralDetails !== "string" ||
-					!referralDetails.trim() ||
-					referralDetails.trim().length > 1000)
-			) {
+			if (normalizedReferralDetails === null) {
 				return sendError(
 					res,
 					400,
@@ -506,12 +524,10 @@ app.patch(
 				);
 			}
 
-			const visitEntryRoute =
-				entryRoute === undefined
-					? req.user.role === "paramedic"
-						? "A&E"
-						: ""
-					: normalizeVisitEntryRoute(entryRoute);
+			const visitEntryRoute = resolveVisitEntryRoute(
+				entryRoute,
+				req.user.role,
+			);
 			if (entryRoute !== undefined && !visitEntryRoute) {
 				return sendError(
 					res,
@@ -542,8 +558,8 @@ app.patch(
 			if (visitEntryRoute) {
 				visitEntry.entryRoute = visitEntryRoute;
 			}
-			if (typeof referralDetails === "string" && referralDetails.trim()) {
-				visitEntry.referralDetails = referralDetails.trim();
+			if (normalizedReferralDetails) {
+				visitEntry.referralDetails = normalizedReferralDetails;
 			}
 
 			const updatedPatient = await Patient.findOneAndUpdate(

@@ -13,7 +13,7 @@ const ALLOWED_DEPARTMENTS = [
 	"Oncology",
 ];
 
-const CARE_ROLES = ["doctor", "nurse", "clinician"];
+const CARE_ROLES = new Set(["doctor", "nurse", "clinician"]);
 
 const validate = (schema, property = "body") => {
 	return (req, res, next) => {
@@ -94,7 +94,7 @@ const schemas = {
 				});
 			}
 
-			if (CARE_ROLES.includes(value.role)) {
+			if (CARE_ROLES.has(value.role)) {
 				if (departments.length === 0) {
 					return helpers.error("any.custom", {
 						message: `${value.role} must belong to at least one department`,

@@ -368,13 +368,13 @@ pipeline {
                         docker run --rm $ZAP_NETWORK_MODE \
                             -v "$PWD/reports/zap:/zap/wrk:rw" \
                             ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-                            -t "$ZAP_TARGET_URL" -J zap-report.json -r zap-report.html \
+                            -t "$ZAP_TARGET_URL" -I -J zap-report.json -r zap-report.html \
                             -z "-configfile /zap/wrk/zap-options.conf"
                     else
                         docker run --rm \
                             -v "$PWD/reports/zap:/zap/wrk:rw" \
                             ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-                            -t "$ZAP_TARGET_URL" -J zap-report.json -r zap-report.html \
+                            -t "$ZAP_TARGET_URL" -I -J zap-report.json -r zap-report.html \
                             -z "-configfile /zap/wrk/zap-options.conf"
                     fi
                     ZAP_RESULT=$?
@@ -388,6 +388,56 @@ pipeline {
                         exit 12
                     fi
 
+                    if [ "$ZAP_RESULT" -ne 0 ] && [ "$ZAP_RESULT" -ne 1 ] && [ "$ZAP_RESULT" -ne 2 ]; then
+                        echo "[ZAP] Baseline scan command failed with exit code: $ZAP_RESULT"
+                        exit "$ZAP_RESULT"
+                    fi
+
+                    echo "[ZAP] Inspecting report severities"
+
+                    set +e
+                    node <<'NODE'
+                    const fs = require('fs');
+
+                    const report = JSON.parse(fs.readFileSync('reports/zap/zap-report.json', 'utf8'));
+                    const alerts = (report.site || []).flatMap((site) => site.alerts || []);
+                    const totals = {
+                        informational: 0,
+                        low: 0,
+                        medium: 0,
+                        high: 0
+                    };
+
+                    for (const alert of alerts) {
+                        const riskCode = Number(alert.riskcode ?? alert.riskCode ?? -1);
+                        const instanceCount = Number(alert.count || 0) || (Array.isArray(alert.instances) && alert.instances.length > 0 ? alert.instances.length : 1);
+
+                        if (riskCode === 0) {
+                            totals.informational += instanceCount;
+                        } else if (riskCode === 1) {
+                            totals.low += instanceCount;
+                        } else if (riskCode === 2) {
+                            totals.medium += instanceCount;
+                        } else if (riskCode === 3) {
+                            totals.high += instanceCount;
+                        }
+                    }
+
+                    console.log(`[ZAP] Alert summary -> High: ${totals.high}, Medium: ${totals.medium}, Low: ${totals.low}, Informational: ${totals.informational}`);
+
+                    if (totals.high > 0) {
+                        process.exit(1);
+                    }
+
+                    if (totals.medium > 0 || totals.low > 0) {
+                        process.exit(2);
+                    }
+
+                    process.exit(0);
+                    NODE
+                    ZAP_RESULT=$?
+                    set -e
+
                     exit "$ZAP_RESULT"
                     ''', returnStatus: true)
 
@@ -400,7 +450,7 @@ pipeline {
                     }
 
                     if (zapExitCode == 2) {
-                        unstable('[ZAP] Medium or lower-risk alerts detected. Review the archived ZAP report.')
+                        unstable('[ZAP] Medium or low-risk alerts detected. Review the archived ZAP report.')
                     }
 
                     if (zapExitCode == 10) {

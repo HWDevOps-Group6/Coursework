@@ -8,7 +8,7 @@ const PATIENT_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 
 const requireNonEmptyString = (value, fieldName) => {
 	if (typeof value !== "string") {
-		throw new Error(`${fieldName} must be a string`);
+		throw new TypeError(`${fieldName} must be a string`);
 	}
 
 	const normalized = value.trim();
@@ -62,7 +62,7 @@ const requirePatientId = (patientId, errorMessage) => {
 const parsePositiveInt = (value, fallback, fieldName, max = Number.MAX_SAFE_INTEGER) => {
 	if (value === undefined || value === null || value === "") return fallback;
 	if (typeof value !== "string" && typeof value !== "number") {
-		throw new Error(`${fieldName} must be a number`);
+		throw new TypeError(`${fieldName} must be a number`);
 	}
 
 	const parsed = Number(value);

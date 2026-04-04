@@ -117,7 +117,7 @@ app.use(
 function ping(baseUrl, timeoutMs = 1500) {
 	return new Promise((resolve) => {
 		const url = new URL("/health", baseUrl);
-		const lib = url.protocol === "https:" ? require("https") : require("http");
+		const lib = url.protocol === "https:" ? require("node:https") : require("node:http");
 		const req = lib.request(
 			{
 				hostname: url.hostname,
