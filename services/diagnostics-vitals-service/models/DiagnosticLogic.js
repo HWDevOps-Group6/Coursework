@@ -1,5 +1,6 @@
 // Business logic for importing and managing diagnostic results from machines
 
+const { randomInt, randomUUID } = require("node:crypto");
 const DiagnosticResult = require("./DiagnosticSchema");
 const mongoose = require("mongoose");
 const MACHINE_TYPES = ["XRAY", "CT", "MRI", "PCR", "ULTRASOUND", "BLOODWORK"];
@@ -93,6 +94,16 @@ const createActivePatientFilter = (patientId, additionalFilter = {}) => ({
 	patientId,
 	...additionalFilter,
 });
+
+const secureRandomInt = (min, maxExclusive) => randomInt(min, maxExclusive);
+
+const pickRandom = (items) => {
+	if (!Array.isArray(items) || items.length === 0) {
+		throw new Error("items must be a non-empty array");
+	}
+
+	return items[secureRandomInt(0, items.length)];
+};
 
 const findActiveResultsForPatient = (patientId, additionalFilter = {}) =>
 	maybePopulateVerifiedBy(
@@ -211,15 +222,15 @@ const fetchFromMachineAPI = async (machineType) => {
 	};
 
 	// Simulate network latency from machine
-	await new Promise((r) => setTimeout(r, 200 + Math.random() * 300));
+	await new Promise((r) => setTimeout(r, secureRandomInt(200, 501)));
 
 	const pool = templates[machineType] || [];
-	const count = Math.floor(Math.random() * 2) + 1; // 1–2 results per machine poll
+	const count = Math.min(pool.length, secureRandomInt(1, 3)); // 1–2 results per machine poll
 	const picked = [];
 	const used = new Set();
 
 	while (picked.length < count && picked.length < pool.length) {
-		const idx = Math.floor(Math.random() * pool.length);
+		const idx = secureRandomInt(0, pool.length);
 		if (!used.has(idx)) {
 			used.add(idx);
 			picked.push(pool[idx]);
@@ -228,16 +239,19 @@ const fetchFromMachineAPI = async (machineType) => {
 
 	return picked.map((t) => ({
 		...t,
-		machineId: `${machineType}-${String(Math.floor(Math.random() * 9) + 1).padStart(2, "0")}`,
-		accessionNo: `ACC${Date.now()}${Math.floor(Math.random() * 999)}`,
-		reportedBy: ["Dr. Al-Farsi", "Dr. Hamdan", "Dr. Nair", "Dr. Krishnamurthy"][
-			Math.floor(Math.random() * 4)
-		],
+		machineId: `${machineType}-${String(secureRandomInt(1, 10)).padStart(2, "0")}`,
+		accessionNo: `ACC${Date.now()}${randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase()}`,
+		reportedBy: pickRandom([
+			"Dr. Al-Farsi",
+			"Dr. Hamdan",
+			"Dr. Nair",
+			"Dr. Krishnamurthy",
+		]),
 		importSource: "api",
 		importedAt: new Date(),
 		rawPayload: { source: machineType, polledAt: new Date().toISOString() },
 		// NOTE: In real usage, patientId comes from the machine payload or req.body override
-		patientId: `P-${10000 + Math.floor(Math.random() * 9000)}`,
+		patientId: `P-${secureRandomInt(10000, 19000)}`,
 	}));
 };
 
