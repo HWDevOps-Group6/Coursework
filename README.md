@@ -176,6 +176,7 @@ cp .env.example .env
    - service ports
    - MongoDB connection string
    - JWT secret
+   - patient ID hash salt
    - service URLs used by the gateway
 
 ### Run the project
@@ -192,6 +193,17 @@ npm run dev:all
 - Postman collections for integration testing are available in the `postman/` directory.
 - Health check requests are included to validate service availability.
 
+## Kubernetes Deployment
+
+Kubernetes manifests now live in [k8s/README.md](k8s/README.md).
+
+Current rollout assumptions:
+
+- only the gateway is intended to be exposed outside the cluster
+- the backend services run as internal `ClusterIP` services
+- MongoDB remains external in MongoDB Atlas for this phase
+- Jenkins deploys the manifests to the target cluster after pushing images to ACR
+
 ## Jenkins Pipeline
 
 Azure VM setup with Jenkins installed
@@ -199,18 +211,22 @@ Azure VM setup with Jenkins installed
 
 ### OWASP ZAP Stage
 
-The Jenkins pipeline includes an authenticated OWASP ZAP baseline scan against the gateway running on the Jenkins host (`http://localhost`).
+The Jenkins pipeline includes an authenticated OWASP ZAP baseline scan against the Kubernetes-deployed gateway using a Jenkins-side `kubectl port-forward` on `http://127.0.0.1:8080`.
 
 Required Jenkins credential:
 
-- **Type:** Username with password
-- **ID:** `zap-auth-credentials`
-- **Username:** Test account email for auth login
-- **Password:** Matching account password
+- **Type:** Secret text
+- **ID:** `ZAP_AUTH_EMAIL`
+- **Value:** Test account email for auth login
+
+- **Type:** Secret text
+- **ID:** `ZAP_AUTH_PASSWORD`
+- **Value:** Matching account password
 
 Behavior:
 
-- Brings up full stack with Docker Compose on the Jenkins VM.
+- Uses the existing Kubernetes deployment in the `coursework` namespace.
+- Port-forwards the gateway service to the Jenkins host for scanning.
 - Authenticates via `POST /api/auth/login` and injects `Authorization: Bearer <token>` into ZAP requests.
 - Generates reports under `reports/zap/` and archives them as Jenkins artifacts.
 - Fails the pipeline only when **High-risk** ZAP alerts are found.
@@ -223,3 +239,4 @@ Additional design notes are available under `docs/`, including architecture and 
 
 - This repository is intended for coursework/development usage.
 - Keep secrets and environment-specific values in local `.env` files and avoid committing sensitive data.
+- Set `PATIENT_ID_HASH_SALT` anywhere the patient registration service runs (local `.env`, Docker Compose, and Jenkins/Kubernetes secret injection).
