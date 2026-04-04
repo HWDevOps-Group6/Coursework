@@ -477,252 +477,254 @@ pipeline {
                             file(credentialsId: 'kubeconfig-coursework', variable: 'KUBECONFIG'),
                             string(credentialsId: 'ZAP_AUTH_EMAIL', variable: 'ZAP_MAIL'),
                             string(credentialsId: 'ZAP_AUTH_PASSWORD', variable: 'ZAP_PWD')
-                        ]) {
-                        echo '[ZAP] Credentials bound successfully'
-                        sh 'mkdir -p reports/zap && chmod 777 reports/zap'
-                        withEnv(["KUBECTL_CMD=${kubectlCmd}"]) {
-                        def zapExitCode = sh(script: '''#!/bin/bash
-                    set -euo pipefail
-                    PF_PID=''
-                    cleanup() {
-                        rc=$?
-                        if [ -n "$PF_PID" ]; then
-                            kill "$PF_PID" >/dev/null 2>&1 || true
-                            wait "$PF_PID" 2>/dev/null || true
-                        fi
-                        if [ "$rc" -ne 0 ]; then
-                            echo "[ZAP] Failed at line ${LINENO} with exit code ${rc}"
-                        fi
-                        exit "$rc"
-                    }
-                    trap cleanup EXIT
+                        ]) 
+                        {
+                            echo '[ZAP] Credentials bound successfully'
+                            sh 'mkdir -p reports/zap && chmod 777 reports/zap'
+                            withEnv(["KUBECTL_CMD=${kubectlCmd}"]) 
+                            {
+                                def zapExitCode = sh(script: '''#!/bin/bash
+                                    set -euo pipefail
+                                    PF_PID=''
+                                    cleanup() {
+                                        rc=$?
+                                        if [ -n "$PF_PID" ]; then
+                                            kill "$PF_PID" >/dev/null 2>&1 || true
+                                            wait "$PF_PID" 2>/dev/null || true
+                                        fi
+                                        if [ "$rc" -ne 0 ]; then
+                                            echo "[ZAP] Failed at line ${LINENO} with exit code ${rc}"
+                                        fi
+                                        exit "$rc"
+                                    }
+                                    trap cleanup EXIT
 
-                    echo "[ZAP] Stage started"
-                    command -v curl >/dev/null 2>&1 || { echo "[ZAP] curl is required but not installed"; exit 1; }
-                    command -v node >/dev/null 2>&1 || { echo "[ZAP] node is required but not installed"; exit 1; }
-                    command -v docker >/dev/null 2>&1 || { echo "[ZAP] docker is required but not installed"; exit 1; }
-                    KUBECTL="$KUBECTL_CMD"
-                    [ -x "\$KUBECTL" ] || { echo "[ZAP] kubectl is required but could not be prepared"; exit 1; }
-                    [ -n "${KUBECONFIG:-}" ] && [ -f "$KUBECONFIG" ] || { echo "[ZAP] KUBECONFIG credential file is missing or unreadable"; exit 1; }
+                                    echo "[ZAP] Stage started"
+                                    command -v curl >/dev/null 2>&1 || { echo "[ZAP] curl is required but not installed"; exit 1; }
+                                    command -v node >/dev/null 2>&1 || { echo "[ZAP] node is required but not installed"; exit 1; }
+                                    command -v docker >/dev/null 2>&1 || { echo "[ZAP] docker is required but not installed"; exit 1; }
+                                    KUBECTL="$KUBECTL_CMD"
+                                    [ -x "\$KUBECTL" ] || { echo "[ZAP] kubectl is required but could not be prepared"; exit 1; }
+                                    [ -n "${KUBECONFIG:-}" ] && [ -f "$KUBECONFIG" ] || { echo "[ZAP] KUBECONFIG credential file is missing or unreadable"; exit 1; }
 
-                    k() {
-                        "$KUBECTL" --kubeconfig "$KUBECONFIG" "$@"
-                    }
+                                    k() {
+                                        "$KUBECTL" --kubeconfig "$KUBECONFIG" "$@"
+                                    }
 
-                    mkdir -p reports/zap
-                    rm -f reports/zap/zap-options.conf reports/zap/zap-report.json reports/zap/zap-report.html
-                    rm -f /tmp/coursework-port-forward.log /tmp/gateway-health.json
+                                    mkdir -p reports/zap
+                                    rm -f reports/zap/zap-options.conf reports/zap/zap-report.json reports/zap/zap-report.html
+                                    rm -f /tmp/coursework-port-forward.log /tmp/gateway-health.json
 
-                    echo "[ZAP] Ensuring gateway deployment is ready"
-                    k -n coursework rollout status deployment/gateway --timeout=180s
+                                    echo "[ZAP] Ensuring gateway deployment is ready"
+                                    k -n coursework rollout status deployment/gateway --timeout=180s
 
-                    echo "[ZAP] Starting gateway port-forward on 127.0.0.1:8080"
-                    k -n coursework port-forward svc/gateway 8080:80 >/tmp/coursework-port-forward.log 2>&1 &
-                    PF_PID=$!
-                    
-                    echo "[ZAP] Waiting for gateway..."
-                    GATEWAY_READY=0
-                    for _ in {1..24}; do
-                        if curl -fsS http://127.0.0.1:8080/health >/tmp/gateway-health.json; then
-                            if node -e "
-                                const fs = require('fs');
-                                const data = JSON.parse(fs.readFileSync('/tmp/gateway-health.json', 'utf8'));
-                                const backends = data.backends || {};
-                                const ready = backends.auth === 'up' && backends.patientRegistration === 'up' && backends.diagnosticsVitals === 'up';
-                                process.exit(ready ? 0 : 1);
-                            "; then
-                                GATEWAY_READY=1
-                                break
-                            fi
-                        fi
-                        sleep 5
-                    done
+                                    echo "[ZAP] Starting gateway port-forward on 127.0.0.1:8080"
+                                    k -n coursework port-forward svc/gateway 8080:80 >/tmp/coursework-port-forward.log 2>&1 &
+                                    PF_PID=$!
+                                    
+                                    echo "[ZAP] Waiting for gateway..."
+                                    GATEWAY_READY=0
+                                    for _ in {1..24}; do
+                                        if curl -fsS http://127.0.0.1:8080/health >/tmp/gateway-health.json; then
+                                            if node -e "
+                                                const fs = require('fs');
+                                                const data = JSON.parse(fs.readFileSync('/tmp/gateway-health.json', 'utf8'));
+                                                const backends = data.backends || {};
+                                                const ready = backends.auth === 'up' && backends.patientRegistration === 'up' && backends.diagnosticsVitals === 'up';
+                                                process.exit(ready ? 0 : 1);
+                                            "; then
+                                                GATEWAY_READY=1
+                                                break
+                                            fi
+                                        fi
+                                        sleep 5
+                                    done
 
-                    if [ "$GATEWAY_READY" -ne 1 ]; then
-                        echo "[ZAP] Gateway health check failed after retries"
-                        cat /tmp/coursework-port-forward.log || true
-                        exit 10
-                    fi
+                                    if [ "$GATEWAY_READY" -ne 1 ]; then
+                                        echo "[ZAP] Gateway health check failed after retries"
+                                        cat /tmp/coursework-port-forward.log || true
+                                        exit 10
+                                    fi
 
-                    echo "[ZAP] Gateway health response:"
-                    cat /tmp/gateway-health.json || true
+                                    echo "[ZAP] Gateway health response:"
+                                    cat /tmp/gateway-health.json || true
 
-                    echo "[ZAP] Waiting for auth login readiness..."
-                    ZAP_JWT=""
-                    LOGIN_RESPONSE=""
-                    ZAP_AUTH_PASSWORD="$ZAP_PWD"
+                                    echo "[ZAP] Waiting for auth login readiness..."
+                                    ZAP_JWT=""
+                                    LOGIN_RESPONSE=""
+                                    ZAP_AUTH_PASSWORD="$ZAP_PWD"
 
-                    login_and_extract_token() {
-                        LOGIN_RESPONSE=$(curl -sS -X POST http://127.0.0.1:8080/api/auth/login \
-                            -H "Content-Type: application/json" \
-                            -d "{\\"email\\":\\"$ZAP_MAIL\\",\\"password\\":\\"$ZAP_AUTH_PASSWORD\\"}")
+                                    login_and_extract_token() {
+                                        LOGIN_RESPONSE=$(curl -sS -X POST http://127.0.0.1:8080/api/auth/login \
+                                            -H "Content-Type: application/json" \
+                                            -d "{\\"email\\":\\"$ZAP_MAIL\\",\\"password\\":\\"$ZAP_AUTH_PASSWORD\\"}")
 
-                        ZAP_JWT=$(printf '%s' "$LOGIN_RESPONSE" | node -e "
-                            try {
-                                const data = JSON.parse(require('fs').readFileSync(0, 'utf8'));
-                                process.stdout.write(data.token || data.data?.token || '');
-                            } catch (_) {
-                                process.stdout.write('');
+                                        ZAP_JWT=$(printf '%s' "$LOGIN_RESPONSE" | node -e "
+                                            try {
+                                                const data = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+                                                process.stdout.write(data.token || data.data?.token || '');
+                                            } catch (_) {
+                                                process.stdout.write('');
+                                            }
+                                        ")
+                                    }
+
+                                    for _ in {1..18}; do
+                                        login_and_extract_token
+
+                                        if [ -n "$ZAP_JWT" ]; then
+                                            break
+                                        fi
+
+                                        if echo "$LOGIN_RESPONSE" | grep -qi "Invalid email or password"; then
+                                            echo "[ZAP] Auth user missing; registering scan user..."
+
+                                            REGISTER_RESPONSE=$(curl -sS -X POST http://127.0.0.1:8080/api/auth/register \
+                                                -H "Content-Type: application/json" \
+                                                -d "{\\"email\\":\\"$ZAP_MAIL\\",\\"password\\":\\"$ZAP_AUTH_PASSWORD\\",\\"firstName\\":\\"Zap\\",\\"lastName\\":\\"Scanner\\",\\"role\\":\\"clerk\\"}")
+
+                                            if echo "$REGISTER_RESPONSE" | grep -qi "Password must contain at least one uppercase"; then
+                                                ZAP_AUTH_PASSWORD='ZapScan@1234'
+                                                REGISTER_RESPONSE=$(curl -sS -X POST http://127.0.0.1:8080/api/auth/register \
+                                                    -H "Content-Type: application/json" \
+                                                    -d "{\\"email\\":\\"$ZAP_MAIL\\",\\"password\\":\\"$ZAP_AUTH_PASSWORD\\",\\"firstName\\":\\"Zap\\",\\"lastName\\":\\"Scanner\\",\\"role\\":\\"clerk\\"}")
+                                            fi
+
+                                            if echo "$REGISTER_RESPONSE" | grep -qi "already exists"; then
+                                                :
+                                            fi
+
+                                            login_and_extract_token
+                                            if [ -n "$ZAP_JWT" ]; then
+                                                break
+                                            fi
+                                        fi
+
+                                        sleep 5
+                                    done
+
+                                    if [ -z "$ZAP_JWT" ]; then
+                                        echo "[ZAP] Failed to get JWT"
+                                        echo "[ZAP] Login response: $LOGIN_RESPONSE"
+                                        k -n coursework logs deployment/auth-service --tail=200 || true
+                                        exit 11
+                                    fi
+
+                                    echo "[ZAP] JWT acquired; running baseline scan"
+
+                                    # Configure ZAP with the JWT
+                                    printf "replacer.full_list(0).description=auth\\nreplacer.full_list(0).enabled=true\\nreplacer.full_list(0).matchtype=REQ_HEADER\\nreplacer.full_list(0).matchstr=Authorization\\nreplacer.full_list(0).regex=false\\nreplacer.full_list(0).replacement=Bearer %s" "$ZAP_JWT" > reports/zap/zap-options.conf
+
+                                    ZAP_TARGET_URL="http://127.0.0.1:8080"
+                                    ZAP_NETWORK_MODE="--network host"
+
+                                    if [ "$(uname -s)" = "Darwin" ]; then
+                                        ZAP_TARGET_URL="http://host.docker.internal:8080"
+                                        ZAP_NETWORK_MODE=""
+                                    fi
+
+                                    echo "[ZAP] Running scan against ${ZAP_TARGET_URL}"
+
+                                    set +e
+                                    if [ -n "$ZAP_NETWORK_MODE" ]; then
+                                        docker run --rm $ZAP_NETWORK_MODE \
+                                            -v "$PWD/reports/zap:/zap/wrk:rw" \
+                                            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+                                            -t "$ZAP_TARGET_URL" -I -J zap-report.json -r zap-report.html \
+                                            -z "-configfile /zap/wrk/zap-options.conf"
+                                    else
+                                        docker run --rm \
+                                            -v "$PWD/reports/zap:/zap/wrk:rw" \
+                                            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+                                            -t "$ZAP_TARGET_URL" -I -J zap-report.json -r zap-report.html \
+                                            -z "-configfile /zap/wrk/zap-options.conf"
+                                    fi
+                                    ZAP_RESULT=$?
+                                    set -e
+
+                                    echo "[ZAP] Baseline command exit code: $ZAP_RESULT"
+
+                                    echo "[ZAP] Scan finished. Generated artifacts:"
+                                    ls -l reports/zap || true
+
+                                    if [ ! -f reports/zap/zap-report.json ] || [ ! -f reports/zap/zap-report.html ]; then
+                                        echo "[ZAP] Expected report files were not generated"
+                                        exit 12
+                                    fi
+
+                                    if [ "$ZAP_RESULT" -ne 0 ] && [ "$ZAP_RESULT" -ne 1 ] && [ "$ZAP_RESULT" -ne 2 ]; then
+                                        echo "[ZAP] Baseline scan command failed with exit code: $ZAP_RESULT"
+                                        exit "$ZAP_RESULT"
+                                    fi
+
+                                    echo "[ZAP] Inspecting report severities"
+
+                                    set +e
+                                    node -e 'const fs = require("fs");
+                                    const report = JSON.parse(fs.readFileSync("reports/zap/zap-report.json", "utf8"));
+                                    const sites = Array.isArray(report.site) ? report.site : (report.site ? [report.site] : []);
+                                    const totals = { informational: 0, low: 0, medium: 0, high: 0 };
+                                    for (const site of sites) {
+                                        const alerts = Array.isArray(site.alerts) ? site.alerts : [];
+                                        for (const alert of alerts) {
+                                            const rawRiskCode = Object.prototype.hasOwnProperty.call(alert, "riskcode")
+                                                ? alert.riskcode
+                                                : (Object.prototype.hasOwnProperty.call(alert, "riskCode") ? alert.riskCode : -1);
+                                            const riskCode = Number(rawRiskCode);
+                                            const instanceCount = Number(alert.count || 0) || (Array.isArray(alert.instances) && alert.instances.length > 0 ? alert.instances.length : 1);
+                                            if (riskCode === 0) {
+                                                totals.informational += instanceCount;
+                                            } else if (riskCode === 1) {
+                                                totals.low += instanceCount;
+                                            } else if (riskCode === 2) {
+                                                totals.medium += instanceCount;
+                                            } else if (riskCode === 3) {
+                                                totals.high += instanceCount;
+                                            }
+                                        }
+                                    }
+                                    console.log("[ZAP] Alert summary -> High: " + totals.high + ", Medium: " + totals.medium + ", Low: " + totals.low + ", Informational: " + totals.informational);
+                                    if (totals.high > 0) {
+                                        process.exit(1);
+                                    }
+                                    if (totals.medium > 0 || totals.low > 0) {
+                                        process.exit(2);
+                                    }
+                                    process.exit(0);'
+                                    ZAP_RESULT=$?
+                                    set -e
+
+                                    exit "$ZAP_RESULT"
+                                    ''', returnStatus: true)
+
+                                echo "[ZAP] Shell execution completed with exit code: ${zapExitCode}"
+                                sh 'ls -la reports || true'
+                                sh 'ls -la reports/zap || true'
+
+                                if (zapExitCode == 1) {
+                                    error('[ZAP] High-risk alerts detected. Failing the pipeline.')
+                                }
+
+                                if (zapExitCode == 2) {
+                                    unstable('[ZAP] Medium or low-risk alerts detected. Review the archived ZAP report.')
+                                }
+
+                                if (zapExitCode == 10) {
+                                    error('[ZAP] Gateway did not become ready before the scan started.')
+                                }
+
+                                if (zapExitCode == 11) {
+                                    error('[ZAP] Auth bootstrap failed. JWT could not be acquired for ZAP.')
+                                }
+
+                                if (zapExitCode == 12) {
+                                    error('[ZAP] ZAP did not generate the expected HTML and JSON reports.')
+                                }
+
+                                if (zapExitCode != 0 && zapExitCode != 1 && zapExitCode != 2 && zapExitCode != 10 && zapExitCode != 11 && zapExitCode != 12) {
+                                    error("[ZAP] Scan failed to complete correctly. Exit code: ${zapExitCode}")
+                                }
                             }
-                        ")
-                    }
-
-                    for _ in {1..18}; do
-                        login_and_extract_token
-
-                        if [ -n "$ZAP_JWT" ]; then
-                            break
-                        fi
-
-                        if echo "$LOGIN_RESPONSE" | grep -qi "Invalid email or password"; then
-                            echo "[ZAP] Auth user missing; registering scan user..."
-
-                            REGISTER_RESPONSE=$(curl -sS -X POST http://127.0.0.1:8080/api/auth/register \
-                                -H "Content-Type: application/json" \
-                                -d "{\\"email\\":\\"$ZAP_MAIL\\",\\"password\\":\\"$ZAP_AUTH_PASSWORD\\",\\"firstName\\":\\"Zap\\",\\"lastName\\":\\"Scanner\\",\\"role\\":\\"clerk\\"}")
-
-                            if echo "$REGISTER_RESPONSE" | grep -qi "Password must contain at least one uppercase"; then
-                                ZAP_AUTH_PASSWORD='ZapScan@1234'
-                                REGISTER_RESPONSE=$(curl -sS -X POST http://127.0.0.1:8080/api/auth/register \
-                                    -H "Content-Type: application/json" \
-                                    -d "{\\"email\\":\\"$ZAP_MAIL\\",\\"password\\":\\"$ZAP_AUTH_PASSWORD\\",\\"firstName\\":\\"Zap\\",\\"lastName\\":\\"Scanner\\",\\"role\\":\\"clerk\\"}")
-                            fi
-
-                            if echo "$REGISTER_RESPONSE" | grep -qi "already exists"; then
-                                :
-                            fi
-
-                            login_and_extract_token
-                            if [ -n "$ZAP_JWT" ]; then
-                                break
-                            fi
-                        fi
-
-                        sleep 5
-                    done
-
-                    if [ -z "$ZAP_JWT" ]; then
-                        echo "[ZAP] Failed to get JWT"
-                        echo "[ZAP] Login response: $LOGIN_RESPONSE"
-                        k -n coursework logs deployment/auth-service --tail=200 || true
-                        exit 11
-                    fi
-
-                    echo "[ZAP] JWT acquired; running baseline scan"
-
-                    # Configure ZAP with the JWT
-                    printf "replacer.full_list(0).description=auth\\nreplacer.full_list(0).enabled=true\\nreplacer.full_list(0).matchtype=REQ_HEADER\\nreplacer.full_list(0).matchstr=Authorization\\nreplacer.full_list(0).regex=false\\nreplacer.full_list(0).replacement=Bearer %s" "$ZAP_JWT" > reports/zap/zap-options.conf
-
-                    ZAP_TARGET_URL="http://127.0.0.1:8080"
-                    ZAP_NETWORK_MODE="--network host"
-
-                    if [ "$(uname -s)" = "Darwin" ]; then
-                        ZAP_TARGET_URL="http://host.docker.internal:8080"
-                        ZAP_NETWORK_MODE=""
-                    fi
-
-                    echo "[ZAP] Running scan against ${ZAP_TARGET_URL}"
-
-                    set +e
-                    if [ -n "$ZAP_NETWORK_MODE" ]; then
-                        docker run --rm $ZAP_NETWORK_MODE \
-                            -v "$PWD/reports/zap:/zap/wrk:rw" \
-                            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-                            -t "$ZAP_TARGET_URL" -I -J zap-report.json -r zap-report.html \
-                            -z "-configfile /zap/wrk/zap-options.conf"
-                    else
-                        docker run --rm \
-                            -v "$PWD/reports/zap:/zap/wrk:rw" \
-                            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-                            -t "$ZAP_TARGET_URL" -I -J zap-report.json -r zap-report.html \
-                            -z "-configfile /zap/wrk/zap-options.conf"
-                    fi
-                    ZAP_RESULT=$?
-                    set -e
-
-                    echo "[ZAP] Baseline command exit code: $ZAP_RESULT"
-
-                    echo "[ZAP] Scan finished. Generated artifacts:"
-                    ls -l reports/zap || true
-
-                    if [ ! -f reports/zap/zap-report.json ] || [ ! -f reports/zap/zap-report.html ]; then
-                        echo "[ZAP] Expected report files were not generated"
-                        exit 12
-                    fi
-
-                    if [ "$ZAP_RESULT" -ne 0 ] && [ "$ZAP_RESULT" -ne 1 ] && [ "$ZAP_RESULT" -ne 2 ]; then
-                        echo "[ZAP] Baseline scan command failed with exit code: $ZAP_RESULT"
-                        exit "$ZAP_RESULT"
-                    fi
-
-                    echo "[ZAP] Inspecting report severities"
-
-                    set +e
-                                        node -e 'const fs = require("fs");
-    const report = JSON.parse(fs.readFileSync("reports/zap/zap-report.json", "utf8"));
-    const sites = Array.isArray(report.site) ? report.site : (report.site ? [report.site] : []);
-    const totals = { informational: 0, low: 0, medium: 0, high: 0 };
-    for (const site of sites) {
-        const alerts = Array.isArray(site.alerts) ? site.alerts : [];
-        for (const alert of alerts) {
-            const rawRiskCode = Object.prototype.hasOwnProperty.call(alert, "riskcode")
-                ? alert.riskcode
-                : (Object.prototype.hasOwnProperty.call(alert, "riskCode") ? alert.riskCode : -1);
-            const riskCode = Number(rawRiskCode);
-            const instanceCount = Number(alert.count || 0) || (Array.isArray(alert.instances) && alert.instances.length > 0 ? alert.instances.length : 1);
-            if (riskCode === 0) {
-                totals.informational += instanceCount;
-            } else if (riskCode === 1) {
-                totals.low += instanceCount;
-            } else if (riskCode === 2) {
-                totals.medium += instanceCount;
-            } else if (riskCode === 3) {
-                totals.high += instanceCount;
-            }
-        }
-    }
-    console.log("[ZAP] Alert summary -> High: " + totals.high + ", Medium: " + totals.medium + ", Low: " + totals.low + ", Informational: " + totals.informational);
-    if (totals.high > 0) {
-        process.exit(1);
-    }
-    if (totals.medium > 0 || totals.low > 0) {
-        process.exit(2);
-    }
-    process.exit(0);'
-                    ZAP_RESULT=$?
-                    set -e
-
-                    exit "$ZAP_RESULT"
-                    ''', returnStatus: true)
-
-                    echo "[ZAP] Shell execution completed with exit code: ${zapExitCode}"
-                    sh 'ls -la reports || true'
-                    sh 'ls -la reports/zap || true'
-
-                    if (zapExitCode == 1) {
-                        error('[ZAP] High-risk alerts detected. Failing the pipeline.')
-                    }
-
-                    if (zapExitCode == 2) {
-                        unstable('[ZAP] Medium or low-risk alerts detected. Review the archived ZAP report.')
-                    }
-
-                    if (zapExitCode == 10) {
-                        error('[ZAP] Gateway did not become ready before the scan started.')
-                    }
-
-                    if (zapExitCode == 11) {
-                        error('[ZAP] Auth bootstrap failed. JWT could not be acquired for ZAP.')
-                    }
-
-                    if (zapExitCode == 12) {
-                        error('[ZAP] ZAP did not generate the expected HTML and JSON reports.')
-                    }
-
-                    if (zapExitCode != 0 && zapExitCode != 1 && zapExitCode != 2 && zapExitCode != 10 && zapExitCode != 11 && zapExitCode != 12) {
-                        error("[ZAP] Scan failed to complete correctly. Exit code: ${zapExitCode}")
-                    }
-                        }
                         }
                     } catch (Exception err) {
                         if (err.getMessage()?.contains('High-risk alerts detected') || err.getMessage()?.contains('Gateway did not become ready') || err.getMessage()?.contains('Auth bootstrap failed') || err.getMessage()?.contains('did not generate the expected HTML and JSON reports') || err.getMessage()?.contains('Scan failed to complete correctly')) {
