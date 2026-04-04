@@ -314,19 +314,19 @@ pipeline {
                         set -euo pipefail
                         KUBECTL='${kubectlCmd}'
 
-                        if [ ! -x "$KUBECTL" ]; then
+                        if [ ! -x "\$KUBECTL" ]; then
                             echo '[K8S] kubectl is required but could not be prepared'
                             exit 1
                         fi
 
-                        "$KUBECTL" cluster-info >/dev/null
-                        "$KUBECTL" apply -f k8s/namespace.yaml
+                        "\$KUBECTL" cluster-info >/dev/null
+                        "\$KUBECTL" apply -f k8s/namespace.yaml
 
-                        "$KUBECTL" -n ${env.K8S_NAMESPACE} create secret docker-registry ${env.K8S_REGISTRY_SECRET} \
+                        "\$KUBECTL" -n ${env.K8S_NAMESPACE} create secret docker-registry ${env.K8S_REGISTRY_SECRET} \
                             --docker-server='${env.REGISTRY}' \
                             --docker-username="$ACR_CREDS_USR" \
                             --docker-password="$ACR_CREDS_PSW" \
-                            --dry-run=client -o yaml | "$KUBECTL" apply -f -
+                            --dry-run=client -o yaml | "\$KUBECTL" apply -f -
 
                         secret_args=(
                             --from-literal=JWT_SECRET="$JWT_SECRET_VALUE"
@@ -349,13 +349,13 @@ pipeline {
                             secret_args+=(--from-literal=GOOGLE_REDIRECT_AFTER_LOGIN="\${GOOGLE_REDIRECT_AFTER_LOGIN}")
                         fi
 
-                        "$KUBECTL" -n ${env.K8S_NAMESPACE} create secret generic ${env.K8S_APP_SECRET_NAME} \
+                        "\$KUBECTL" -n ${env.K8S_NAMESPACE} create secret generic ${env.K8S_APP_SECRET_NAME} \
                             "\${secret_args[@]}" \
-                            --dry-run=client -o yaml | "$KUBECTL" apply -f -
+                            --dry-run=client -o yaml | "\$KUBECTL" apply -f -
 
-                        "$KUBECTL" apply -f k8s/configmap.yaml
-                        "$KUBECTL" apply -f k8s/services
-                        "$KUBECTL" apply -f k8s/deployments
+                        "\$KUBECTL" apply -f k8s/configmap.yaml
+                        "\$KUBECTL" apply -f k8s/services
+                        "\$KUBECTL" apply -f k8s/deployments
                         """
 
                         if (deployGateway) {
@@ -374,10 +374,10 @@ pipeline {
                         sh """#!/bin/bash
                         set -euo pipefail
                         KUBECTL='${kubectlCmd}'
-                        "$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/auth-service --timeout=180s
-                        "$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/vitals-service --timeout=180s
-                        "$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/patient-service --timeout=180s
-                        "$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/gateway --timeout=180s
+                        "\$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/auth-service --timeout=180s
+                        "\$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/vitals-service --timeout=180s
+                        "\$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/patient-service --timeout=180s
+                        "\$KUBECTL" -n ${env.K8S_NAMESPACE} rollout status deployment/gateway --timeout=180s
                         """
                     }
                 }
@@ -474,17 +474,17 @@ pipeline {
                     command -v node >/dev/null 2>&1 || { echo "[ZAP] node is required but not installed"; exit 1; }
                     command -v docker >/dev/null 2>&1 || { echo "[ZAP] docker is required but not installed"; exit 1; }
                     KUBECTL='${kubectlCmd}'
-                    [ -x "$KUBECTL" ] || { echo "[ZAP] kubectl is required but could not be prepared"; exit 1; }
+                    [ -x "\$KUBECTL" ] || { echo "[ZAP] kubectl is required but could not be prepared"; exit 1; }
 
                     mkdir -p reports/zap
                     rm -f reports/zap/zap-options.conf reports/zap/zap-report.json reports/zap/zap-report.html
                     rm -f /tmp/coursework-port-forward.log /tmp/gateway-health.json
 
                     echo "[ZAP] Ensuring gateway deployment is ready"
-                    "$KUBECTL" -n coursework rollout status deployment/gateway --timeout=180s
+                    "\$KUBECTL" -n coursework rollout status deployment/gateway --timeout=180s
 
                     echo "[ZAP] Starting gateway port-forward on 127.0.0.1:8080"
-                    "$KUBECTL" -n coursework port-forward svc/gateway 8080:80 >/tmp/coursework-port-forward.log 2>&1 &
+                    "\$KUBECTL" -n coursework port-forward svc/gateway 8080:80 >/tmp/coursework-port-forward.log 2>&1 &
                     PF_PID=$!
                     
                     echo "[ZAP] Waiting for gateway..."
@@ -571,7 +571,7 @@ pipeline {
                     if [ -z "$ZAP_JWT" ]; then
                         echo "[ZAP] Failed to get JWT"
                         echo "[ZAP] Login response: $LOGIN_RESPONSE"
-                        "$KUBECTL" -n coursework logs deployment/auth-service --tail=200 || true
+                        "\$KUBECTL" -n coursework logs deployment/auth-service --tail=200 || true
                         exit 11
                     fi
 
