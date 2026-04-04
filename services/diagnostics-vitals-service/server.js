@@ -36,7 +36,7 @@ const VITALS_CREATE_FIELDS = [
 
 const requireNonEmptyString = (value, fieldName) => {
 	if (typeof value !== "string") {
-		throw new Error(`${fieldName} must be a string`);
+		throw new TypeError(`${fieldName} must be a string`);
 	}
 
 	const normalized = value.trim();

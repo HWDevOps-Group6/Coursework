@@ -8,8 +8,10 @@ const buildDefaultHalfHourSlots = () => {
 	for (let hour = 9; hour < 17; hour += 1) {
 		const fromHour = String(hour).padStart(2, "0");
 		const toHour = String(hour + 1).padStart(2, "0");
-		slots.push({ startTime: `${fromHour}:00`, endTime: `${fromHour}:30` });
-		slots.push({ startTime: `${fromHour}:30`, endTime: `${toHour}:00` });
+		slots.push(
+			{ startTime: `${fromHour}:00`, endTime: `${fromHour}:30` },
+			{ startTime: `${fromHour}:30`, endTime: `${toHour}:00` },
+		);
 	}
 	return slots;
 };
