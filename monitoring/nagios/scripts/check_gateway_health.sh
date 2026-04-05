@@ -69,11 +69,14 @@ fi
 
 pkill -f "kubectl.*port-forward.*${LOCAL_PORT}:${REMOTE_PORT}" >/dev/null 2>&1 || true
 
-if ! ${KUBECTL_ARGS[@]} -n "$NAMESPACE" port-forward "svc/${SERVICE_NAME}" "${LOCAL_PORT}:${REMOTE_PORT}" >/tmp/coursework-nagios-gateway.log 2>&1 & then
-  echo "CRITICAL - failed to start port-forward for svc/${SERVICE_NAME}"
+${KUBECTL_ARGS[@]} -n "$NAMESPACE" port-forward "svc/${SERVICE_NAME}" "${LOCAL_PORT}:${REMOTE_PORT}" >/tmp/coursework-nagios-gateway.log 2>&1 &
+PF_PID=$!
+
+sleep 2
+if ! kill -0 "$PF_PID" >/dev/null 2>&1; then
+  echo "CRITICAL - failed to start port-forward for svc/${SERVICE_NAME}: $(cat /tmp/coursework-nagios-gateway.log 2>/dev/null || true)"
   exit 2
 fi
-PF_PID=$!
 
 HEALTH_JSON=""
 for _ in {1..20}; do
