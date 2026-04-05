@@ -68,14 +68,6 @@ sudo nagios4 -v /etc/nagios4/nagios.cfg
 sudo systemctl restart nagios4
 ```
 
-## Required changes before enabling alerts
-
-Update [objects/contacts.cfg](objects/contacts.cfg):
-
-- replace `CHANGE_ME@example.com` with the real recipient email address
-
-If your VM uses a different `kubectl` path or kubeconfig path, update [objects/coursework-services.cfg](objects/coursework-services.cfg).
-
 ## How the checks work
 
 ### AKS pod check
@@ -109,9 +101,3 @@ You still need to provide:
 - the final recipient email address for alerts
 - the final kubeconfig file to place at `/etc/nagios4/aks-coursework.kubeconfig`
 - confirmation that Nagios may run on the Jenkins VM with access to `/snap/bin/kubectl`
-
-## Notes
-
-- This setup intentionally avoids app changes.
-- It also avoids requiring public ingress, because it monitors the current private AKS setup from the VM.
-- If you later add public ingress, you can add standard Nagios `check_http` checks alongside these AKS-aware checks.
