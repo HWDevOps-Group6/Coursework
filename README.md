@@ -209,6 +209,16 @@ Current rollout assumptions:
 Azure VM setup with Jenkins installed
 <http://52.140.125.222:8080/>
 
+## Nagios Monitoring
+
+A starter Nagios Core monitoring setup for the Jenkins VM + AKS deployment is available in [monitoring/nagios/README.md](monitoring/nagios/README.md).
+
+It includes:
+
+- Kubernetes pod and deployment health checks for the `coursework` namespace
+- Gateway health validation that inspects backend status, not just HTTP 200
+- Jenkins VM host checks and sample email contact configuration
+
 ### OWASP ZAP Stage
 
 The Jenkins pipeline includes an authenticated OWASP ZAP baseline scan against the Kubernetes-deployed gateway using a Jenkins-side `kubectl port-forward` on `http://127.0.0.1:8080`.
