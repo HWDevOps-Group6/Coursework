@@ -748,9 +748,11 @@ pipeline {
 
         // --- STAGE: GITHUB RELEASE ---
         stage('GitHub Release') {
-            // Only run this if the build was successful
+            // Only run this if the build was successful and at least one application image was rebuilt
             when {
-                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+                expression {
+                    (currentBuild.result == null || currentBuild.result == 'SUCCESS') && applicationChanged()
+                }
             }
             steps {
                 script {
