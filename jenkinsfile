@@ -389,21 +389,19 @@ pipeline {
 
                             if [[ "$DEPLOY_GATEWAY" == 'true' ]]; then
                                 k -n "$K8S_NAMESPACE" set image deployment/gateway gateway="$REGISTRY/gateway:$BUILD_NUMBER"
+                                k -n "$K8S_NAMESPACE" rollout status deployment/gateway --timeout=180s
                             fi
                             if [[ "$DEPLOY_AUTH" == 'true' ]]; then
                                 k -n "$K8S_NAMESPACE" set image deployment/auth-service auth-service="$REGISTRY/auth-service:$BUILD_NUMBER"
                             fi
                             if [[ "$DEPLOY_VITALS" == 'true' ]]; then
                                 k -n "$K8S_NAMESPACE" set image deployment/vitals-service vitals-service="$REGISTRY/vitals-service:$BUILD_NUMBER"
+                                k -n "$K8S_NAMESPACE" rollout status deployment/vitals-service --timeout=180s
                             fi
                             if [[ "$DEPLOY_PATIENT" == 'true' ]]; then
                                 k -n "$K8S_NAMESPACE" set image deployment/patient-service patient-service="$REGISTRY/patient-service:$BUILD_NUMBER"
+                                k -n "$K8S_NAMESPACE" rollout status deployment/patient-service --timeout=180s
                             fi
-
-                            k -n "$K8S_NAMESPACE" rollout status deployment/auth-service --timeout=180s
-                            k -n "$K8S_NAMESPACE" rollout status deployment/vitals-service --timeout=180s
-                            k -n "$K8S_NAMESPACE" rollout status deployment/patient-service --timeout=180s
-                            k -n "$K8S_NAMESPACE" rollout status deployment/gateway --timeout=180s
                             '''
                         }
                     }
