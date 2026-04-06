@@ -240,7 +240,7 @@ const fetchFromMachineAPI = async (machineType) => {
 	return picked.map((t) => ({
 		...t,
 		machineId: `${machineType}-${String(secureRandomInt(1, 10)).padStart(2, "0")}`,
-		accessionNo: `ACC${Date.now()}${randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase()}`,
+		accessionNo: `ACC${Date.now()}${randomUUID().replaceAll(/-/g, "").slice(0, 12).toUpperCase()}`,
 		reportedBy: pickRandom([
 			"Dr. Al-Farsi",
 			"Dr. Hamdan",
